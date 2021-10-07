@@ -192,11 +192,47 @@ def ID3(examples, default):
   return tree
 
 
-def prune(node, examples):
-  '''
-  Takes in a trained tree and a validation set of examples.  Prunes nodes in order
-  to improve accuracy on the validation data; the precise pruning strategy is up to you.
-  '''
+#changed the accuracy function a little so that it fits the prune code
+
+def accuracy(score, examples):
+    return float(score) / len(examples) * 100
+
+
+# def prune(node, examples):
+#   '''
+#   Takes in a trained tree and a validation set of examples.  Prunes nodes in order
+#   to improve accuracy on the validation data; the precise pruning strategy is up to you.
+#   '''
+#
+#   depth = 0 #variable to record the depth we're looking at
+#   TopNode = Node('TopNode')
+#   TopNode.data = examples
+#   TopNode.depth = depth
+#   tree = {0:[TopNode]} #keys = depth, values = list of nodes at that depth
+#   end_condition = False
+#
+#   def prune_node(node, examples):
+#     # If leaf node
+#       if len(node.child) == 0:  # rename the ".child" after adapting to the ".childa" or ".childb"
+#           accuracy_before_pruning = accuracy(score, examples)
+#           node.pruned = True
+#
+#        # If accuracy does not improve, no pruning
+#           if accuracy_before_pruning >= accuracy(score, examples):
+#               node.pruned = False
+#           return
+#
+#       for value, child_node in node.child.items():
+#           prune_node(child_node, val_instances)
+#
+#     # Prune when we reach the end of the recursion
+#       accuracy_before_pruning = accuracy(score, examples)
+#       node.pruned = True
+#
+#       if accuracy_before_pruning >= accuracy(score, examples):
+#           node.pruned = False
+#
+#   return prune_node(node, examples)
 
 
 def test(node, examples):
@@ -247,7 +283,9 @@ for i in range(len(examples)):
   score += 1 if real == guess else 0
   print(i,'       ',guess,'       ',real)
 
-print('accuracy: {}%'.format(float(score)/len(examples)*100))
+#print('accuracy: {}%'.format(float(score)/len(examples)*100))
+
+print(accuracy(score, examples)) 
 
 print('''
 At the moment ID3() returns a dictionary holding the tree structure + all the nodes. I think looking at the description demeter gave for ID3 (above in the code), its supposed to just return the instance of "Node" which is the top node...'
