@@ -221,13 +221,26 @@ def evaluate(tree, example):
           node = nextnode
 
 
-#lets see how it does on the tennis dataset
-print('running tennis set:')
-tree = ID3(parse.parse("tennis.data"),"Class")
-tennis_examples = parse.parse('tennis.data')
+#lets see how it does on the full datasets (i haven't split into train/test sets here...)
+file = 'tennis.data'
+print('running {} set'.format(file))
+tree = ID3(parse.parse(file),"Class")
+examples = parse.parse(file)
 print('example | Class | ID3 Guess')
-for i in range(len(tennis_examples)):
-  example = tennis_examples[i]
+
+score = 0
+
+for i in range(len(examples)):
+  example = examples[i]
   guess = evaluate(tree, example)
   real = example['Class']
+  score += 1 if real == guess else 0
   print(i,'       ',guess,'       ',real)
+
+print('accuracy: {}%'.format(float(score)/len(examples)*100))
+
+print('''
+I think looking at the description demeter gave for ID3 (above in the code), its supposed to just return the instance of "Node" which is the top node...'
+in theory, this should contain all the information for the tree, so I think maybe get rid of the dictionary "tree" I return,
+and just return the top node, then rewrite my evaluate() function above...
+      '')
