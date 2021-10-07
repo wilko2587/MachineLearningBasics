@@ -240,7 +240,7 @@ for i in range(len(examples)):
 print('accuracy: {}%'.format(float(score)/len(examples)*100))
 
 print('''
-I think looking at the description demeter gave for ID3 (above in the code), its supposed to just return the instance of "Node" which is the top node...'
+At the moment ID3() returns a dictionary holding the tree structure + all the nodes. I think looking at the description demeter gave for ID3 (above in the code), its supposed to just return the instance of "Node" which is the top node...'
 in theory, this should contain all the information for the tree, so I think maybe get rid of the dictionary "tree" I return,
 and just return the top node, then rewrite my evaluate() function above...
-      '')
+      ''')
