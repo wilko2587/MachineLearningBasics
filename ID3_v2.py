@@ -205,6 +205,16 @@ def test(node, examples):
   of examples the tree classifies correctly).
   '''
 
+def missing_vals(file):
+  dict_original = parse.parse(file)
+  dict_mostfreq = most_frequent(dict_original)
+
+  for each in dict_original:
+      for all in each:
+          if each[all] == '?':
+              each[all] = dict_mostfreq[all]
+
+  return dict_original
 
 def evaluate(tree, example):
   '''
