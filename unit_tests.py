@@ -1,4 +1,4 @@
-import ID3, parse, random
+import parse, random, ID3
 
 def testID3AndEvaluate():
   data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1)]
@@ -83,11 +83,16 @@ def testPruningOnHouseData(inFile):
     acc = ID3.test(tree, test)
     print("pruned tree test accuracy: ",acc)
     withPruning.append(acc)
-    tree = ID3.ID3(train+valid, 'democrat')
+    tree = ID3.ID3(train + valid, 'democrat')
     acc = ID3.test(tree, test)
     print("no pruning test accuracy: ",acc)
     withoutPruning.append(acc)
   print(withPruning)
   print(withoutPruning)
   print("average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning))
-  
+
+
+#testID3AndEvaluate()
+#testPruning()
+testID3AndTest()
+#testPruningOnHouseData('./house_votes_84.data')
