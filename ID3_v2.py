@@ -157,7 +157,7 @@ def ID3(examples, default, target="Class"):
         else:
             # if we get down here, current node is not a leaf node (there's a good variable to split the node by)
             current_node.label = split_variable  # rename the current node appropriately
-            child_data = get_examples_split(current_node.data, split_variable)  # result of splitting the data
+            child_data, var0, var1 = get_examples_split(current_node.data, split_variable)  # result of splitting the data
 
             # now we have the results of splitting at the "current_node" node, we can make the children nodes
             # we don't know what the children nodes will be yet.. so lets call them "childa" and "childb"
@@ -173,11 +173,11 @@ def ID3(examples, default, target="Class"):
             childa.prior_variables = current_node.prior_variables + [
                 split_variable]  # we record the prior variables used further up the tree
             childb.prior_variables = current_node.prior_variables + [split_variable]
-            childa.parentanswer = 0
-            childb.parentanswer = 1
+            childa.parentanswer = var0
+            childb.parentanswer = var1
 
-            current_node.children[0] = childa
-            current_node.children[1] = childb
+            current_node.children[var0] = childa
+            current_node.children[var1] = childb
 
             # great. We're there. After the first iteration of this, we have a top node of the tree with the correct
             #  variable to split the data... and we also have set up the next 'depth' of the tree which will be looked at
@@ -198,15 +198,14 @@ def accuracy(score, examples):
 
 
 def missing_vals(file):
-    dict_original = parse.parse(file)
-    dict_mostfreq = most_frequent(dict_original)
+    data = parse.parse(file)
+    mostfreq = most_frequent(data)
 
-    for each in dict_original:
-        for all in each:
-            if each[all] == '?':
-                each[all] = dict_mostfreq[all]
-
-    return dict_original
+    for example in data:
+        for key in example.keys():
+            if example[key] == '?':
+                example[key] = mostfreq[key]
+    return data
 
 
 def evaluate(node, example):
@@ -219,7 +218,7 @@ def evaluate(node, example):
         if node.label == "Leaf":  # if the next node is a leaf, we need to return its classification
             return node.classification
         else:
-            node = node._evaluate(example)
+            node = node._evaluate(example) #node._evaluate returns the next node "example" will be "propagated" to
 
 
 def test(node, examples):
@@ -239,9 +238,9 @@ def test(node, examples):
 def prune(node, examples, acceptible_accuracy_decline=0.05,
           target="Class"):
     '''
-  Takes in a trained tree and a validation set of examples.  Prunes nodes in order
-  to improve accuracy on the validation data; the precise pruning strategy is up to you.
-  '''
+    Takes in a trained tree and a validation set of examples.  Prunes nodes in order
+    to improve accuracy on the validation data; the precise pruning strategy is up to you.
+    '''
 
     TopNode = node
     node.data = examples
@@ -267,7 +266,7 @@ def prune(node, examples, acceptible_accuracy_decline=0.05,
                 # turn a child into a leaf node
                 debug_Pruning('try turning ', child, ' into leaf! ({})'.format(currentnode.children[child].label))
                 currentnode.children[child].label = "Leaf"
-                currentnode.children[child].leafify("Class")
+                currentnode.children[child].leafify(target)
                 tree_accuracy_after = test(TopNode, examples)
                 debug_Pruning('change in accuracy: ', tree_accuracy_before, tree_accuracy_after)
                 if tree_accuracy_before - tree_accuracy_after < acceptible_accuracy_decline:
@@ -280,11 +279,11 @@ def prune(node, examples, acceptible_accuracy_decline=0.05,
             debug_Pruning('fringe after runthrough: ', fringe)
     return TopNode
 
-##lets see how it does on the full datasets (i haven't split into train/test sets here...)
-# file = 'tennis.data'
-# debug_Pruning('running {} set'.format(file))
-# examples = parse.parse(file)
-# tree = ID3(examples,0)
+#lets see how it does on the full datasets (i haven't split into train/test sets here...)
+#file = 'tennis.data'
+#debug_Pruning('running {} set'.format(file))
+#examples = parse.parse(file)
+#tree = ID3(examples,0)
 # tree.draw()
 # tree = prune(tree,examples, acceptible_accuracy_decline=0.2)
 # print('Pruned!')

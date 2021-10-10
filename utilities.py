@@ -11,3 +11,10 @@ def most_frequent(List, default = 0):
     return default #if a draw, use default
   else:
     return List[counter.index(max(counter))] #else, use the most common value
+
+
+x = most_frequent(['a','b','a','c'])
+print(x) # --> should return 'a'
+
+y = most_frequent([1,1,1,0,0])
+print(y) #--> should return 1

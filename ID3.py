@@ -4,8 +4,8 @@ import math
 import parse
 from utilities import most_frequent
 
-_debug_id3 = True
-_debug_pruning = False
+_debug_id3 = False
+_debug_pruning = True
 
 def debug_ID3(*string):
   if _debug_id3:
@@ -202,13 +202,10 @@ def test(node, examples):
   of examples the tree classifies correctly).
   '''
   score = 0
-  count = 0
   for example in examples:
     our_guess = evaluate(node, example)
     true_value = example['Class']
-    count += 1
     score += 1 if int(true_value) == int(our_guess) else 0
-
   return accuracy(score,examples)
 
 
@@ -248,67 +245,14 @@ def prune(node, examples, acceptible_accuracy_decline = 0.05,
           debug_Pruning("    PRUNED! ",currentnode.label,child)
         else:
           debug_Pruning('    Not pruning...')
-          currentnode.children[child] = child_copy
+          currentnode.children[child] = child_copy #revert the change back to the saved version
           fringe = fringe + [child_copy] #if we're not cutting off the node, add it to the fringe to check its children
       debug_Pruning('fringe after runthrough: ',fringe)
   return TopNode
 
 
-##lets see how it does on the full datasets (i haven't split into train/test sets here...)
+#lets see how it does on the full datasets (i haven't split into train/test sets here...)
 #file = 'tennis.data'
 #debug_Pruning('running {} set'.format(file))
-#examples = parse.parse(file)
-#tree = ID3(examples,0)
-#tree.draw()
-#tree = prune(tree,examples, acceptible_accuracy_decline=0.2)
-#print('Pruned!')
-#tree.draw()
-
-print('''hey. Change the _debug variables at the top of this script to print debug statements within the code.
-At the moment the ID3.py code only allows variable values of 0 or 1 or "0" or "1", and deals with these being either 
-strings or integers by calling int() whenever they are used to force everything to be integers. 
-In ID3_v2.py I've tried to go about fixing this, since this change is required for us to pass Demeter's 
-"testPruningOnHouseData()" test in unit_tests.py... his variable names in the housing data are fully generalised so 
-they can be either "y" or "n"; or also "Republican" and "Democrat" depending on the field. 
-You'll have to look at things in pretty much every function in this file, utilities.py, and node.py.
-
-I already started trying to make the variable switch, to give you some inspiration, I've used bits of code like:
-
->>> vars = list(set([example[var] for example in examples])) 
->>>if len(vars) == 1:
->>>    vars = vars + ['dummyvar'] 
-
-at the beginning of some functions to identify what the two variables could be (and in the case where only one variable 
-is found it adds its own second replacement "dummyvar" which has no functionality/consequence but makes the code work.
-
-I recommend leaving this ID3.py file alone and working on v2, since that way we preserve a copy that at least passes 
-the first three of Demeter's tests.
-
-Node.draw() -> I've added this method into Node. I've found it incredibly useful for debugging. 
-
-If you draw the highest node in a tree, it'll print out a sort-of-table
-that illustrates the tree. It's not well formatted, but the headers for the table are at the top of each column. You 
-can trace a datapoint through the tree using this to get to the answer manually, and also by setting _debug_id3 = True
-you can see the time-evolution of the tree. This is also helpful when you're changing the variables around because it 
-explicitally prints out the variables
-
-eg: this is Node.draw() for the third of Demeter's tests:
-
- -------
-Parent | Answer  | label  |  child1 label | child2 label |
-N/A | NA | b | 0_a | 1_Leaf |
-b | 0 | a | 0_Leaf | 1_Leaf |
-b | 1 | Leaf | Guess:  1
-a | 0 | Leaf | Guess:  0
-a | 1 | Leaf | Guess:  1
------- 
-
-you can see there are three leaves, two outputting "1" and one outputting "0'. If you have the example
-{'a': 1, 'b': 0, 'c': 0, 'Class': 1}, you can see we start off at the first row of the table with "label" = b.
-we have b=0, meaning we're looking for the node with Parent = "b" and Answer = "0", which is the 2nd row of the table.
-this row's label is "a", and we have a=1, so we're looking for the node with parent = "a" and answer = 1, which
-is the bottom row of the table. We can see this is a leaf node, with guess = 1. So this decision tree would return "1"
-as a guess. Which is great because we can see Class = 1 in the example, so this decision tree classifies this example
-correctly!
-'''
-)
+#examples = parse.parse(file)[0:3]
+#tree = ID3(examples,0) #build tree using training set

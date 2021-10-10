@@ -5,7 +5,7 @@ from utilities import most_frequent
 class Node:
   def __init__(self,label, default = None):
     self.data = None
-    self.label = label #label will represent the variable the node splits by
+    self.label = label #label will represent the variable the node splits by, "Leaf"
     self.children = {}
     self.prior_variables = []
     self.classification = None
