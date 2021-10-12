@@ -56,6 +56,7 @@ def get_examples_split(examples, var):
     split0 = [example for example in examples if example[var] == vars[0]]
     split1 = [example for example in examples if example[var] == vars[1]]
     splits = [split0, split1]
+    print(splits)
     return splits, vars[0], vars[1]
 
 
@@ -90,6 +91,7 @@ def get_parent_split(examples, target='Class'):
 
 def best_split(examples, target, vars_to_ignore=[]):
     information_gains = {}  # list to contain the entropies of different nodes
+
     variables = list(examples[0].keys())
     variables.remove(target)  # remove the target variable
 
@@ -107,7 +109,7 @@ def best_split(examples, target, vars_to_ignore=[]):
         children_entropy = get_entropy(children_split)
 
         information_gain = parent_entropy - children_entropy
-
+        print(information_gain)
         information_gains[information_gain] = var
 
     maxvalue = max(information_gains.keys())
@@ -133,6 +135,7 @@ def ID3(examples, default, target="Class"):
 
     while len(fringe) != 0:  # loop until an arbitrary depth limit is reached, or break condition is met
         current_node = fringe.pop(0)
+
         debug_ID3('current node: ', current_node.label)
         debug_ID3('data: ', current_node.data)
         split_variable = best_split(current_node.data, target,
@@ -279,11 +282,21 @@ def prune(node, examples, acceptible_accuracy_decline=0.05,
             debug_Pruning('fringe after runthrough: ', fringe)
     return TopNode
 
+def random_forest(examples, n_subsets):
+    # create subsets of data
+    pass
+
+
+
+
 #lets see how it does on the full datasets (i haven't split into train/test sets here...)
-#file = 'tennis.data'
-#debug_Pruning('running {} set'.format(file))
-#examples = parse.parse(file)
-#tree = ID3(examples,0)
+file = 'tennis.data'
+debug_Pruning('running {} set'.format(file))
+examples = parse.parse(file)
+# print(best_split(examples, 'Humidity'))
+# print(get_examples_split(examples, 'Humidity'))
+tree = ID3(examples,0)
+# print(tree)
 # tree.draw()
 # tree = prune(tree,examples, acceptible_accuracy_decline=0.2)
 # print('Pruned!')
