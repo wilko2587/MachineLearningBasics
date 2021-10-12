@@ -329,5 +329,7 @@ def test_forest(forest,examples):
 file = 'house_votes_84.data'
 ## debug_Pruning('running {} set'.format(file))
 examples = parse.parse(file)
-forest = build_random_forest(10,examples,'democrat')
-print('random forest accuracy: ', test_forest(forest,examples))
+training = examples[0:300]
+testing = examples[300:]
+forest = build_random_forest(10,training,'democrat')
+print('random forest accuracy: ', test_forest(forest,testing))
