@@ -25,7 +25,7 @@ class Node:
 
     splitvariable = self.label #we've engineered it so .label stores the split variable of the node (ie: the question the node asks)
     key = example[splitvariable]
-    return self.children[int(key)]
+    return self.children[key]
 
   def _pass_on_data(self,childkey):
     '''
@@ -48,27 +48,3 @@ class Node:
     targets = [example[var] for example in self.data]
     self.classification = most_frequent(targets, default = self.default)
     return None
-
-  def draw(self):
-    '''
-    function to illustrate/print the tree below it (children and children's children etc)
-    helpful for debugging
-    '''
-
-    fringe = [self]
-    print('\n -------')
-    print('''Parent | Answer  | label  |  child1 label | child2 label |''')
-    while len(fringe) != 0:
-      currentnode = fringe.pop(0)
-      children = list(currentnode.children.values())
-      parent = currentnode.parent.label if currentnode.parent != None else "N/A"
-      if len(children) != 0:
-        print(parent, '|', currentnode.parentanswer, '|', currentnode.label, '|',
-              children[0].parentanswer + '_' + children[0].label, '|',
-              children[1].parentanswer + '_' + children[1].label, '|')
-      else:
-        print(parent, '|', currentnode.parentanswer, '|', currentnode.label, '|', "Guess: ", currentnode.classification)
-
-      fringe = fringe + list(children)
-
-    print('------ \n')

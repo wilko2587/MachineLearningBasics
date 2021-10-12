@@ -1,13 +1,13 @@
-import ID3, parse, random
+import ID3_old, parse, random
 
 def mini_grader():
 
   data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1)]
 
   try:
-    tree = ID3.ID3(data, 0)
+    tree = ID3_old.ID3(data, 0)
     if tree != None:
-      ans = ID3.evaluate(tree, dict(a=1, b=0))
+      ans = ID3_old.evaluate(tree, dict(a=1, b=0))
       if ans != 1:
         print("ID3 test 1 failed.")
       else:
@@ -20,9 +20,9 @@ def mini_grader():
   data = [dict(a=1, b=0, Class=0), dict(a=1, b=1, Class=1)]
 
   try:
-    tree = ID3.ID3(data, 0)
+    tree = ID3_old.ID3(data, 0)
     if tree != None:
-      ans = ID3.evaluate(tree, dict(a=1, b=0))
+      ans = ID3_old.evaluate(tree, dict(a=1, b=0))
       if ans != 0:
         print("ID3 test 2 failed.")
       else:
@@ -38,14 +38,14 @@ def mini_grader():
           dict(a=3, b=0, Class=1), dict(a=3, b=1, Class=3)]
 
   try:
-    tree = ID3.ID3(data, 0)
+    tree = ID3_old.ID3(data, 0)
     if tree != None:
-      ans = ID3.evaluate(tree, dict(a=1, b=0))
+      ans = ID3_old.evaluate(tree, dict(a=1, b=0))
       if ans != 2:
         print("ID3 test 3-1 failed.")
       else:
         print("ID3 test 3-1 succeeded.")
-      ans = ID3.evaluate(tree, dict(a=1, b=1))
+      ans = ID3_old.evaluate(tree, dict(a=1, b=1))
       if ans != 1:
         print("ID3 test 3-2 failed.")
       else:
@@ -60,14 +60,14 @@ def mini_grader():
          dict(a=3, b=0, c=1, Class=3), dict(a=3, b=2, c='?', Class=3)]
 
   try:
-    tree = ID3.ID3(data, 0)
+    tree = ID3_old.ID3(data, 0)
     if tree != None:
-      ans = ID3.evaluate(tree, dict(a=1, b=1, c=1))
+      ans = ID3_old.evaluate(tree, dict(a=1, b=1, c=1))
       if ans != 1:
         print("ID3 test 4-1 failed.")
       else:
         print("ID3 test 4-1 succeeded.")
-      ans = ID3.evaluate(tree, dict(a=2, b=0, c=0))
+      ans = ID3_old.evaluate(tree, dict(a=2, b=0, c=0))
       if ans != 2:
         print("ID3 test 4-2 failed.")
       else:
