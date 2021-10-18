@@ -1,11 +1,26 @@
+import math
+
+#returns dot product of vectors a,b
+def dot(a,b):
+    assert(len(a)==len(b))
+    N = len(a)
+    return sum([a[i]*b[i] for i in range(N)])
+
+#returns magnitude of vector a
+def mag(a):
+    return math.sqrt(sum([x**2 for x in a]))
+
 # returns Euclidean distance between vectors a dn b
 def euclidean(a,b):
-    
+    assert(len(a)==len(b))
+    N = len(a)
+    dist2 = sum([(a[i]-b[i])**2 for i in range(N)])
+    dist = math.sqrt(dist2)
     return(dist)
         
 # returns Cosine Similarity between vectors a dn b
-def cosim(a,b):
-    
+def cosin(a,b):
+    dist = dot(a,b)/(mag(a)*mag(b))
     return(dist)
 
 # returns a list of labels for the query dataset based upon labeled observations in the train dataset.
