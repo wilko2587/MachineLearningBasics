@@ -18,12 +18,12 @@ for Ntraining in range(10,int(len(data)/2)):
         trainingset = [data[k] for k in data_indices[0:Ntraining]]
         testset = [data[k] for k in data_indices[Ntraining:]]
 
-        tree = ID3.ID3(trainingset,'democrat')
+        tree = ID3.ID3(trainingset, 'democrat')
 
-        noprune_acc = ID3.test(tree,testset)
+        noprune_acc = ID3.test(tree, testset)
 
-        tree = ID3.prune(tree,trainingset)
-        prune_acc = ID3.test(tree,testset)
+        tree = ID3.prune(tree, trainingset)
+        prune_acc = ID3.test(tree, testset)
 
         noprune_accs.append(noprune_acc)
         prune_accs.append(prune_acc)
