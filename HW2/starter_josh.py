@@ -53,7 +53,7 @@ def cosim(a, b):
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
 def knn(train, query, metric):
-    k = 4  # number of nearest neighbors to look at
+    k = 7  # number of nearest neighbors to look at
 
     if metric == "euclidean":
         metric_func = euclidean
@@ -138,13 +138,14 @@ Can someone make this print out more sig figs??
 For whatever reason on validation set, accuracy is super similar until k = 9 then starts to fall. 
 I ran this on test set to compare with James's output and its the same. 
 '''
-def best_k():
+def best_k(): #embedded the binary transformation in here
     k = 1
     k_output = list() # append tuple with (k value, validation accuracy)
 
     train = read_data('train.csv')
+    train = data_bin(train)
     valid = read_data('valid.csv')
-    test = read_data('test.csv')
+    valid = data_bin(valid)
 
     while True:
         labels = knn_bestk(train, valid, "euclidean",k)
@@ -155,13 +156,12 @@ def best_k():
 
         if k == 1:
             pass
-        elif k > 10: # or _accuracy < k_output[-2][1]
+        elif k == 10: # or _accuracy < k_output[-2][1]
             break
 
         k = k + 1
 
     return k_output
-
 
 # Same function as James's but takes k as input instead of hard coding
 # Used this for my best_k function
@@ -196,6 +196,19 @@ def knn_bestk(train, query, metric,k):
 
     return (labels)
 
+'''
+Not pretty, but I think it works? 
+'''
+
+def data_bin(data):
+
+    for line in data: # line[0] = label, line[1] = list with all values
+        for each in line[1]: # go into each individual value
+            if each > 1: # if greater than 1, replace that specific location with 1
+                data [data.index(line)][1][line[1].index(each)] = 1.0
+
+    return data
+
 def main():
     # show('test.csv', 'pixels')
     train = read_data('train.csv')
@@ -206,12 +219,14 @@ def main():
     _accuracy = accuracy(labels,true_labels)
     print(f'accuracy: {_accuracy}') # made this an f string and added %
 
-
 if __name__ == "__main__":
-    # main()
-    best_k()
+    main()
+    # best_k()
 
-# decide on transformations to speed this up
-# build k means clustering
 
-# validation set vs K, keep increasing K until validation set accuracy falls
+# Left to do:
+# 10x10 confusion matrix
+# k means classifier
+# collaborative filter question
+# soft k means classifier
+# write-up
