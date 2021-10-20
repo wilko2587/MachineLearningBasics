@@ -1,3 +1,6 @@
+# This is built on James's code
+# Made accuracy a percentage
+
 import math
 
 
@@ -50,7 +53,7 @@ def cosim(a, b):
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
 def knn(train, query, metric):
-    k = 5  # number of nearest neighbors to look at
+    k = 4  # number of nearest neighbors to look at
 
     if metric == "euclidean":
         metric_func = euclidean
@@ -85,6 +88,7 @@ def knn(train, query, metric):
 # labels should be ignored in the training set
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
+
 def kmeans(train, query, metric):
     return (labels)
 
@@ -126,6 +130,71 @@ def accuracy(guess_labels,true_labels):
     N = len(guess_labels)
     return sum([int(guess_labels[i]==true_labels[i]) for i in range(N)]) / len(true_labels) # made this a percentage
 
+'''
+Starts with k = 1 then will increase k and keep printing accuracy testing on validation data until arbitrary stop.
+I did until k > 50 just to see.
+Also did until accuracy falls but seems highest accuracy is 0.86 (k = 1).
+Can someone make this print out more sig figs??
+For whatever reason on validation set, accuracy is super similar until k = 9 then starts to fall. 
+I ran this on test set to compare with James's output and its the same. 
+'''
+def best_k():
+    k = 1
+    k_output = list() # append tuple with (k value, validation accuracy)
+
+    train = read_data('train.csv')
+    valid = read_data('valid.csv')
+    test = read_data('test.csv')
+
+    while True:
+        labels = knn_bestk(train, valid, "euclidean",k)
+        true_labels = [x[0] for x in valid]
+        _accuracy = accuracy(labels,true_labels)
+        print(f'k: {k}, accuracy: {_accuracy}')
+        k_output.append((k,_accuracy))
+
+        if k == 1:
+            pass
+        elif k > 50: # or _accuracy < k_output[-2][1]
+            break
+
+        k = k + 1
+
+    return k_output
+
+
+# Same function as James's but takes k as input instead of hard coding
+# Used this for my best_k function
+def knn_bestk(train, query, metric,k):
+    k_val = k
+
+    if metric == "euclidean":
+        metric_func = euclidean
+    elif metric == "cosim":
+        metric_func = cosim
+    else:
+        raise NameError("Invalid Metric choice")
+
+    labels = []
+    for testpoint in query:
+        traincopy = train.copy()
+        dists = []
+
+        for labelledpoint in train:
+            dists.append(metric_func(testpoint[1], labelledpoint[1]))
+
+        all_labels = []
+        while len(all_labels) < k_val:
+            next_nearest_index = dists.index(min(dists))  # index of the nearest training point
+            all_labels.append(traincopy[next_nearest_index][0])
+            # now remove the smallest value from dists and train
+            traincopy.pop(next_nearest_index)
+            dists.pop(next_nearest_index)
+
+        label = most_frequent(all_labels)
+        labels.append(label)
+
+    return (labels)
 
 def main():
     # show('test.csv', 'pixels')
@@ -135,8 +204,14 @@ def main():
     labels = knn(train, test, "euclidean")
     true_labels = [x[0] for x in test]
     _accuracy = accuracy(labels,true_labels)
-    print('accuracy: ', _accuracy)
+    print(f'accuracy: {_accuracy}') # made this an f string and added %
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    best_k()
+
+# decide on transformations to speed this up
+# build k means clustering
+
+# validation set vs K, keep increasing K until validation set accuracy falls
