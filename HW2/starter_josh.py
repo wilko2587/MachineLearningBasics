@@ -155,7 +155,7 @@ def best_k():
 
         if k == 1:
             pass
-        elif k > 50: # or _accuracy < k_output[-2][1]
+        elif k > 10: # or _accuracy < k_output[-2][1]
             break
 
         k = k + 1
