@@ -1,5 +1,8 @@
+# This is built on James's code
+# Made accuracy a percentage
+
 import math
-import transformation_tools
+
 
 # formats the elements in "list" to conform to a data type
 def format_list(list, dtype_func):
@@ -49,8 +52,7 @@ def cosim(a, b):
 # returns a list of labels for the query dataset based upon labeled observations in the train dataset.
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
-def knn(train, query, metric):
-    k = 7  # number of nearest neighbors to look at
+def knn(train, query, metric, k=7):
 
     if metric == "euclidean":
         metric_func = euclidean
@@ -135,76 +137,31 @@ Can someone make this print out more sig figs??
 For whatever reason on validation set, accuracy is super similar until k = 9 then starts to fall. 
 I ran this on test set to compare with James's output and its the same. 
 '''
-def best_k(metric): #embedded the binary transformation in here
+def best_k(train, valid,max_k=10): #embedded the binary transformation in here
     k = 1
     k_output = list() # append tuple with (k value, validation accuracy)
 
-    train = read_data('train.csv')
-    train = data_bin(train)
-    valid = read_data('valid.csv')
-    valid = data_bin(valid)
-
-    while True:
-        labels = knn_bestk(train, valid, metric,k)
+    for k in range(0,max_k):
+        labels = knn(train, valid, "euclidean",k)
         true_labels = [x[0] for x in valid]
         _accuracy = accuracy(labels,true_labels)
-        print(f'k: {k}, accuracy: {_accuracy}')
+        #print(f'k: {k}, accuracy: {_accuracy}')
         k_output.append((k,_accuracy))
-
-        if k == 20:
-            break
-
-        k = k + 1
 
     return k_output
 
-# Same function as James's but takes k as input instead of hard coding
-# Used this for my best_k function
-def knn_bestk(train, query, metric,k):
-    k_val = k
-
-    if metric == "euclidean":
-        metric_func = euclidean
-    elif metric == "cosim":
-        metric_func = cosim
-    else:
-        raise NameError("Invalid Metric choice")
-
-    labels = []
-    for testpoint in query:
-        traincopy = train.copy()
-        dists = []
-
-        for labelledpoint in train:
-            dists.append(metric_func(testpoint[1], labelledpoint[1]))
-
-        all_labels = []
-        while len(all_labels) < k_val:
-            next_nearest_index = dists.index(min(dists))  # index of the nearest training point
-            all_labels.append(traincopy[next_nearest_index][0])
-            # now remove the smallest value from dists and train
-            traincopy.pop(next_nearest_index)
-            dists.pop(next_nearest_index)
-
-        label = most_frequent(all_labels)
-        labels.append(label)
-
-    return (labels)
 
 '''
 Not pretty, but I think it works? 
 '''
 
 def data_bin(data):
-    lin_num = 0
 
     for line in data: # line[0] = label, line[1] = list with all values
-        pix_num = 0
         for each in line[1]: # go into each individual value
-            if each > 0: # if greater than 1, replace that specific location with 1
-                data[lin_num][1][pix_num] = 1
-            pix_num += 1
-        lin_num += 1
+            if each > 1: # if greater than 1, replace that specific location with 1
+                data [data.index(line)][1][line[1].index(each)] = 1.0
+
     return data
 
 def main():
@@ -215,16 +172,11 @@ def main():
     labels = knn(train, test, "euclidean")
     true_labels = [x[0] for x in test]
     _accuracy = accuracy(labels,true_labels)
-    bestk = best_k(metric)
     print(f'accuracy: {_accuracy}') # made this an f string and added %
 
 if __name__ == "__main__":
-    # main()
-
-    train = read_data('train.csv')
-    train = data_bin(train)
-    print(train)
-
+    main()
+    # best_k()
 
 
 # Left to do:

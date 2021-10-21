@@ -1,21 +1,6 @@
 import math
 
 
-# def flatten(List):
-#    '''
-#    function to flatten "list", ie: turn [[1,2,3],[4,5,6]] into [1,2,3,4,5,6]
-#    '''
-#    # check if list is empty
-#    if len(List) == 0:
-#        return List
-#
-#    # if there is a nested list, recursively iterate
-#    if isinstance(List[0], list):
-#        return flatten(*List[:1]) + flatten(List[1:])
-#
-#    return List[:1] + flatten(List[1:])
-
-
 def pctile(value, List):
     '''
     returns an approximate percentile that "value" sits at within "list" (must contain integers or floats)
