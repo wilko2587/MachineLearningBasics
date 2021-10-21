@@ -135,7 +135,7 @@ Can someone make this print out more sig figs??
 For whatever reason on validation set, accuracy is super similar until k = 9 then starts to fall. 
 I ran this on test set to compare with James's output and its the same. 
 '''
-def best_k(): #embedded the binary transformation in here
+def best_k(metric): #embedded the binary transformation in here
     k = 1
     k_output = list() # append tuple with (k value, validation accuracy)
 
@@ -145,7 +145,7 @@ def best_k(): #embedded the binary transformation in here
     valid = data_bin(valid)
 
     while True:
-        labels = knn_bestk(train, valid, "euclidean",k)
+        labels = knn_bestk(train, valid, metric,k)
         true_labels = [x[0] for x in valid]
         _accuracy = accuracy(labels,true_labels)
         print(f'k: {k}, accuracy: {_accuracy}')
