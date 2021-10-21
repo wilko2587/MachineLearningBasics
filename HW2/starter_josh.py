@@ -227,6 +227,6 @@ if __name__ == "__main__":
 # Left to do:
 # 10x10 confusion matrix
 # k means classifier
-# collaborative filter question
 # soft k means classifier
+# collaborative filter question
 # write-up
