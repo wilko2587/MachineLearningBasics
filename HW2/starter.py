@@ -212,11 +212,12 @@ def main():
     labels = knn(train, test, "euclidean")
     true_labels = [x[0] for x in test]
     _accuracy = accuracy(labels,true_labels)
+    bestk = best_k(metric)
     print(f'accuracy: {_accuracy}') # made this an f string and added %
 
 if __name__ == "__main__":
     # main()
-    best_k()
+
 
 
 # Left to do:
