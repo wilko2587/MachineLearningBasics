@@ -151,17 +151,18 @@ def best_k(train, valid,max_k=10): #embedded the binary transformation in here
     return k_output
 
 
-'''
-Not pretty, but I think it works? 
-'''
-
 def data_bin(data):
+    lin_num = 0
 
     for line in data: # line[0] = label, line[1] = list with all values
+        pix_num = 0
         for each in line[1]: # go into each individual value
-            if each > 1: # if greater than 1, replace that specific location with 1
+            if each > 0: # if greater than 1, replace that specific location with 1
                 data [data.index(line)][1][line[1].index(each)] = 1.0
 
+                data[lin_num][1][pix_num] = 1
+            pix_num += 1
+        lin_num += 1
     return data
 
 def main():
