@@ -1,6 +1,3 @@
-# This is built on James's code
-# Made accuracy a percentage
-
 import math
 
 
@@ -154,9 +151,7 @@ def best_k(): #embedded the binary transformation in here
         print(f'k: {k}, accuracy: {_accuracy}')
         k_output.append((k,_accuracy))
 
-        if k == 1:
-            pass
-        elif k == 10: # or _accuracy < k_output[-2][1]
+        if k == 20:
             break
 
         k = k + 1
@@ -204,7 +199,7 @@ def data_bin(data):
 
     for line in data: # line[0] = label, line[1] = list with all values
         for each in line[1]: # go into each individual value
-            if each > 1: # if greater than 1, replace that specific location with 1
+            if each > 0: # if greater than 1, replace that specific location with 1
                 data [data.index(line)][1][line[1].index(each)] = 1.0
 
     return data
@@ -220,8 +215,8 @@ def main():
     print(f'accuracy: {_accuracy}') # made this an f string and added %
 
 if __name__ == "__main__":
-    main()
-    # best_k()
+    # main()
+    best_k()
 
 
 # Left to do:
