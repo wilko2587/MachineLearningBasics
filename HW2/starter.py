@@ -129,14 +129,7 @@ def accuracy(guess_labels,true_labels):
     N = len(guess_labels)
     return sum([int(guess_labels[i]==true_labels[i]) for i in range(N)]) / len(true_labels) # made this a percentage
 
-'''
-Starts with k = 1 then will increase k and keep printing accuracy testing on validation data until arbitrary stop.
-I did until k > 50 just to see.
-Also did until accuracy falls but seems highest accuracy is 0.86 (k = 1).
-Can someone make this print out more sig figs??
-For whatever reason on validation set, accuracy is super similar until k = 9 then starts to fall. 
-I ran this on test set to compare with James's output and its the same. 
-'''
+
 def best_k(train, valid,max_k=10): #embedded the binary transformation in here
     k = 1
     k_output = list() # append tuple with (k value, validation accuracy)
@@ -145,7 +138,7 @@ def best_k(train, valid,max_k=10): #embedded the binary transformation in here
         labels = knn(train, valid, "euclidean",k)
         true_labels = [x[0] for x in valid]
         _accuracy = accuracy(labels,true_labels)
-        #print(f'k: {k}, accuracy: {_accuracy}')
+        print(f'k: {k}, accuracy: {_accuracy}')
         k_output.append((k,_accuracy))
 
     return k_output
@@ -170,6 +163,12 @@ def main():
     train = read_data('train.csv')
     valid = read_data('valid.csv')
     test = read_data('test.csv')
+
+    train = data_bin(train)
+    valid = data_bin(valid)
+
+    # best_k(train,valid)
+
     labels = knn(train, test, "euclidean")
     true_labels = [x[0] for x in test]
     _accuracy = accuracy(labels,true_labels)
@@ -177,7 +176,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # best_k()
 
 
 # Left to do:
