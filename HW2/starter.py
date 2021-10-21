@@ -1,5 +1,5 @@
 import math
-
+import transformation_tools as tt
 
 # formats the elements in "list" to conform to a data type
 def format_list(list, dtype_func):
@@ -86,6 +86,14 @@ def knn(train, query, metric):
 # metric is a string specifying either "euclidean" or "cosim".  
 # All hyper-parameters should be hard-coded in the algorithm.
 def kmeans(train, query, metric):
+
+    if metric == "euclidean":
+        metric_func = euclidean
+    elif metric == "cosim":
+        metric_func = cosim
+    else:
+        raise NameError("Invalid Metric choice")
+
     return (labels)
 
 
@@ -121,22 +129,29 @@ def show(file_name, mode):
 
 
 # returns the accuracy of a set of guesses to the expected values
-def accuracy(guess_labels,true_labels):
-    assert(len(guess_labels) == len(true_labels))
-    N = len(guess_labels)
-    return sum([int(guess_labels[i]==true_labels[i]) for i in range(N)])
+def accuracy(guess_labels, true_labels):
+    assert (len(guess_labels) == len(true_labels))
+    n = len(guess_labels)
+    return sum([int(guess_labels[i] == true_labels[i]) for i in range(n)]) / n
 
 
-def main():
-    # show('valid.csv', 'pixels')
-    train = read_data('train.csv')
-    valid = read_data('valid.csv')
-    test = read_data('test.csv')
-    labels = knn(train, test, "euclidean")
-    true_labels = [x[0] for x in test]
-    _accuracy = accuracy(labels,true_labels)
-    print('accuracy: ', _accuracy)
 
+#def main():
+# show('valid.csv', 'pixels')
+train = read_data('train.csv')
+valid = read_data('valid.csv')
+test = read_data('test.csv')
+labels = knn(train, test, "euclidean")
+true_labels = [x[0] for x in test]
+_accuracy = accuracy(labels, true_labels)
+print('accuracy: ', _accuracy)
 
-if __name__ == "__main__":
-    main()
+for pctile in range(0,100,5):
+    _train, _valid = tt.variance_reduce(train,valid,pctile)
+    labels = knn(_train, _valid, "euclidean")
+    valid_labels = [x[0] for x in valid]
+    _accuracy = accuracy(labels, valid_labels)
+    print(pctile, _accuracy)
+
+#if __name__ == "__main__":
+#    main()
