@@ -1,8 +1,4 @@
-# This is built on James's code
-# Made accuracy a percentage
-
 import math
-import sklearn
 
 
 # formats the elements in "list" to conform to a data type
@@ -173,35 +169,10 @@ def main():
     labels = knn(train, test, "euclidean")
     true_labels = [x[0] for x in test]
     _accuracy = accuracy(labels,true_labels)
-    print(f'accuracy: {_accuracy}') # made this an f string and added %
+    print(f'accuracy: {_accuracy}') 
 
 if __name__ == "__main__":
-    # main()
-
-    '''
-    For fun, I wanted to implement this in scikitlearn and see what happens.
-    I failed thus far. 
-    All of this can be commented out whenever and removed before submission. 
-    '''
-
-    train = read_data('train.csv')
-    test = read_data('test.csv')
-
-    data = list()
-    labels = list()
-
-    for each in train:
-        data.append(each[1])
-
-    for each in test:
-        labels.append(each[0])
-
-    neigh = KNeighborsClassifier(n_neighbors=7)
-    neigh.fit(data, labels)
-
-
-
-
+    main()
 
 # Left to do:
 # 10x10 confusion matrix
