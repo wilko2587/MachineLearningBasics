@@ -2,6 +2,7 @@
 # Made accuracy a percentage
 
 import math
+import sklearn
 
 
 # formats the elements in "list" to conform to a data type
@@ -175,7 +176,31 @@ def main():
     print(f'accuracy: {_accuracy}') # made this an f string and added %
 
 if __name__ == "__main__":
-    main()
+    # main()
+
+    '''
+    For fun, I wanted to implement this in scikitlearn and see what happens.
+    I failed thus far. 
+    All of this can be commented out whenever and removed before submission. 
+    '''
+
+    train = read_data('train.csv')
+    test = read_data('test.csv')
+
+    data = list()
+    labels = list()
+
+    for each in train:
+        data.append(each[1])
+
+    for each in test:
+        labels.append(each[0])
+
+    neigh = KNeighborsClassifier(n_neighbors=7)
+    neigh.fit(data, labels)
+
+
+
 
 
 # Left to do:
