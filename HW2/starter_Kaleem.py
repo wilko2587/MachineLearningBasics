@@ -3,6 +3,7 @@ from numpy.linalg import norm
 import math
 
 
+
 # returns Euclidean distance between vectors a dn b
 def euclidean(a, b):
     l = []
@@ -18,20 +19,6 @@ def euclidean(a, b):
         dist = math.sqrt(sums)
     #   print(dist)
     return dist
-
-
-def euclidean_np(a, b):
-    a = np.array(a)
-    b = np.array(b)
-    diff = a - b
-    print(diff)
-    square = np.square(diff)
-    print(square)
-    sums = sum(square)
-    print(sums)
-    dist = np.sqrt(np.sum(np.square(a - b)))
-    print(dist)
-    return (dist)
 
 
 # returns Cosine Similarity between vectors a dn b
@@ -59,19 +46,6 @@ def cosim(a, b):
         # print('Denominator:', den)
         dist = num_sum / den
         # print('dist:',dist)
-    return (dist)
-
-
-def cosim_np(a, b):
-    norm_a = norm(a)
-    print('Norm_a:', norm_a)
-    norm_b = norm(b)
-    print('Norm_b:', norm_b)
-    den = norm(a) * norm(b)
-    print('Den:', den)
-    dot_pdt = np.dot(a, b)
-    print('Dot(a,b):', np.dot(a, b))
-    dist = dot_pdt / (norm(a) * norm(b))
     return (dist)
 
 
@@ -112,6 +86,95 @@ def knn_np(train, query, metric):
 
 # def kmeans(train, query, metric):
 #     return (labels)
+
+# setup class for K Means
+class Kmeans:
+    # set k, tolerance and max iterations to undergo
+    def __init__(self, n_classes = 4, tolerance = 0.0001, max_iterations = 1000):
+        self.n_classes = n_classes
+        self.tolerance = tolerance
+        self.max_iterations = max_iterations
+
+    def fit(self, features):
+        # create centroids
+        self.centroids = {}
+        # initialize centroids
+        for i in range(self.k):
+            self.centroids[i] = features[i]  # check if we need to adjust "data" to "read_data"
+
+        # initialize loop iterations
+        for i in range(self.max_iterations):
+            self.classes = {}
+            for i in range(self.k):
+                self.classes[i] = []
+
+            # choose nearest centroid by finding the distance between the point and cluster
+            for points in features:
+                # numpy version
+                # distances = [np.linalg.norm(points - self.centroids[centroid]) for centroid in self.centroids]
+                # classification = distances.index(min(distances))
+                # self.classes[classification].append(points)
+
+                # my attempt to change that lol
+                distance = []
+
+                if distance == "euclidean":
+                   metric_func = euclidean
+                elif distance == "cosim":
+                   metric_func = cosim
+                else:
+                    raise NameError("Invalid Metric choice")
+
+                for labelledpoint in features:
+                    distance.append(metric_func(points[1], labelledpoint[1]))
+
+                classification = distance.index(min(distance))
+                self.classes[classification].append(points)
+
+            previous = {(self.centroids)}
+
+            # recalculate the centroids by averaging the data points
+            for classification in self.classes:
+                # numpy version
+                # self.centroids[classification] = np.average(self.classes[classification], axis=0)
+
+                # my attempt lol
+                self.centroids[classification] = sum(classification) / len(classification)
+
+            isOptimal = True
+
+            for centroid in self.centroids:
+                original_centroid = previous[centroid]
+                current = self.centroids[centroid]
+
+                if sum((current - original_centroid)/original_centroid * 100.0) > self.tolerance:
+                    isOptimal = False
+
+            if isOptimal:
+                break
+
+    def predict(self, features):
+        # numpy version
+        # distances = [np.linalg.norm(features - self.centroids[centroid]) for centroid in self.centroids]
+        # classification = distances.index(min(distances))
+        # return classification
+
+        # my attempt lol
+        distance = []
+
+        if distance == "euclidean":
+            metric_func = euclidean
+        elif distance == "cosim":
+            metric_func = cosim
+        else:
+            raise NameError("Invalid Metric choice")
+
+        for labelledpoint in features:
+            distance.append(metric_func(features[1], labelledpoint[1]))
+
+        classification = distance.index(min(distance))
+        return classification
+
 
 
 def read_data(file_name):
