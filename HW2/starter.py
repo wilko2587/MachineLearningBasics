@@ -1,38 +1,14 @@
 import math
+import math_utils as mu
+import list_utils as lu
+import transformation_utils as tu
+import validation_utils
 
 
-# formats the elements in "list" to conform to a data type
-def format_list(list, dtype_func):
-    return [dtype_func(i) for i in list]
-
-
-# returns dot product of vectors a,b
-def dot(a, b):
-    assert (len(a) == len(b))
-    N = len(a)
-    return sum([a[i] * b[i] for i in range(N)])
-
-
-# returns most frequent element in a list
-def most_frequent(List):
-    counter = 0
-    num = List[0]
-
-    for i in List:
-        curr_frequency = List.count(i)
-        if (curr_frequency > counter):
-            counter = curr_frequency
-            num = i
-    return num
-
-
-# returns magnitude of vector a
-def mag(a):
-    return math.sqrt(sum([x ** 2 for x in a]))
-
-
-# returns Euclidean distance between vectors a dn b
 def euclidean(a, b):
+    """
+    returns Euclidean distance between vectors a dn b
+    """
     assert (len(a) == len(b))
     N = len(a)
     dist2 = sum([(a[i] - b[i]) ** 2 for i in range(N)])
@@ -40,16 +16,20 @@ def euclidean(a, b):
     return (dist)
 
 
-# returns Cosine Similarity between vectors a dn b
 def cosim(a, b):
-    dist = dot(a, b) / (mag(a) * mag(b))
+    """
+    returns Cosine Similarity between vectors a dn b
+    """
+    dist = mu.dot(a, b) / (mu.mag(a) * mu.mag(b))
     return (dist)
 
 
-# returns a list of labels for the query dataset based upon labeled observations in the train dataset.
-# metric is a string specifying either "euclidean" or "cosim".  
-# All hyper-parameters should be hard-coded in the algorithm.
-def knn(train, query, metric, k=7):
+def knn(k, train, query, metric):
+    """
+    returns a list of labels for the query dataset based upon labeled observations in the train dataset.
+    metric is a string specifying either "euclidean" or "cosim".
+    All hyper-parameters should be hard-coded in the algorithm.
+    """
 
     if metric == "euclidean":
         metric_func = euclidean
@@ -74,22 +54,35 @@ def knn(train, query, metric, k=7):
             traincopy.pop(next_nearest_index)
             dists.pop(next_nearest_index)
 
-        label = most_frequent(all_labels)
+        label = lu.most_frequent(all_labels)
         labels.append(label)
 
     return (labels)
 
 
-# returns a list of labels for the query dataset based upon observations in the train dataset.
-# labels should be ignored in the training set
-# metric is a string specifying either "euclidean" or "cosim".  
-# All hyper-parameters should be hard-coded in the algorithm.
+def knn_dimred(pctthresh, train, valid, metric="euclidean", k=7):
+    """
+    little wrapper for knn using dimensionally reduced data
+    """
+    train_lowD, valid_lowD = tu.variance_reduce(train, valid, pctile_thresh=pctthresh)
+    return knn(k, train_lowD, valid_lowD, metric=metric)
+
 
 def kmeans(train, query, metric):
-    return (labels)
+    """
+    returns a list of labels for the query dataset based upon observations in the train dataset.
+    labels should be ignored in the training set
+    metric is a string specifying either "euclidean" or "cosim".
+    All hyper-parameters should be hard-coded in the algorithm.
+    """
+    return
 
 
 def read_data(file_name):
+    """
+    function to read data from file_name
+    :returns data in a tupple
+    """
     data_set = []
     with open(file_name, 'rt') as f:
         for line in f:
@@ -99,11 +92,15 @@ def read_data(file_name):
             attribs = []
             for i in range(784):
                 attribs.append(tokens[i + 1])
-            data_set.append([label, format_list(attribs, float)])
+            data_set.append([label, lu.format_list(attribs, float)])
     return (data_set)
 
 
 def show(file_name, mode):
+    """
+    function to print the image held in data from file_name.
+    Prints a blank space in terminal if a pixel is "0", else "*"
+    """
     data_set = read_data(file_name)
     for obs in range(len(data_set)):
         for idx in range(784):
@@ -120,56 +117,32 @@ def show(file_name, mode):
         print(' ')
 
 
-# returns the accuracy of a set of guesses to the expected values
-def accuracy(guess_labels,true_labels):
-    assert(len(guess_labels) == len(true_labels))
-    N = len(guess_labels)
-    return sum([int(guess_labels[i]==true_labels[i]) for i in range(N)]) / len(true_labels) # made this a percentage
-
-
-def best_k(train, valid,max_k=10): #embedded the binary transformation in here
-    k = 1
-    k_output = list() # append tuple with (k value, validation accuracy)
-
-    for k in range(0,max_k):
-        labels = knn(train, valid, "euclidean",k)
-        true_labels = [x[0] for x in valid]
-        _accuracy = accuracy(labels,true_labels)
-        print(f'k: {k}, accuracy: {_accuracy}')
-        k_output.append((k,_accuracy))
-
-    return k_output
-
-
-def data_bin(data):
-    lin_num = 0
-
-    for line in data: # line[0] = label, line[1] = list with all values
-        pix_num = 0
-        for each in line[1]: # go into each individual value
-            if each > 0: # if greater than 1, replace that specific location with 1
-                data [data.index(line)][1][line[1].index(each)] = 1.0
-
-                data[lin_num][1][pix_num] = 1
-            pix_num += 1
-        lin_num += 1
-    return data
-
 def main():
     # show('test.csv', 'pixels')
     train = read_data('train.csv')
     valid = read_data('valid.csv')
     test = read_data('test.csv')
 
-    train = data_bin(train)
-    valid = data_bin(valid)
+    validation_utils.voptimize(train, valid, knn, range(1, 20, 1),
+                               plot_title="KNN accuracy by different k",
+                               metric="euclidean")
 
-    # best_k(train,valid)
+    train_binary = tu.data_bin(train)
+    valid_binary = tu.data_bin(valid)
 
-    labels = knn(train, test, "euclidean")
-    true_labels = [x[0] for x in test]
-    _accuracy = accuracy(labels,true_labels)
-    print(f'accuracy: {_accuracy}') 
+    validation_utils.voptimize(train_binary, valid_binary, knn, range(1, 20, 1),
+                               plot_title="Binary KNN accuracy by different k",
+                               metric="euclidean")
+
+    validation_utils.voptimize(train_binary, valid_binary, knn_dimred, range(30,70,5),
+                               plot_title="Binary, Dim-reduced KNN accuracy by dimensionality reduction level (0-100%)",
+                               metric="euclidean")
+
+    # labels = knn(train, test, "euclidean")
+    # true_labels = [x[0] for x in test]
+    # _accuracy = accuracy(labels,true_labels)
+    # print(f'accuracy: {_accuracy}')
+
 
 if __name__ == "__main__":
     main()
