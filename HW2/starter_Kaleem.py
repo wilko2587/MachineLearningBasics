@@ -20,6 +20,7 @@ def euclidean(a, b):
     #   print(dist)
     return dist
 
+# alternatively take two np arrays, subtract and square if not using np.linearalg.norm
 
 # returns Cosine Similarity between vectors a dn b
 def cosim(a, b):
@@ -48,36 +49,36 @@ def cosim(a, b):
         # print('dist:',dist)
     return (dist)
 
-
-# returns a list of labels for the query dataset based upon labeled observations in the train dataset.
-# metric is a string specifying either "euclidean" or "cosim".
-# All hyper-parameters should be hard-coded in the algorithm.
-def knn(train, query, metric):
-    distance = list()
-    for i in train:
-        dist = euclidean(query, i)
-        distance.append((i, dist))
-    distance.sort(key = lambda tup: tup[1])
-    labels = list()
-    for j in range(metric):
-        labels.append(distance[j][0])
-    return (labels)
-
-
-def knn_np(train, query, metric):
-    distance = list()
-    data = []
-    for i in train:
-        dist = euclidean(query, i)
-        distance.append(i)
-    distance = np.array(distance)
-    data = np.array(data)
-    index_dist = distance.argsort()
-    data = data[index_dist]
-    labels = data[:metric]
-
-    return (labels)
-
+#
+# # returns a list of labels for the query dataset based upon labeled observations in the train dataset.
+# # metric is a string specifying either "euclidean" or "cosim".
+# # All hyper-parameters should be hard-coded in the algorithm.
+# def knn(train, query, metric):
+#     distance = list()
+#     for i in train:
+#         dist = euclidean(query, i)
+#         distance.append((i, dist))
+#     distance.sort(key = lambda tup: tup[1])
+#     labels = list()
+#     for j in range(metric):
+#         labels.append(distance[j][0])
+#     return (labels)
+#
+#
+# def knn_np(train, query, metric):
+#     distance = list()
+#     data = []
+#     for i in train:
+#         dist = euclidean(query, i)
+#         distance.append(i)
+#     distance = np.array(distance)
+#     data = np.array(data)
+#     index_dist = distance.argsort()
+#     data = data[index_dist]
+#     labels = data[:metric]
+#
+#     return (labels)
+#
 
 # returns a list of labels for the query dataset based upon observations in the train dataset.
 # labels should be ignored in the training set
@@ -90,7 +91,7 @@ def knn_np(train, query, metric):
 # setup class for K Means
 class Kmeans:
     # set k, tolerance and max iterations to undergo
-    def __init__(self, n_classes = 4, tolerance = 0.0001, max_iterations = 1000):
+    def __init__(self, n_classes, tolerance = 0.0001, max_iterations = 1000):
         self.n_classes = n_classes
         self.tolerance = tolerance
         self.max_iterations = max_iterations
@@ -98,15 +99,16 @@ class Kmeans:
     def fit(self, features):
         # create centroids
         self.centroids = {}
-        # initialize centroids
-        for i in range(self.k):
-            self.centroids[i] = features[i]  # check if we need to adjust "data" to "read_data"
+        # initialize centroids (consider using import random)
+        for i in range(self.n_classes):
+            self.centroids[i] = features[i]
 
         # initialize loop iterations
         for i in range(self.max_iterations):
-            self.classes = {}
+            self.classification = {}
+
             for i in range(self.k):
-                self.classes[i] = []
+                self.classification[i] = []
 
             # choose nearest centroid by finding the distance between the point and cluster
             for points in features:
@@ -117,7 +119,6 @@ class Kmeans:
 
                 # my attempt to change that lol
                 distance = []
-
                 if distance == "euclidean":
                    metric_func = euclidean
                 elif distance == "cosim":
@@ -125,13 +126,12 @@ class Kmeans:
                 else:
                     raise NameError("Invalid Metric choice")
 
-                for labelledpoint in features:
+                for labelledpoint in centroids:
                     distance.append(metric_func(points[1], labelledpoint[1]))
+                    classification = distance.index(min(distance))
+                    self.classes[classification].append(points)
 
-                classification = distance.index(min(distance))
-                self.classes[classification].append(points)
-
-            previous = {(self.centroids)}
+                previous = {(self.centroids)}
 
             # recalculate the centroids by averaging the data points
             for classification in self.classes:
@@ -148,6 +148,7 @@ class Kmeans:
                 current = self.centroids[centroid]
 
                 if sum((current - original_centroid)/original_centroid * 100.0) > self.tolerance:
+                    print(sum((current - original_centroid)/original_centroid * 100.0))
                     isOptimal = False
 
             if isOptimal:
@@ -169,9 +170,7 @@ class Kmeans:
         else:
             raise NameError("Invalid Metric choice")
 
-        for labelledpoint in features:
-            distance.append(metric_func(features[1], labelledpoint[1]))
-
+        distance.append(metric_func(points[1], self.centroids[1]))
         classification = distance.index(min(distance))
         return classification
 
@@ -214,3 +213,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# confusion matrix
+def conf_matrix(goals, predictions):
+    conf_matrix = {}
+    group = set(goal)
+    for j in range(len(group)):
+        conf_matrix[j] = {j:0 for instance in range(len(group))}
+    for k in range(len(goal)):
+        conf_matrix[goals[k]][predictions[k]] +=1
+    return conf_matrix
+
+print(conf_matrix(target, actual))
