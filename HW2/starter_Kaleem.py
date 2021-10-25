@@ -219,9 +219,8 @@ def conf_matrix(goals, predictions):
     conf_matrix = {}
     group = set(goal)
     for j in range(len(group)):
-        conf_matrix[j] = {j:0 for instance in range(len(group))}
+        conf_matrix[j] = {j:0 for j in range(len(group))}
     for k in range(len(goal)):
         conf_matrix[goals[k]][predictions[k]] +=1
     return conf_matrix
 
-print(conf_matrix(target, actual))
