@@ -177,6 +177,19 @@ def soft_kmeans(train, query, metric):
 
     return query_results
 
+# confusion matrix
+def conf_matrix(goals, predictions):
+    conf_matrix = {}
+    group = set(goals)
+    for j in group:
+        conf_matrix[j] = {i:0 for i in group}
+        print(j)
+    print(conf_matrix)
+    for k in range(len(goals)):
+        conf_matrix[goals[k]][predictions[k]] += 1
+    return conf_matrix
+
+
 
 def read_data(file_name):
     """
@@ -340,7 +353,7 @@ if __name__ == "__main__":
 
 
 # Left to do:
-# 10x10 confusion matrix
+# 10x10 confusion matrix --> done, please check?
 # k means classifier
 # soft k means classifier
 # collaborative filter question
