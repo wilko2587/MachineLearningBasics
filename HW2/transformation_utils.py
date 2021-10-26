@@ -47,15 +47,14 @@ def Z_Score(data):
     return Z_data
 
 
-def variance_reduce(train_data, validation_data, pctile_thresh=50):
+def low_variance_filter(train_data, validation_data, pctile_thresh):
     '''
-    list_of_datas contains a set of training data.
+    Dimensionality reduction technique.
     We scan through each corresponding "pixel" between the different datas, and calculate that pixel's variance across
     the dataset.
-    We then eliminate pixels (uniformly for all datas in list_of_datas) that have a variance below "threshold"
+    We then eliminate pixels that have a variance below "threshold"
     "pctile" defines the percentile of variance below which we cut
     "validation_data" is a list of other data (ie: validation/test data we want to also affect the changes on)
-    NB: this works for sets of 2D lists inside list_of_dates only
     '''
 
     pixel_variance = []  # initialise. All values will end up being overwritten
@@ -71,5 +70,32 @@ def variance_reduce(train_data, validation_data, pctile_thresh=50):
 
     reduced_train = [[data[0], [data[1][x] for x in pixels_to_keep]] for data in train_data]
     reduced_valid = [[data[0], [data[1][x] for x in pixels_to_keep]] for data in validation_data]
+    print('--> {} dimensions in input; {} dimensions in output'.format(len(train_data[0][1]),len(reduced_train[0][1])))
+    return reduced_train, reduced_valid
 
+
+def high_correlation_filter(train_data, validation_data, correlation_threshold):
+    """
+    Dimensionality reduction technique
+    Calculates correlations between a pixels' values vs other pixels.
+    Eliminates pixels with a high correlation to any other pixels in the training data
+    This function will eliminate the first pixel it comes across. Eg: if a is correlated to b, it will take the list
+    [a,b,c] and return [b,c]
+    """
+    npixels = len(train_data[0][1])
+    to_drop = [] # list to keep track of which pixels have too high correlations with the rest of the data
+    for x in range(npixels):
+        pixel_data = [data[1][x] for data in train_data]
+        for y in range(npixels):
+            if x != y and y not in to_drop:
+                pearsonsR = mu.pearsons_r(pixel_data, [data[1][y] for data in train_data])
+                if abs(pearsonsR) > correlation_threshold and x not in to_drop:
+                    to_drop.append(x)
+                    break
+            else:
+                pass
+
+    reduced_train = [[data[0], [data[1][x] for x in range(npixels) if x not in to_drop]] for data in train_data]
+    reduced_valid = [[data[0], [data[1][x] for x in range(npixels) if x not in to_drop]] for data in validation_data]
+    print('--> {} dimensions in input; {} dimensions in output'.format(len(train_data[0][1]),len(reduced_train[0][1])))
     return reduced_train, reduced_valid

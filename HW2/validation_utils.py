@@ -21,8 +21,7 @@ def voptimize(train, valid, func, _range,
     valid = validation set
     func = function to optimize, with 0th positional argument being the variable to optimize
     """
-    validation_results = []  # append tuple with (k value, validation accuracy)
-    train_results = []
+    validation_results = []
     print('Disclaimer: voptimize can take a while to run using our standard libraries... hold tight')
     for x in _range:
         valid_guess = func(x, train, valid, **kwargs)  # run the function
@@ -33,9 +32,10 @@ def voptimize(train, valid, func, _range,
 
     try:  # if matplotlib available, plot the training and validation accuracies on a figure. If not, pass
         import matplotlib.pyplot as plt
-        plt.plot(_range,validation_results, title=plot_title)
+        plt.plot(_range, validation_results)
+        plt.title(plot_title)
     except:
-        print("looks like matplotlib not installed? No chart for you...")
+        print("looks like matplotlib problems... No chart for you...")
 
     best_accuracy = max(validation_results)
     best_var = _range[validation_results.index(best_accuracy)]

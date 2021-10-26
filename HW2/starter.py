@@ -61,11 +61,12 @@ def knn(k, train, query, metric):
     return (labels)
 
 
-def knn_dimred(pctthresh, train, query, metric="euclidean", k=7):
+def knn_dimred(reductionvar, train, query, metric="euclidean", k=7,
+               dimred_func = tu.low_variance_filter):
     """
     wrapper for knn using dimensionally reduced data
     """
-    train_lowD, query_lowD = tu.variance_reduce(train, query, pctile_thresh=pctthresh)
+    train_lowD, query_lowD = dimred_func(train, query, reductionvar)
     return knn(k, train_lowD, query_lowD, metric=metric)
 
 
@@ -91,7 +92,6 @@ def find_centroids(train, metric_func, ncentroids = 7):
     for i in range(ncentroids):
         init = train[random.randint(0, ndims)][1]
         centroids.append([centroid_labels[i], init])
-
 
 
     change = 100
@@ -217,7 +217,7 @@ def show(file_name, mode):
         print(' ')
 
 
-def main():
+def run_everything():
     # show('test.csv', 'pixels')
     train = read_data('train.csv')
     valid = read_data('valid.csv')
@@ -286,8 +286,58 @@ def main():
     #guess = kmeans(train, test, "euclidean")
 
 
+def main():
+
+    train = read_data('train.csv')
+    valid = read_data('valid.csv')
+    test = read_data('test.csv')
+    test_labels = [x[0] for x in test]
+
+    # 3) Greyscale -> Binary conversion
+    train_binary = tu.data_bin(train)
+    valid_binary = tu.data_bin(valid)
+    test_binary = tu.data_bin(test)
+
+    # Introduce dimensionality reduction, removing high correlation pixels above a certain pearsons-r
+    print(
+        '\n running KNN on data with euclidean metric, eliminating high-correlation pixels...')
+    best_thresh, acc_dimred = validation_utils.voptimize(train, valid, knn_dimred, [float(i)/100 for i in range(50, 100, 5)],
+                                                         plot_title="Binary, Dim-reduced KNN accuracy by "
+                                                                    "dimensionality reduction level (0-100%)",
+                                                         metric="euclidean",
+                                                         k=7,
+                                                         dimred_func = tu.high_correlation_filter)
+
+    testset_guess_dimred = knn_dimred(best_thresh, train_binary, test_binary,
+                                      metric="euclidean", dimred_func=tu.high_correlation_filter)
+    test_acc_dimred = validation_utils.accuracy(testset_guess_dimred, test_labels)
+
+    print("best binary KNN accuracy by removing pixels with variance lower than {} pctile \n".format(best_thresh),
+          "validation accuracy = {} \n".format(acc_dimred),
+          "test accuracy = {}".format(test_acc_dimred))
+
+
+    # Introduce dimensionality reduction, removing low variance pixels below a certain pctile
+    print('\n running KNN on data with euclidean metric, converting greyscale -> binary, and eliminating low-variance pixels...')
+    best_thresh, acc_dimred = validation_utils.voptimize(train_binary, valid_binary, knn_dimred, range(30, 70, 5),
+                                                         plot_title="Binary, Dim-reduced KNN accuracy by "
+                                                                    "dimensionality reduction level (0-100%)",
+                                                         metric="euclidean",
+                                                         k=7,
+                                                         dimred_func = tu.low_variance_filter)
+
+    testset_guess_dimred = knn_dimred(best_thresh, train_binary, test_binary,
+                                      metric="euclidean", dimred_func=tu.low_variance_filter)
+    test_acc_dimred = validation_utils.accuracy(testset_guess_dimred, test_labels)
+
+    print("best binary KNN accuracy by removing pixels with variance lower than {} pctile \n".format(best_thresh),
+          "validation accuracy = {} \n".format(acc_dimred),
+          "test accuracy = {}".format(test_acc_dimred))
+
+
 if __name__ == "__main__":
     main()
+
 
 # Left to do:
 # 10x10 confusion matrix

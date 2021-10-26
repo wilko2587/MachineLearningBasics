@@ -90,3 +90,18 @@ def stdev(data):
     returns standard deviation of floats/integers in a list "data"
     '''
     return math.sqrt(var(data))
+
+
+def covariance(X,Y):
+    """
+    returns the covariance of two lists of numbers, X and Y
+    """
+    assert(len(X)==len(Y))
+    meanx, meany = mean(X), mean(Y)
+    return 1./len(X) * sum([(X[i] - meanx)*(Y[i] - meany) for i in range(len(X))])
+
+def pearsons_r(X,Y):
+    """
+    returns correlation coefficient between two datasets X and Y
+    """
+    return covariance(X, Y)/(stdev(X) * stdev(Y)+1e-5) #add 1e-5 to prevent division by zero error

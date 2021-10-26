@@ -217,10 +217,10 @@ if __name__ == "__main__":
 # confusion matrix
 def conf_matrix(goals, predictions):
     conf_matrix = {}
-    group = set(goal)
+    group = set(goals)
     for j in range(len(group)):
         conf_matrix[j] = {j:0 for j in range(len(group))}
-    for k in range(len(goal)):
+    for k in range(len(goals)):
         conf_matrix[goals[k]][predictions[k]] +=1
     return conf_matrix
 
