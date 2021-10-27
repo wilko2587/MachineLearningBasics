@@ -8,7 +8,6 @@ def accuracy(guess_labels, true_labels):
 
 
 def voptimize(train, valid, func, _range,
-              plot_title="",
               **kwargs):  # embedded the binary transformation in here
     """
     function to take train data "train", validation set "valid", and iterate through possible
@@ -29,13 +28,6 @@ def voptimize(train, valid, func, _range,
         valid_accuracy = accuracy(valid_guess, validation_true)
         validation_results.append(valid_accuracy)
         print(f'x: {x}, accuracy: {valid_accuracy}')
-
-    try:  # if matplotlib available, plot the training and validation accuracies on a figure. If not, pass
-        import matplotlib.pyplot as plt
-        plt.plot(_range, validation_results)
-        plt.title(plot_title)
-    except:
-        print("looks like matplotlib problems... No chart for you...")
 
     best_accuracy = max(validation_results)
     best_var = _range[validation_results.index(best_accuracy)]

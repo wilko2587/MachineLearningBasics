@@ -1,3 +1,6 @@
+"""
+Unused function to generate cross-validation data from a dataset
+"""
 
 def generate_CV(data,N):
     '''

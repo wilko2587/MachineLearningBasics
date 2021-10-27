@@ -21,7 +21,7 @@ def cosim(a, b):
     """
     returns Cosine Similarity between vectors a dn b
     """
-    dist = mu.dot(a, b) / (mu.mag(a) * mu.mag(b))
+    dist = -mu.dot(a, b) / (mu.mag(a) * mu.mag(b))
     return (dist)
 
 
@@ -62,7 +62,7 @@ def knn(k, train, query, metric):
 
 
 def knn_dimred(reductionvar, train, query, metric="euclidean", k=7,
-               dimred_func = tu.low_variance_filter):
+               dimred_func=tu.low_variance_filter):
     """
     wrapper for knn using dimensionally reduced data
     """
@@ -70,7 +70,7 @@ def knn_dimred(reductionvar, train, query, metric="euclidean", k=7,
     return knn(k, train_lowD, query_lowD, metric=metric)
 
 
-def find_centroids(train, metric_func, ncentroids = 7):
+def find_centroids(train, metric_func, ncentroids=10):
     """
     function to iteratively find centroids for the kmeans algorithm
     initialises a number of "ncentroids" centroids
@@ -83,16 +83,15 @@ def find_centroids(train, metric_func, ncentroids = 7):
     # initialize the centroids on top of randomly chosen points in the dataset
 
     centroid_labels = ['a', 'b', 'c', 'd', 'e',
-                      'f', 'g', 'h', 'i', 'j',
-                      'k', 'l', 'm', 'n', 'o',
-                      'p', 'q', 'r', 's', 't',
-                      'u', 'v', 'w', 'x', 'y', 'z']
+                       'f', 'g', 'h', 'i', 'j',
+                       'k', 'l', 'm', 'n', 'o',
+                       'p', 'q', 'r', 's', 't',
+                       'u', 'v', 'w', 'x', 'y', 'z']
 
     centroids = []
     for i in range(ncentroids):
         init = train[random.randint(0, ndims)][1]
         centroids.append([centroid_labels[i], init])
-
 
     change = 100
     counter = 0
@@ -112,8 +111,11 @@ def find_centroids(train, metric_func, ncentroids = 7):
         # scale the centroid vectors so all dimensions fall between 0->1, use this to judge change
         centroids_norm = [mu.normalize(centroid[1], _mins, _maxs) for centroid in centroids]
         old_centroids_norm = [mu.normalize(centroid[1], _mins, _maxs) for centroid in old_centroids]
-        vec_changes = [metric_func(centroids_norm[i], old_centroids_norm[i]) for i in range(ncentroids)]  # find scaled moves
-        change = sum([vec_change for vec_change in vec_changes]) / ncentroids  # convert to a % change overall
+        vec_changes = [metric_func(centroids_norm[i], old_centroids_norm[i]) for i in
+                       range(ncentroids)]  # find scaled moves
+        change = sum([vec_change for vec_change in
+                      vec_changes]) / ncentroids  # convert to a heuristic for % overall change in all the centroids
+
         counter += 1
 
     return centroids
@@ -134,16 +136,16 @@ def kmeans(train, query, metric):
     else:
         raise NameError("Invalid Metric choice")
 
-    k=7
-    #1) iterate to find the centroids
-    centroids = find_centroids(train,metric_func,ncentroids=k)
+    k = 10  # 10 clusters, one for each number
+    # 1) iterate to find the centroids
+    centroids = find_centroids(train, metric_func, ncentroids=k)
 
     # now label the query data
     query_results = []
     for point in query:  # now calculate the cluster for each query point
         dist_2_centroid = [metric_func(point[1], centroid[1]) for centroid in centroids]
         nearest_centroid = dist_2_centroid.index(min(dist_2_centroid))  # get index of nearest centroid (with min dist)
-        query_results.append(centroids[nearest_centroid][0]) #0th index is the label of the centroid
+        query_results.append(centroids[nearest_centroid][0])  # 0th index is the label of the centroid
 
     return query_results
 
@@ -160,22 +162,43 @@ def soft_kmeans(train, query, metric):
     else:
         raise NameError("Invalid Metric choice")
 
-    k=7
-    #1) iterate to find the centroids
-    centroids = find_centroids(train,metric_func,ncentroids=k)
+    k = 10
+    # 1) iterate to find the centroids
+    centroids = find_centroids(train, metric_func, ncentroids=k)
 
     # now label the query data
     query_results = []
 
     for point in query:
         dist_2_centroids = [metric_func(point[1], centroid[1]) for centroid in centroids]
-        Pvalues = [mu.softmax(dist,dist_2_centroids) for dist in dist_2_centroids]
-        #return these values as a dictionary, with key=centroid label, value = softmax probability
+        Pvalues = [mu.softmax(dist, dist_2_centroids) for dist in dist_2_centroids]
+        # return these values as a dictionary, with key=centroid label, value = softmax probability
         Pkeys = [centroid[0] for centroid in centroids]
-        Pdict = dict([(Pkeys[i],Pvalues[i]) for i in range(len(Pvalues))])
+        Pdict = dict([(Pkeys[i], Pvalues[i]) for i in range(len(Pvalues))])
         query_results.append(Pdict)
 
     return query_results
+
+
+# confusion matrix
+def conf_matrix(goals, predictions):
+    """
+    function to return a confusion matrix for lists of "goals" and "predictions"
+    """
+
+    assert (len(goals) == len(predictions))
+
+    conf_matrix = {}
+    rows = set(goals)
+    columns = set(predictions)
+    for c in columns:
+        conf_matrix[str(c)] = {str(r): 0 for r in rows}
+    for c in columns:
+        for r in rows:
+            _bool = [(str(goals[i]) == str(r)) & (str(predictions[i]) == str(c)) for i in range(len(goals))]
+            count = sum(_bool)
+            conf_matrix[str(c)][str(r)] = count
+    return conf_matrix
 
 
 def read_data(file_name):
@@ -217,131 +240,59 @@ def show(file_name, mode):
         print(' ')
 
 
-def run_everything():
-    # show('test.csv', 'pixels')
+def find_KNN_optimal_params():
     train = read_data('train.csv')
     valid = read_data('valid.csv')
+    train_binary = tu.data_bin(train)
+    valid_binary = tu.data_bin(valid)
+
+    print("Using our handbuilt optimization function to find the best")
+    best_thresh, acc_dimred = validation_utils.voptimize(train_binary, valid_binary, knn_dimred, range(50, 90, 5),
+                                                         metric="cosim",
+                                                         k=7,
+                                                         dimred_func=tu.low_variance_filter)
+
+    print("best variance threshold: ", best_thresh)
+    print("best accuracy: ", acc_dimred)
+
+
+def run_KNN():
+    train = read_data('train.csv')
     test = read_data('test.csv')
+    train_binary = tu.data_bin(train)
+    test_binary = tu.data_bin(test)
 
-    # 1) euclidean KNN
-    print('\n running KNN on data with euclidean metric...')
-    bestk, acc = validation_utils.voptimize(train, valid, knn, range(1, 20, 1),
-                                            plot_title="KNN accuracy by different k",
-                                            metric="euclidean")
+    print("finding accuracy of our best model: k=7, binary data and variance filter at 60%")
 
-    testset_guess = knn(bestk, train, test, metric="euclidean")
+    # reduce the dimensionality of our data,
+    train_lowD, test_lowD = tu.low_variance_filter(train_binary, test_binary, 60)
+    guess_labels = knn(7, train_lowD, test_lowD, "cosim")
     true_labels = [x[0] for x in test]
-    test_acc = validation_utils.accuracy(testset_guess, true_labels)
-
-    print("best euclidean KNN accuracy with k = {} \n".format(bestk),
-          "validation accuracy = {} \n".format(acc),
-          "test accuracy = {}".format(test_acc))
-
-    # 2) cosine KNN
-    print('\n running KNN on data with cosim metric...')
-    bestk, acc = validation_utils.voptimize(train, valid, knn, range(1, 20, 1),
-                                            plot_title="KNN accuracy by different k",
-                                            metric="cosim")
-
-    testset_guess = knn(bestk, train, test, metric="cosim")
-    test_labels = [x[0] for x in test]
-    test_acc = validation_utils.accuracy(testset_guess, test_labels)
-
-    print("best cosim KNN accuracy with k = {} \n".format(bestk),
-          "validation accuracy = {} \n".format(acc),
-          "test accuracy = {}".format(test_acc))
-
-    # 3) Greyscale -> Binary conversion
-    print('\n running KNN on data with euclidean metric, converting greyscale -> binary...')
-    train_binary = tu.data_bin(train)
-    valid_binary = tu.data_bin(valid)
-    test_binary = tu.data_bin(test)
-
-    bestk_binary, acc_binary = validation_utils.voptimize(train_binary, valid_binary, knn, range(1, 20, 1),
-                                                          plot_title="Binary KNN accuracy by different k",
-                                                          metric="euclidean")
-
-    testset_guess_binary = knn(bestk_binary, train_binary, test_binary, metric="euclidean")
-    test_acc_binary = validation_utils.accuracy(testset_guess_binary, test_labels)
-
-    print("best binary KNN accuracy with k = {} \n".format(bestk_binary),
-          "validation accuracy = {} \n".format(acc_binary),
-          "test accuracy = {}".format(test_acc_binary))
-
-    # 4) Introduce dimensionality reduction, removing low variance pixels below a certain pctile
-    print('\n running KNN on data with euclidean metric, converting greyscale -> binary, and eliminating low-variance pixels...')
-    best_thresh, acc_dimred = validation_utils.voptimize(train_binary, valid_binary, knn_dimred, range(30, 70, 5),
-                                                         plot_title="Binary, Dim-reduced KNN accuracy by "
-                                                                    "dimensionality reduction level (0-100%)",
-                                                         metric="euclidean",
-                                                         k=bestk_binary)
-
-    testset_guess_dimred = knn_dimred(best_thresh, train_binary, test_binary, metric="euclidean")
-    test_acc_dimred = validation_utils.accuracy(testset_guess_dimred, test_labels)
-
-    print("best binary KNN accuracy by removing pixels with variance lower than {} pctile \n".format(best_thresh),
-          "validation accuracy = {} \n".format(acc_dimred),
-          "test accuracy = {}".format(test_acc_dimred))
-
-    #guess = kmeans(train, test, "euclidean")
+    test_accuracy = validation_utils.accuracy(guess_labels, true_labels)
+    print("KNN accuracy: ", test_accuracy)
+    import pandas as pd
+    cm = pd.DataFrame(conf_matrix(guess_labels, true_labels))
+    print("KNN confusion matrix:")
+    print(cm)
+    cm.to_csv("KNN_cm.csv")
 
 
-def main():
-
+def run_kmeans():
     train = read_data('train.csv')
-    valid = read_data('valid.csv')
     test = read_data('test.csv')
-    test_labels = [x[0] for x in test]
 
-    # 3) Greyscale -> Binary conversion
-    train_binary = tu.data_bin(train)
-    valid_binary = tu.data_bin(valid)
-    test_binary = tu.data_bin(test)
+    metric = "cosim"
+    cluster_assignments = kmeans(train, test, metric)
 
-    # Introduce dimensionality reduction, removing high correlation pixels above a certain pearsons-r
-    print(
-        '\n running KNN on data with euclidean metric, eliminating high-correlation pixels...')
-    best_thresh, acc_dimred = validation_utils.voptimize(train, valid, knn_dimred, [float(i)/100 for i in range(50, 100, 5)],
-                                                         plot_title="Binary, Dim-reduced KNN accuracy by "
-                                                                    "dimensionality reduction level (0-100%)",
-                                                         metric="euclidean",
-                                                         k=7,
-                                                         dimred_func = tu.high_correlation_filter)
+    true_labels = [x[0] for x in test]
 
-    testset_guess_dimred = knn_dimred(best_thresh, train_binary, test_binary,
-                                      metric="euclidean", dimred_func=tu.high_correlation_filter)
-    test_acc_dimred = validation_utils.accuracy(testset_guess_dimred, test_labels)
-
-    print("best binary KNN accuracy by removing pixels with variance lower than {} pctile \n".format(best_thresh),
-          "validation accuracy = {} \n".format(acc_dimred),
-          "test accuracy = {}".format(test_acc_dimred))
-
-
-    # Introduce dimensionality reduction, removing low variance pixels below a certain pctile
-    print('\n running KNN on data with euclidean metric, converting greyscale -> binary, and eliminating low-variance pixels...')
-    best_thresh, acc_dimred = validation_utils.voptimize(train_binary, valid_binary, knn_dimred, range(30, 70, 5),
-                                                         plot_title="Binary, Dim-reduced KNN accuracy by "
-                                                                    "dimensionality reduction level (0-100%)",
-                                                         metric="euclidean",
-                                                         k=7,
-                                                         dimred_func = tu.low_variance_filter)
-
-    testset_guess_dimred = knn_dimred(best_thresh, train_binary, test_binary,
-                                      metric="euclidean", dimred_func=tu.low_variance_filter)
-    test_acc_dimred = validation_utils.accuracy(testset_guess_dimred, test_labels)
-
-    print("best binary KNN accuracy by removing pixels with variance lower than {} pctile \n".format(best_thresh),
-          "validation accuracy = {} \n".format(acc_dimred),
-          "test accuracy = {}".format(test_acc_dimred))
+    import pandas as pd
+    cm = pd.DataFrame(conf_matrix(true_labels, cluster_assignments))
+    print("kmeans confusion matrix: ")
+    print(cm)
 
 
 if __name__ == "__main__":
-    main()
-
-
-# Left to do:
-# 10x10 confusion matrix
-# k means classifier
-# soft k means classifier
-# collaborative filter question
-# write-up
+    find_KNN_optimal_params() # Included this as we want to show our optimization function. Can take a while to run
+    run_KNN()
+    run_kmeans()

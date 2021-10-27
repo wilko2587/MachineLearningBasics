@@ -105,3 +105,34 @@ def pearsons_r(X,Y):
     returns correlation coefficient between two datasets X and Y
     """
     return covariance(X, Y)/(stdev(X) * stdev(Y)+1e-5) #add 1e-5 to prevent division by zero error
+
+
+def subtract_mean(train, valid, test):
+    data = train + valid + test
+    train_idx = len(train)
+    valid_idx = train_idx + len(valid)
+    test_idx = valid_idx + len(test)
+    test_len = len(test)
+    avgs = []
+    output = []
+    init_results = []
+
+    for i in range(len(data[0][1])):
+        avg = mean([item[1][i] for item in data])
+        avgs.append(avg)
+
+    for i in range(len(data)):
+        temp = []
+        for j in range(len(data[i][1])):
+            result = data[i][1][j] - avgs[j]
+            temp.append(result)
+        init_results.append(temp)
+
+    for i in range(len(init_results)):
+        output.append([data[i][0], init_results[i]])
+
+    train_new = output[0:train_idx]
+    valid_new = output[train_idx:valid_idx]
+    test_new = output[valid_idx:test_idx]
+
+    return train_new, valid_new, test_new
