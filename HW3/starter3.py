@@ -6,6 +6,8 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
+from NN import FeedForward
+
 
 def read_mnist(file_name):
     
@@ -68,7 +70,9 @@ def classify_insurability():
     test = read_insurability('three_test.csv')
     
     # insert code to train simple FFNN and produce evaluation metrics
-    
+    NN = FeedForward(3, 2, 3)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8
+    NN.train()
+
 def classify_mnist():
     
     train = read_mnist('mnist_train.csv')
@@ -78,7 +82,7 @@ def classify_mnist():
     
     # insert code to train a neural network with an architecture of your choice
     # (a FFNN is fine) and produce evaluation metrics
-    
+
 def classify_mnist_reg():
     
     train = read_mnist('mnist_train.csv')
