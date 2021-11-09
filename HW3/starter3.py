@@ -6,9 +6,9 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
-from NN import FeedForward, trainNN
+from NN import FeedForwardSoftmax, trainNN
 from torch.utils.data import DataLoader
-
+from sklearn.preprocessing import MinMaxScaler as MM
 
 def read_mnist(file_name):
     data_set = []
@@ -69,26 +69,15 @@ def classify_insurability():
     valid = read_insurability('three_valid.csv')
     test = read_insurability('three_test.csv')
 
-    #convert data to DataLoader objects for batch processing
-    trainDL = DataLoader(train, batch_size=50,shuffle=True)
-    validDL = DataLoader(valid, batch_size=50,shuffle=True)
-    testDL = DataLoader(test, batch_size=50,shuffle=True)
-
     # insert code to train simple FFNN and produce evaluation metrics
-    NN = FeedForward(3, 3, hiddenNs=[2])  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8
+    NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=False)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
 
-    loss_func = nn.MSELoss()
-    print("params: ",list(NN.parameters()))
+    loss_func = nn.MSELoss() #mean square error loss function
     optimizer = torch.optim.SGD(NN.parameters(), lr=1e-4, momentum=0.1)
-    train_loss = []
-    epoch = 0 #counter for which epoch we're in
-    losses = 1e8
-    while losses > 1e-2 and epoch < 50:
-        epoch += 1
-        print(f"Epoch {epoch}\n------------------------------- \n")
-        losses = trainNN(train, NN, loss_func, optimizer)
-        train_loss.append(losses)
-    print(train_loss)
+    trainNN(train, NN, loss_func, optimizer,
+            max_epoch = 10000,
+            loss_target = 0.15) # train the NN on our data
+    return
 
 def classify_mnist():
     train = read_mnist('mnist_train.csv')

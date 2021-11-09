@@ -1,17 +1,27 @@
 from torch import nn, tensor
 import torch
-import datetime
+import numpy as np
 
-class FeedForward(nn.Module):
-    def __init__(self, inputN, outputN, hiddenNs=None):
+def softmax(x):
+    '''
+    returns softmax of x
+    '''
+    return np.exp(x)/np.sum(np.exp(x))
+
+
+class FeedForwardSoftmax(nn.Module):
+    def __init__(self, inputN, outputN, hiddenNs=None, bias=True):
         """
+        Feed-forward linear neural network, using softmax at the output layer to normalise the outputs.
+
         :param: inputN = integer. Number of input nodes to our network
         :param: hiddenNs = list of integers. One element for each hidden layer. Each element tells
                        us the size of that layer
         :param: outputN = integer. Nuber of output nodes for our network
+        :param: bias = True/False bool. If True pytorch will add a bias term into the calculations
         """
 
-        super(FeedForward, self).__init__()
+        super(FeedForwardSoftmax, self).__init__()
 
         if hiddenNs is None:
             hiddenNs = []
@@ -19,10 +29,8 @@ class FeedForward(nn.Module):
         layer_sizes = [inputN] + hiddenNs + [outputN]  # form list of all layer sizes in the network
 
         self._layers = nn.ModuleList()  # initialise container for the layer objects
-        self._methods = []  # initialise container
         for i in range(len(layer_sizes) - 1):  # build the architecture
-            self._layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
-            self._methods.append(nn.LeakyReLU())
+            self._layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1], bias=bias))
 
     def forward(self, x):
         """
@@ -33,27 +41,47 @@ class FeedForward(nn.Module):
         returns network output
         """
         #assert our vector x is a tensor
-        x = tensor(x)
+        x = tensor(x).to(torch.float32)
+
         for i in range(len(self._layers)): #iterate through the layers, passing x from one layer to the next
             x = self._layers[i](x)
-            x = self._methods[i](x)
-        return x
+        return softmax(x)
+
+    def get_weights(self):
+        '''
+        quick function to return the weights in the NN
+        '''
+        weights = []
+        for layer in self._layers:
+            weights.append(layer.weight)
+        return weights
 
 
-def trainNN(data, model, loss_func, optimizer):
-    model.train()
+def trainNN(dataset, model, loss_func, optimizer, max_epoch = 50,
+            loss_target = 0.1):
+    '''
+    :param: dataset = list holding data (in Demeter's format)
+    :model: torch.nn.Module object -> our neural network object
+    :loss_func: function to calculate the loss
+    :optimizer: torch.optim object -> our optimizing function
+    '''
+
+    model.train() # tell the model we're training
     train_loss = []
 
-    now = datetime.datetime.now()
+    # set up the data
+    X = tensor([d[1] for d in dataset])
+    y = tensor([d[0] for d in dataset])
 
-    for batch, (y, X) in enumerate(data):
+    # endusure the datatypes are okay
+    X = X.to(torch.float32)
+    y = y.to(torch.float32)
 
+    loss = 1e8 # initialise to a value somewhere above the threshold
+    epoch = 0 # counter for which training epoch we are in
+    while loss > loss_target and epoch < max_epoch:
         # make predictions
         pred = model.forward(X)
-
-        # make sure our datatypes are good
-        pred = pred.to(torch.float32)
-        y = tensor(y).to(torch.float32)
 
         # calculate the loss
         loss = loss_func(pred, y)
@@ -63,13 +91,15 @@ def trainNN(data, model, loss_func, optimizer):
         loss.backward()
         optimizer.step()
 
-        if batch % 10 == 0: #print out every 10 iterations...
-            loss, current = loss.item(), batch * len(X)
-            iters = 10 * len(X)
-            then = datetime.datetime.now()
-            iters /= (then - now).total_seconds()
-            print(f"loss: {loss:>6f} [{current:>5d}/{17000}] ({iters:.1f} its/sec)")
-            now = then
-            train_loss.append(loss)
+        loss = loss.item()
+        print('loss: ', loss)
+        train_loss.append(loss)
+        epoch += 1
 
-    return train_loss
+    if loss <= loss_target:
+        reason = "loss small enough!"
+    else:
+        reason = "max epoch reached ({})".format(max_epoch)
+
+    print("Training complete! : {}".format(reason)) # print we're complete and reason the training stopped
+    return
