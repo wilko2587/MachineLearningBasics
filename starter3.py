@@ -153,7 +153,7 @@ def classify_insurability():
                 intervs = 10 * len(X)
                 past = datetime.datetime.now()
                 intervs /= (past - now).total_seconds()
-                print(f"loss: {loss:>6f} [{current:>5d}/{17000}] ({iters:.1f} its/sec)")
+                print(f"loss: {loss:>6f} [{current:>5d}/{17000}] ({intervs:.1f} its/sec)")
                 now = past
                 train_loss_value.append(loss)
         return train_loss_value
