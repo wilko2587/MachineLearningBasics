@@ -69,14 +69,19 @@ def classify_insurability():
     valid = read_insurability('three_valid.csv')
     test = read_insurability('three_test.csv')
 
+    for row in train: #reformat the labelled data so y=2 --> [0,0,1] (to match the NN output)
+        n = row[0].copy()[0]
+        row[0] = [0,0,0]
+        row[0][n] = 1.0
+
     # insert code to train simple FFNN and produce evaluation metrics
     NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=False)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
 
     loss_func = nn.MSELoss() #mean square error loss function
-    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-4, momentum=0.1)
-    trainNN(train, NN, loss_func, optimizer,
-            max_epoch = 10000,
-            loss_target = 0.15) # train the NN on our data
+    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-2, momentum=0.9)
+    train_loss = trainNN(train, NN, loss_func, optimizer,
+                                max_epoch = 10000,
+                                loss_target = 0.15) # train the NN on our data
     return
 
 def classify_mnist():

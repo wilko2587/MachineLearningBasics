@@ -6,7 +6,8 @@ def softmax(x):
     '''
     returns softmax of x
     '''
-    return np.exp(x)/np.sum(np.exp(x))
+    #x = np.array(x.detach().numpy()) #convert to number
+    return torch.div(torch.exp(x),torch.sum(torch.exp(x),1).unsqueeze(1))
 
 
 class FeedForwardSoftmax(nn.Module):
@@ -102,4 +103,4 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 50,
         reason = "max epoch reached ({})".format(max_epoch)
 
     print("Training complete! : {}".format(reason)) # print we're complete and reason the training stopped
-    return
+    return train_loss
