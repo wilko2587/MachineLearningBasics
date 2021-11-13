@@ -1,6 +1,6 @@
 from torch import nn, tensor
 import torch
-import numpy as np
+from random import randint
 
 def softmax(x):
     '''
@@ -58,13 +58,19 @@ class FeedForwardSoftmax(nn.Module):
         return weights
 
 
-def trainNN(dataset, model, loss_func, optimizer, max_epoch = 50,
-            loss_target = 0.1):
+def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
+            loss_target = 0.1, method = "batch"):
     '''
+    takes a dataset, and a model (such as FeedForwardSoftmax), a loss function, and a
+    pytorch optimizer and trains the model using a batch method
+
     :param: dataset = list holding data (in Demeter's format)
     :model: torch.nn.Module object -> our neural network object
     :loss_func: function to calculate the loss
     :optimizer: torch.optim object -> our optimizing function
+    :max_epoch: maximum number of iterations we'll allow before force-stopping
+    :loss_target: the target loss we're aiming for -> if this is reached the training will stop
+    :method: either "batch" or "stochastic".
     '''
 
     model.train() # tell the model we're training
@@ -80,12 +86,23 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 50,
 
     loss = 1e8 # initialise to a value somewhere above the threshold
     epoch = 0 # counter for which training epoch we are in
+    print('--- Training {} using method: {}'.format(type(model).__name__, method))
     while loss > loss_target and epoch < max_epoch:
+        if method.lower() == "batch": #if batch -> use all the training data in each iteration
+            _X = X
+            _y = y
+        elif method.lower() == 'stochastic': #if stochastic -> use one randomly selected example for each epoch
+            randomi = randint(0,len(X))
+            _X = X[randomi]
+            _y = y[randomi]
+        else:
+            raise(NameError("Kwarg 'method' must be either 'batch' or 'stochastic'"))
+
         # make predictions
-        pred = model.forward(X)
+        pred = model.forward(_X)
 
         # calculate the loss
-        loss = loss_func(pred, y)
+        loss = loss_func(pred, _y)
 
         # backprop
         optimizer.zero_grad()
@@ -93,14 +110,20 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 50,
         optimizer.step()
 
         loss = loss.item()
-        print('loss: ', loss)
         train_loss.append(loss)
         epoch += 1
 
-    if loss <= loss_target:
-        reason = "loss small enough!"
-    else:
-        reason = "max epoch reached ({})".format(max_epoch)
+        print(
+            'loss: {} -- epoch: {}'.format(
+                method, round(loss,4), epoch), end="\r"
+        )
 
-    print("Training complete! : {}".format(reason)) # print we're complete and reason the training stopped
+        if loss <= loss_target:
+            reason = "loss small enough!"
+        else:
+            reason = "max epoch reached ({})".format(max_epoch)
+
+    print("\n Training complete! : {}".format(reason)) # print we're complete and reason the training stopped
     return train_loss
+
+

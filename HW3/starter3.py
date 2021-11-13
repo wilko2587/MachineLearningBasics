@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
 from NN import FeedForwardSoftmax, trainNN
+import data_transformations as dt
 from torch.utils.data import DataLoader
 from sklearn.preprocessing import MinMaxScaler as MM
 
@@ -63,6 +64,17 @@ def read_insurability(file_name):
             count = count + 1
     return (data)
 
+def univariate_insurability():
+    '''
+    function to view the underlying relationships between hyperparameters and the outpus
+    '''
+    train = read_insurability('three_train.csv')
+    for row in train:  # reformat the labelled data so y=2 --> [0,0,1] (to match the NN output)
+        n = row[0].copy()[0]
+        row[0] = [0, 0, 0]
+        row[0][n] = 1.0
+    dt.univariate(train)
+    return
 
 def classify_insurability():
     train = read_insurability('three_train.csv')
@@ -78,10 +90,11 @@ def classify_insurability():
     NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=False)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
 
     loss_func = nn.MSELoss() #mean square error loss function
-    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-2, momentum=0.9)
+    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
     train_loss = trainNN(train, NN, loss_func, optimizer,
-                                max_epoch = 10000,
-                                loss_target = 0.15) # train the NN on our data
+                                max_epoch = 500000,
+                                loss_target = 0.10,
+                                method = 'stochastic') # train the NN on our data
     return
 
 def classify_mnist():
@@ -113,7 +126,8 @@ def classify_insurability_manual():
 
 
 def main():
-    classify_insurability()
+    #classify_insurability()
+    univariate_insurability()
     #classify_mnist()
     #classify_mnist_reg()
     #classify_insurability_manual()
