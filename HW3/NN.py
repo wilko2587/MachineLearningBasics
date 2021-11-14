@@ -1,13 +1,21 @@
 from torch import nn, tensor
 import torch
 from random import randint
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import data_transformations as dt
 
 def softmax(x):
     '''
     returns softmax of x
     '''
     #x = np.array(x.detach().numpy()) #convert to number
-    return torch.div(torch.exp(x),torch.sum(torch.exp(x),1).unsqueeze(1))
+    Ndims = len(x.shape)
+    if Ndims == 2:
+        return torch.div(torch.exp(x),torch.sum(torch.exp(x),1).unsqueeze(1))
+    elif Ndims == 1:
+        return torch.div(torch.exp(x),torch.sum(torch.exp(x)))
 
 
 class FeedForwardSoftmax(nn.Module):
@@ -42,7 +50,7 @@ class FeedForwardSoftmax(nn.Module):
         returns network output
         """
         #assert our vector x is a tensor
-        x = tensor(x).to(torch.float32)
+        x = tensor(np.array(x)).to(torch.float32)
 
         for i in range(len(self._layers)): #iterate through the layers, passing x from one layer to the next
             x = self._layers[i](x)
@@ -59,42 +67,42 @@ class FeedForwardSoftmax(nn.Module):
 
 
 def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
-            loss_target = 0.1, method = "batch"):
+            loss_target = 0.1, method = "batch", plot=True, verbosity=True):
     '''
     takes a dataset, and a model (such as FeedForwardSoftmax), a loss function, and a
     pytorch optimizer and trains the model using a batch method
 
     :param: dataset = list holding data (in Demeter's format)
-    :model: torch.nn.Module object -> our neural network object
-    :loss_func: function to calculate the loss
-    :optimizer: torch.optim object -> our optimizing function
-    :max_epoch: maximum number of iterations we'll allow before force-stopping
-    :loss_target: the target loss we're aiming for -> if this is reached the training will stop
-    :method: either "batch" or "stochastic".
+    :param: model = torch.nn.Module object -> our neural network object
+    :param: loss_func: function to calculate the loss
+    :param: optimizer: torch.optim object -> our optimizing function
+    :param: max_epoch: maximum number of iterations we'll allow before force-stopping
+    :param: loss_target: the target loss we're aiming for -> if this is reached the training will stop
+    :param: method: either "batch" or "stochastic".
+    :poram: plot: True/False. If true, matplotlib called to plot the loss vs epoch
     '''
 
     model.train() # tell the model we're training
     train_loss = []
 
     # set up the data
-    X = tensor([d[1] for d in dataset])
-    y = tensor([d[0] for d in dataset])
+    X = dt.extract_hparams(dataset)
+    y = dt.extract_targets(dataset)
+    ybin = dt.labels_to_binary(y)
 
-    # endusure the datatypes are okay
-    X = X.to(torch.float32)
-    y = y.to(torch.float32)
-
-    loss = 1e8 # initialise to a value somewhere above the threshold
+    full_loss = 1e8 # initialise to a value somewhere above the threshold
     epoch = 0 # counter for which training epoch we are in
-    print('--- Training {} using method: {}'.format(type(model).__name__, method))
-    while loss > loss_target and epoch < max_epoch:
+    if verbosity:
+        print('Training {} using method: {}'.format(type(model).__name__, method))
+
+    while full_loss > loss_target and epoch < max_epoch:
         if method.lower() == "batch": #if batch -> use all the training data in each iteration
             _X = X
-            _y = y
+            _y = ybin
         elif method.lower() == 'stochastic': #if stochastic -> use one randomly selected example for each epoch
-            randomi = randint(0,len(X))
+            randomi = randint(0, len(X)-1)
             _X = X[randomi]
-            _y = y[randomi]
+            _y = ybin[randomi]
         else:
             raise(NameError("Kwarg 'method' must be either 'batch' or 'stochastic'"))
 
@@ -109,21 +117,90 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
         loss.backward()
         optimizer.step()
 
-        loss = loss.item()
-        train_loss.append(loss)
+        full_loss = loss_func(model.forward(X), ybin).item()
+        train_loss.append(full_loss)
         epoch += 1
 
+        if epoch % 50 == 0 and verbosity:
+            print(
+                'epoch: {} | loss: {} | target: {}'.format(
+                    epoch, round(full_loss,4), loss_target), end="\r"
+            )
+
+    if full_loss <= loss_target:
+        reason = "loss small enough!"
+    elif pd.isna(full_loss):
+        reason = "loss function breaking"
+    else:
+        reason = "max epoch reached ({})".format(max_epoch)
+
+    if verbosity:
+        print("\nTraining complete! : {}".format(reason)) # print we're complete and reason the training stopped
         print(
-            'loss: {} -- epoch: {}'.format(
-                method, round(loss,4), epoch), end="\r"
+            'Final epoch: {} | Final loss: {} | target: {}'.format(
+                epoch, round(full_loss, 4), loss_target)
         )
 
-        if loss <= loss_target:
-            reason = "loss small enough!"
-        else:
-            reason = "max epoch reached ({})".format(max_epoch)
-
-    print("\n Training complete! : {}".format(reason)) # print we're complete and reason the training stopped
+    if plot:
+        f = plt.figure()
+        plt.plot(train_loss)
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.suptitle('Training Loss vs Epoch')
+        plt.show()
     return train_loss
 
 
+def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch,
+                            method="batch", plot=True):
+
+    epochs = range(1,max_epoch,1000)
+    D_epoch = epochs[1]-epochs[0]
+
+    # set up the data
+    Xtrain = dt.extract_hparams(train)
+    ytrain = dt.extract_targets(train)
+    ytrain_bin = dt.labels_to_binary(ytrain)
+    Xvalid = dt.extract_hparams(valid)
+    yvalid = dt.extract_targets(valid)
+    yvalid_bin = dt.labels_to_binary(yvalid)
+
+    train_losses = [] #containers to plot learning curves
+    valid_losses = []
+    print('Generating Learning Curves for {}'.format(type(model).__name__))
+    for each in epochs:
+        # train our model for another D_epochs using training data.
+        # Set loss_target negative so its guaranteed to train for D_epochs
+        trainNN(train,model,loss_func,optimizer,
+                max_epoch = D_epoch,
+                loss_target = -1,
+                method = method,
+                plot=False,
+                verbosity=False)
+
+        #calculate training loss
+        train_preds = model.forward(Xtrain)
+        train_loss = loss_func(train_preds, ytrain_bin).item()
+
+        #calculate validation loss
+        valid_preds = model.forward(Xvalid)
+        valid_loss = loss_func(valid_preds, yvalid_bin).item()
+
+        train_losses.append(train_loss)
+        valid_losses.append(valid_loss)
+
+        print('Epoch: {} | training loss: {} | validation loss: {}'.format(
+            each,round(train_loss,4),round(valid_loss,4)),end='\r')
+    print('\n')
+
+    if plot:
+        f = plt.figure()
+        plt.plot(epochs,train_losses,label='training loss')
+        plt.plot(epochs,valid_losses,label='validation loss')
+        plt.xlabel('Training Epoch')
+        plt.ylabel('Loss')
+        plt.suptitle("Learning Curve")
+        plt.legend()
+        plt.show()
+
+    return train_losses, valid_losses
