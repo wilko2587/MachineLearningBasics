@@ -42,8 +42,26 @@ def precision_recall_F1(cfm, _class):
     fp = cfm.drop(columns=_class).loc[_class].sum()
     fn = cfm.drop(index=_class).loc[:,_class].sum()
 
-    precision = tp/(tp+fp)
-    recall = tp/(tp+fn)
+    if tp == 0:
+        precision = 0
+        recall = 0
+    else: #stop zero division errors
+        precision = tp/(tp+fp)
+        recall = tp/(tp+fn)
+
     f1 = 2*precision*recall/(precision+recall)
 
     return precision, recall, f1
+
+
+def global_accuracy(expected,predicted):
+    '''
+    calculate a basic measure of accuracy for a classifier. Total correct divided by all predictions.
+    returns decimal (0->1)
+    '''
+
+    assert(len(expected) == len(predicted))
+    expected = expected.tolist()
+    predicted = predicted.tolist()
+    tp = sum([expected[i] == predicted[i] for i in range(len(expected))])
+    return float(tp)/len(expected)

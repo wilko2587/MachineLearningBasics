@@ -4,7 +4,9 @@ from random import randint
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import data_transformations as dt
+import transformation_utils as tu
+import validation_utils as vu
+
 
 def softmax(x):
     '''
@@ -36,6 +38,7 @@ class FeedForwardSoftmax(nn.Module):
             hiddenNs = []
 
         layer_sizes = [inputN] + hiddenNs + [outputN]  # form list of all layer sizes in the network
+        self._layer_sizes = layer_sizes
 
         self._layers = nn.ModuleList()  # initialise container for the layer objects
         for i in range(len(layer_sizes) - 1):  # build the architecture
@@ -85,10 +88,12 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
     model.train() # tell the model we're training
     train_loss = []
 
+    Noutputs = model._layer_sizes[-1]
+
     # set up the data
-    X = dt.extract_hparams(dataset)
-    y = dt.extract_targets(dataset)
-    ybin = dt.labels_to_binary(y)
+    X = tu.extract_hparams(dataset)
+    y = tu.extract_targets(dataset)
+    ybin = tu.labels_to_binary(y, Noutputs)
 
     full_loss = 1e8 # initialise to a value somewhere above the threshold
     epoch = 0 # counter for which training epoch we are in
@@ -110,7 +115,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
         pred = model.forward(_X)
 
         # calculate the loss
-        loss = loss_func(pred, _y)
+        loss = loss_func(pred.unsqueeze(0), _y.unsqueeze(0))
 
         # backprop
         optimizer.zero_grad()
@@ -153,17 +158,21 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
 
 def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch,
                             method="batch", plot=True):
+    '''
+    for a model, with train data and valid data + other params, plot a training curve using loss as
+    the metric. Plots training epoch vs loss separately for training data and validation data.
+    '''
 
     epochs = range(1,max_epoch,1000)
     D_epoch = epochs[1]-epochs[0]
 
     # set up the data
-    Xtrain = dt.extract_hparams(train)
-    ytrain = dt.extract_targets(train)
-    ytrain_bin = dt.labels_to_binary(ytrain)
-    Xvalid = dt.extract_hparams(valid)
-    yvalid = dt.extract_targets(valid)
-    yvalid_bin = dt.labels_to_binary(yvalid)
+    Xtrain = tu.extract_hparams(train)
+    ytrain = tu.extract_targets(train)
+    ytrain_bin = tu.labels_to_binary(ytrain)
+    Xvalid = tu.extract_hparams(valid)
+    yvalid = tu.extract_targets(valid)
+    yvalid_bin = tu.labels_to_binary(yvalid)
 
     train_losses = [] #containers to plot learning curves
     valid_losses = []
@@ -180,16 +189,16 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
 
         #calculate training loss
         train_preds = model.forward(Xtrain)
-        train_F1 = loss_func(train_preds, ytrain_bin).item()
+        train_loss = loss_func(ytrain_bin,train_preds).item()
 
         #calculate validation loss
         valid_preds = model.forward(Xvalid)
-        valid_loss = loss_func(valid_preds, yvalid_bin).item()
+        valid_loss = loss_func(yvalid_bin,valid_preds)
 
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
 
-        print('Epoch: {} | training loss: {} | validation loss: {}'.format(
+        print('Epoch: {} | training acc: {} | validation acc: {}'.format(
             each,round(train_loss,4),round(valid_loss,4)),end='\r')
     print('\n')
 
@@ -204,3 +213,63 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
         plt.show()
 
     return train_losses, valid_losses
+
+
+def generate_learning_curve_accuracy(train, valid, model, loss_func, optimizer, max_epoch,
+                            method="batch", plot=True):
+
+    '''
+    for a model, with train data and valid data + other params, plot a training curve using F1 score as
+    the metric. Plots training epoch vs global_accuracy separately for training data and validation data.
+    '''
+
+    epochs = range(1,max_epoch,1000)
+    D_epoch = epochs[1]-epochs[0]
+
+    # set up the data
+    Xtrain = tu.extract_hparams(train)
+    ytrain = tu.extract_targets(train)
+    ytrain_bin = tu.labels_to_binary(ytrain)
+    Xvalid = tu.extract_hparams(valid)
+    yvalid = tu.extract_targets(valid)
+    yvalid_bin = tu.labels_to_binary(yvalid)
+
+    train_accuracys= [] #containers to plot learning curves
+    valid_accuracys = []
+    print('Generating Learning Curves for {}'.format(type(model).__name__))
+    for each in epochs:
+        # train our model for another D_epochs using training data.
+        # Set loss_target negative so its guaranteed to train for D_epochs
+        trainNN(train,model,loss_func,optimizer,
+                max_epoch = D_epoch,
+                loss_target = -1,
+                method = method,
+                plot=False,
+                verbosity=False)
+
+        #calculate training loss
+        train_preds = model.forward(Xtrain)
+        train_accuracy = vu.global_accuracy(ytrain, tu.binary_to_labels(train_preds))
+
+        #calculate validation loss
+        valid_preds = model.forward(Xvalid)
+        valid_accuracy = vu.global_accuracy(yvalid, tu.binary_to_labels(valid_preds))
+
+        train_accuracys.append(train_accuracy)
+        valid_accuracys.append(valid_accuracy)
+
+        print('Epoch: {} | training acc: {} | validation acc: {}'.format(
+            each,round(train_accuracy,4),round(valid_accuracy,4)),end='\r')
+    print('\n')
+
+    if plot:
+        f = plt.figure()
+        plt.plot(epochs,train_accuracys,label='training loss')
+        plt.plot(epochs,valid_accuracys,label='validation loss')
+        plt.xlabel('Training Epoch')
+        plt.ylabel('Loss')
+        plt.suptitle("Learning Curve")
+        plt.legend()
+        plt.show()
+
+    return train_accuracys, valid_accuracys

@@ -1,4 +1,5 @@
 import seaborn as sns
+import math_utils as mu
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -122,15 +123,16 @@ def scale01(train, items_to_norm):
     return items_to_norm
 
 
-def labels_to_binary(ys):
+def labels_to_binary(ys, Noutputs):
     '''
-    converts y = 2 into [0,0,1] etc (to match NN output)
+    converts y = 2 into [0,0,1] etc (to match NN output). Number of items in list should be given by number of output
+    nodes in the NN in input argument to this function
     '''
     new_ys = []
     ys = ys.tolist()
     for row in ys:  # reformat the labelled data so y=2 --> [0,0,1] (to match the NN output)
         n = int(row)
-        row = [0, 0, 0]
+        row = [0]*Noutputs
         row[n] = 1
         new_ys.append(row)
     new_ys = torch.tensor(new_ys)
@@ -140,10 +142,9 @@ def labels_to_binary(ys):
 
 def binary_to_labels(ys):
     '''
-    converts y = [0,0,1] into 2 etc (to match labels output)
+    converts y = [0,0,1] into 2 etc (to match labels output) for insurability data
     '''
     return torch.argmax(ys,1)
-
 
 
 def extract_hparams(data):
@@ -168,4 +169,70 @@ def extract_targets(data):
     targets = torch.tensor(targets)
     targets = targets.to(torch.float32)
     return targets
+
+
+def data_bin(data):
+    """
+    function to turn data from continuous into binary
+    nb: "datas" structure is
+    data[0] = a string label,
+    data[1] = list of numbers we will turn to binary
+    returns data in the format [data[0],new_data[1]]
+    """
+    lin_num = 0
+
+    for line in data: # line[0] = label, line[1] = list with all values
+        pix_num = 0
+        for each in line[1]: # go into each individual value
+            if int(each) > 0: # if greater than 1, replace that specific location with 1
+                #data[data.index(line)][1][line[1].index(each)] = 1.0
+                data[lin_num][1][pix_num] = 1
+            else:
+                data[lin_num][1][pix_num] = 0
+            pix_num += 1
+        lin_num += 1
+    return data
+
+
+def low_variance_filter(train_data, validation_data, pctile_thresh):
+    '''
+    Dimensionality reduction technique.
+    We scan through each corresponding "pixel" between the different datas, and calculate that pixel's variance across
+    the dataset.
+    We then eliminate pixels that have a variance below "threshold"
+    "pctile" defines the percentile of variance below which we cut
+    "validation_data" is a list of other data (ie: validation/test data we want to also affect the changes on)
+    '''
+
+    pixel_variance = []  # initialise. All values will end up being overwritten
+    npixels = len(train_data[0][1])
+    for x in range(
+            npixels):  # scan through each pixel, and work out what the variance is for that same pixel, accross the dataset.
+        pixel_data = [data[1][x] for data in train_data]
+        _var = mu.var(pixel_data)
+        pixel_variance.append(_var)  # save the result in pixel_variance
+
+    pixels_to_keep = [x for x in range(npixels) if
+                      mu.pctile(pixel_variance[x], list(set(pixel_variance))) >= pctile_thresh]
+
+    reduced_train = [[data[0], [data[1][x] for x in pixels_to_keep]] for data in train_data]
+    reduced_valid = [[data[0], [data[1][x] for x in pixels_to_keep]] for data in validation_data]
+    print('--> {} dimensions in input; {} dimensions in output'.format(len(train_data[0][1]),len(reduced_train[0][1])))
+    return reduced_train, reduced_valid
+
+
+def str2int(list_of_data):
+    '''
+    function to convert all data in list_of_data (which is a list of [train, valid, test] for example,
+    from strings into integers
+    Also puts the target in its own list, so a row in mnist data goes from: [7, [0,0,0,...]] -> [ [7], [0,0,0 ....]]
+    which matches the insurability data format
+    '''
+    list_out = []
+    for data in list_of_data:
+        for row in data:
+            row[0] = [int(row[0])] #first convert the target
+            row[1] =  [int(i) for i in row[1]] #second convert the hparams
+        list_out.append(data)
+    return list_out
 
