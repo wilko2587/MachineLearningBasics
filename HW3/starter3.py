@@ -86,7 +86,7 @@ def univariate_insurability():
     return
 
 
-def insurability_epochtest():
+def insurability_learningcurve():
     '''
     see how the validation accuracy vs training accuracy varies over different epochs we train for
     '''
@@ -100,16 +100,35 @@ def insurability_epochtest():
     f1s = []  # holder to record the f1 score on validation set for different powers
 
     # initialise a new NN
-    NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+    NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=False)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
     loss_func = nn.MSELoss()  # mean square error loss function
     optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
 
     generate_learning_curve(train,valid,NN,loss_func,optimizer,
                             max_epoch=100000,
-                            method='stochastic',
+                            method='batch',
                             plot=True)
     return
 
+
+def insurability_testbias():
+    '''
+    see how the validation accuracy varies when using bias and when not using bias.
+    '''
+
+    train = read_insurability('three_train.csv')
+    valid = read_insurability('three_valid.csv')
+    test = read_insurability('three_test.csv')
+
+    train, valid, test = dt.scale01(train, [train, valid, test])  # normalise the data
+
+
+    # initialise a new NN
+    NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=False)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+    loss_func = nn.MSELoss()  # mean square error loss function
+    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
+    trainNN(train,NN,loss_func,optimizer,max_epoch = 10000,loss_target = 0.08, method='stochastic', plot=False)
+    return
 
 def dataengineer_insurability():
     train = read_insurability('three_train.csv')
@@ -216,8 +235,8 @@ def classify_insurability_manual():
 
 def main():
     # classify_insurability()
-    univariate_insurability()
-    insurability_epochtest()
+    # univariate_insurability()
+    insurability_learningcurve()
     # classify_mnist()
     # classify_mnist_reg()
     # classify_insurability_manual()
