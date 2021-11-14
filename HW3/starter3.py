@@ -407,8 +407,8 @@ def classify_mnist():
 
     train_loss = trainNN(train, NN, loss_func, optimizer,
                          max_epoch=500000,
-                         loss_target=1.65,
-                         method='stochastic',
+                         loss_target=1.30,
+                         method='batch',
                          plot=False)  # train the NN on our data
 
     # test on the validation set

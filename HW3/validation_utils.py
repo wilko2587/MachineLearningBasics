@@ -45,11 +45,11 @@ def precision_recall_F1(cfm, _class):
     if tp == 0:
         precision = 0
         recall = 0
+        f1 = 0
     else: #stop zero division errors
         precision = tp/(tp+fp)
         recall = tp/(tp+fn)
-
-    f1 = 2*precision*recall/(precision+recall)
+        f1 = 2 * precision * recall / (precision + recall)
 
     return precision, recall, f1
 
