@@ -322,7 +322,7 @@ def insurability_testpowers():
 
         train_loss = trainNN(_train, NN, loss_func, optimizer,
                              max_epoch=500000,
-                             loss_target=0.08,
+                             loss_target=0.15,
                              method='stochastic',
                              plot=False,
                              verbosity=False)  # train the NN on our data

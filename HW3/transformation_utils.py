@@ -1,5 +1,6 @@
 import seaborn as sns
 import math_utils as mu
+import copy
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -80,9 +81,12 @@ def power_up(data, column, power):
     :power: the power we want to raise the column to
     :returns: transformed data (same format as demeter's examples), List dtype
     '''
-    for row in data:
-        row[1][column] = row[1][column]**power
-    return data
+    new_data = []
+    datacopy = copy.deepcopy(data)
+    for row in datacopy:
+        new_data.append(row)
+        new_data[-1][1][column] = new_data[-1][1][column]**power
+    return new_data
 
 
 def Zscore(train, items_to_norm):
@@ -180,7 +184,6 @@ def data_bin(data):
     returns data in the format [data[0],new_data[1]]
     """
     lin_num = 0
-
     for line in data: # line[0] = label, line[1] = list with all values
         pix_num = 0
         for each in line[1]: # go into each individual value
