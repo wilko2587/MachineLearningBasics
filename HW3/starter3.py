@@ -379,7 +379,7 @@ def classify_insurability():
     return
 
 
-def classify_mnist():
+def learningcurve_mnist():
     train = read_mnist('mnist_train.csv')
     valid = read_mnist('mnist_valid.csv')
     test = read_mnist('mnist_test.csv')
@@ -426,6 +426,39 @@ def classify_mnist():
     return
 
 
+def classify_mnist():
+    train = read_mnist('mnist_train.csv')
+    valid = read_mnist('mnist_valid.csv')
+    test = read_mnist('mnist_test.csv')
+    #show_mnist('mnist_test.csv', 'pixels')
+
+    # insert code to train a neural network with an architecture of your choice
+    # (a FFNN is fine) and produce evaluation metrics
+
+    # with mnist, we need to turn the data from strings into integers
+    train, valid, test = tu.str2int([train, valid, test])
+
+    # turn data to binary
+    train = tu.data_bin(train)
+    valid = tu.data_bin(valid)
+    test = tu.data_bin(test)
+
+    # run data through variance filter
+    train_lowD, test_lowD = tu.low_variance_filter(train, test, 60)
+
+    # initialise a new NN
+    NN = FeedForwardSoftmax(len(train[0][1]), 10, hiddenNs=[10], bias=True)
+    loss_func = nn.CrossEntropyLoss()  # mean square error loss function
+    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
+
+    generate_learning_curve(train, valid, NN, loss_func, optimizer,
+                         max_epoch=100000,
+                         method='stochastic',
+                         plot=True)  # train the NN on our data
+
+    return
+
+
 def classify_mnist_reg():
     train = read_mnist('mnist_train.csv')
     valid = read_mnist('mnist_valid.csv')
@@ -452,8 +485,8 @@ def main():
     # insurability_testbias()
     # insurability_testmomentum()
     # insurability_testlosstarget()
-    # insurability_testpowers()
-    classify_mnist()
+    insurability_testpowers()
+    # classify_mnist()
     # classify_mnist_reg()
     # classify_insurability_manual()
 

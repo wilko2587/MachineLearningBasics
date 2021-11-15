@@ -166,13 +166,15 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
     epochs = range(1,max_epoch,1000)
     D_epoch = epochs[1]-epochs[0]
 
+    Noutputs = model._layer_sizes[-1]
+
     # set up the data
     Xtrain = tu.extract_hparams(train)
     ytrain = tu.extract_targets(train)
-    ytrain_bin = tu.labels_to_binary(ytrain)
+    ytrain_bin = tu.labels_to_binary(ytrain, Noutputs)
     Xvalid = tu.extract_hparams(valid)
     yvalid = tu.extract_targets(valid)
-    yvalid_bin = tu.labels_to_binary(yvalid)
+    yvalid_bin = tu.labels_to_binary(yvalid, Noutputs)
 
     train_losses = [] #containers to plot learning curves
     valid_losses = []
