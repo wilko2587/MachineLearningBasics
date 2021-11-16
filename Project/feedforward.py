@@ -93,8 +93,9 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
     Noutputs = model._layer_sizes[-1]
 
     # set up the data
-    X = tu.extract_hparams(dataset)
-    y = tu.extract_targets(dataset)
+    X = dataset[0]
+    y = dataset[1].squeeze()
+
     ybin = tu.labels_to_binary(y, Noutputs)
 
     full_loss = 1e8 # initialise to a value somewhere above the threshold
@@ -175,11 +176,11 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
     Noutputs = model._layer_sizes[-1]
 
     # set up the data
-    Xtrain = tu.extract_hparams(train)
-    ytrain = tu.extract_targets(train)
+    Xtrain = train[0]
+    ytrain = train[1]
     ytrain_bin = tu.labels_to_binary(ytrain, Noutputs)
-    Xvalid = tu.extract_hparams(valid)
-    yvalid = tu.extract_targets(valid)
+    Xvalid = valid[0]
+    yvalid = valid[1]
     yvalid_bin = tu.labels_to_binary(yvalid, Noutputs)
 
     train_losses = [] #containers to plot learning curves

@@ -58,4 +58,3 @@ def explode(df, remove_unknown=False):
                 expcol.name = df[col].name + '_' + item  # create new column name
                 exploded = pd.concat([exploded, expcol], axis=1)
     return exploded
-

@@ -116,14 +116,10 @@ def scale01(train, items_to_norm):
     function to scale the data in items_to_norm so it sits between 0->1 (ie: no negatives)
     '''
 
-    Nparams = len(train[0][1])
-    for i in range(Nparams):
-        _train = [x[1][i] for x in train]
-        max = np.max(_train)
-        min = np.min(_train)
-        for item in items_to_norm:
-            for row in item:
-                row[1][i] = (row[1][i] - min)/(max-min)
+    _max = train[0].max(axis=0).values
+    _min = train[0].min(axis=0).values
+    for item in items_to_norm:
+        item[0] = (item[0] - _min)/(_max-_min)
     return items_to_norm
 
 
@@ -151,50 +147,28 @@ def binary_to_labels(ys):
     return torch.argmax(ys,1)
 
 
-def extract_hparams(data):
-    '''
-    function to extract the hyperparameters from demeter's data format
-    '''
-    hparams = []
-    for row in data:
-        hparams.append(row[1])
-    hparams = torch.tensor(hparams)
-    hparams = hparams.to(torch.float32)
-    return hparams
-
-
-def extract_targets(data):
-    '''
-    function to extract the targets from demeter's data format
-    '''
-    targets = []
-    for row in data:
-        targets.append(row[0][0])
-    targets = torch.tensor(targets)
-    targets = targets.to(torch.float32)
-    return targets
-
-
-def data_bin(data):
-    """
-    function to turn data from continuous into binary
-    nb: "datas" structure is
-    data[0] = a string label,
-    data[1] = list of numbers we will turn to binary
-    returns data in the format [data[0],new_data[1]]
-    """
-    lin_num = 0
-    for line in data: # line[0] = label, line[1] = list with all values
-        pix_num = 0
-        for each in line[1]: # go into each individual value
-            if int(each) > 0: # if greater than 1, replace that specific location with 1
-                #data[data.index(line)][1][line[1].index(each)] = 1.0
-                data[lin_num][1][pix_num] = 1
-            else:
-                data[lin_num][1][pix_num] = 0
-            pix_num += 1
-        lin_num += 1
-    return data
+#def extract_hparams(data):
+#    '''
+#    function to extract the hyperparameters from demeter's data format
+#    '''
+#    hparams = []
+#    for row in data:
+#        hparams.append(row[1])
+#    hparams = torch.tensor(hparams)
+#    hparams = hparams.to(torch.float32)
+#    return hparams
+#
+#
+#def extract_targets(data):
+#    '''
+#    function to extract the targets from demeter's data format
+#    '''
+#    targets = []
+#    for row in data:
+#        targets.append(row[0][0])
+#    targets = torch.tensor(targets)
+#    targets = targets.to(torch.float32)
+#    return targets
 
 
 def low_variance_filter(train_data, validation_data, pctile_thresh):
