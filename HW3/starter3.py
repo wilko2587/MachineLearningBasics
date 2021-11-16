@@ -1,3 +1,4 @@
+import copy
 import sys
 import random
 import math
@@ -173,14 +174,14 @@ def insurability_learningcurve_differentLR():
     optimizer1 = torch.optim.SGD(NN1.parameters(), lr=1e-3, momentum=0.9)
     optimizer2 = torch.optim.SGD(NN2.parameters(), lr=3e-3, momentum=0.9)
 
-    training_curve1 = trainNN(train, NN1, loss_func, optimizer1,
-                            max_epoch=300000,
+    training_curve1 = trainNN(copy.deepcopy(train), NN1, loss_func, optimizer1,
+                            max_epoch=100000,
                             loss_target=-1,
                             method='stochastic',
                             plot=False)
 
-    training_curve2 = trainNN(train, NN2, loss_func, optimizer2,
-                            max_epoch=300000,
+    training_curve2 = trainNN(copy.deepcopy(train), NN2, loss_func, optimizer2,
+                            max_epoch=100000,
                             loss_target = -1,
                             method='stochastic',
                             plot=False)
@@ -377,7 +378,7 @@ def insurability_testpowers():
 
             train_loss = trainNN(_train, NN, loss_func, optimizer,
                                  max_epoch=500000,
-                                 loss_target=0.75,
+                                 loss_target=0.67,
                                  method='stochastic',
                                  plot=False,
                                  verbosity=True)  # train the NN on our data
@@ -832,7 +833,7 @@ def classify_insurability_manual():
 def main():
     # classify_insurability()
     # univariate_insurability()
-    insurability_learningcurve()
+    # insurability_learningcurve()
     # insurability_testbias()
     # insurability_testmomentum()
     # insurability_learningcurve_differentLR()
@@ -840,7 +841,7 @@ def main():
     # insurability_testpowers()
     # mnist_learningcurve()
     # mnist_learningcurveL2()
-    # classify_mnist_reg()
+    classify_mnist_reg()
     # classify_insurability_manual()
     # mnist_testvarthresh()
     # classify_mnist()
