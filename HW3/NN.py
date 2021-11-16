@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import transformation_utils as tu
 import validation_utils as vu
-
+import copy
 
 def softmax(x):
     '''
@@ -70,7 +70,8 @@ class FeedForwardSoftmax(nn.Module):
 
 
 def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
-            loss_target = 0.1, method = "batch", plot=True, verbosity=True):
+            loss_target = 0.1, method = "batch", plot=True, verbosity=True,
+            _lambda = 0):
     '''
     takes a dataset, and a model (such as FeedForwardSoftmax), a loss function, and a
     pytorch optimizer and trains the model using a batch method
@@ -83,6 +84,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
     :param: loss_target: the target loss we're aiming for -> if this is reached the training will stop
     :param: method: either "batch" or "stochastic".
     :poram: plot: True/False. If true, matplotlib called to plot the loss vs epoch
+    :param: _lambda: the regularisation constant for L2
     '''
 
     model.train() # tell the model we're training
@@ -116,6 +118,10 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
 
         # calculate the loss
         loss = loss_func(pred.unsqueeze(0), _y.unsqueeze(0))
+
+        #deal with regularization
+        l2_norm = sum(p.pow(2.0).sum() for p in model.parameters()).item()
+        loss = loss + (_lambda*l2_norm)
 
         # backprop
         optimizer.zero_grad()
@@ -182,7 +188,7 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
     for each in epochs:
         # train our model for another D_epochs using training data.
         # Set loss_target negative so its guaranteed to train for D_epochs
-        trainNN(train,model,loss_func,optimizer,
+        trainNN(copy.deepcopy(train),model,loss_func,optimizer,
                 max_epoch = D_epoch,
                 loss_target = -1,
                 method = method,
@@ -195,7 +201,7 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
 
         #calculate validation loss
         valid_preds = model.forward(Xvalid)
-        valid_loss = loss_func(yvalid_bin,valid_preds)
+        valid_loss = loss_func(yvalid_bin,valid_preds).item()
 
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)

@@ -100,17 +100,60 @@ def insurability_learningcurve():
 
     train, valid, test = tu.scale01(train, [train, valid, test])  # normalise the data
 
+    train = tu.power_up(train,2,6.5) # raise Cigarettes to power of 6.5
+    valid = tu.power_up(valid,2,6.5)
+
     f1s = []  # holder to record the f1 score on validation set for different powers
 
     # initialise a new NN
-    NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=False)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+    NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
     loss_func = nn.MSELoss()  # mean square error loss function
-    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.5)
+    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
 
     generate_learning_curve(train, valid, NN, loss_func, optimizer,
-                            max_epoch=300000,
-                            method='batch',
+                            max_epoch=200000,
+                            method='stochastic',
                             plot=True)
+    return
+
+
+def insurability_learningcurve_differentmoms():
+    '''
+    see how the training loss curve varies when we use two different learning parameters (ie: learning rate)
+    '''
+
+    train = read_insurability('three_train.csv')
+
+    train = tu.scale01(train, [train])[0]  # normalise the data
+
+    train = tu.power_up(train,2,6.5) # raise Cigarettes to power of 6.5
+
+    # initialise a new NN
+    NN1 = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+    NN2 = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+    loss_func = nn.MSELoss()  # mean square error loss function
+    optimizer1 = torch.optim.SGD(NN1.parameters(), lr=1e-3, momentum=0.9)
+    optimizer2 = torch.optim.SGD(NN2.parameters(), lr=1e-3, momentum=0.7)
+
+    training_curve1 = trainNN(train, NN1, loss_func, optimizer1,
+                            max_epoch=300000,
+                            loss_target=-1,
+                            method='stochastic',
+                            plot=False)
+
+    training_curve2 = trainNN(train, NN2, loss_func, optimizer2,
+                            max_epoch=300000,
+                            loss_target = -1,
+                            method='stochastic',
+                            plot=False)
+
+    f = plt.figure()
+    plt.plot(training_curve1,label='momentum = 0.9')
+    plt.plot(training_curve2,label='momentum = 0.7')
+    plt.xlabel("Epoch")
+    plt.ylabel("Training Loss")
+    plt.suptitle("Loss curves for different momentums")
+    plt.legend()
     return
 
 
@@ -125,6 +168,9 @@ def insurability_testbias():
 
     train, valid, test = tu.scale01(train, [train, valid, test])  # normalise the data
 
+    train = tu.power_up(train, 2, 6.5)  # raise cigarettes to power of 6.5
+    valid = tu.power_up(valid, 2, 6.5)
+
     results = pd.DataFrame(index=[True, False], columns=['Good', 'Neutral', 'Bad'])
     # initialise a new NN without bias
     print("Testing effect of bias...")
@@ -132,7 +178,7 @@ def insurability_testbias():
         NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=bias)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
         loss_func = nn.MSELoss()  # mean square error loss function
         optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
-        trainNN(train, NN, loss_func, optimizer, max_epoch=100000, loss_target=0.15, method='stochastic', plot=False)
+        trainNN(train, NN, loss_func, optimizer, max_epoch=100000, loss_target=0.08, method='stochastic', plot=False)
 
         # test on the validation set
         valid_preds = NN.forward(tu.extract_hparams(valid))
@@ -161,35 +207,45 @@ def insurability_testmomentum():
 
     train, valid, test = tu.scale01(train, [train, valid, test])  # normalise the data
 
+    train = tu.power_up(train,2,6.5) #power cigarettes by 6.5
+    valid = tu.power_up(valid,2,6.5)
+
     momentums = np.arange(0, 1, 0.05)  # powers to experiment with
 
-    f1s = pd.dataframe(data=0,
+    f1s = pd.DataFrame(data=0,
                        index=momentums,
                        columns=["good", "neutral",
                                 "bad"])  # holder to record the f1 score on validation set for different powers
 
     for mom in tqdm(momentums):
-        # initialise a new nn
-        nn = FeedForwardSoftmax(3, 3, hiddenns=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
-        loss_func = nn.MSEloss  # mean square error loss function
-        optimizer = torch.optim.SGD(nn.parameters(), lr=1e-3, momentum=mom)
+        fs = {0:[],1:[],2:[]}
+        for n in range(5):
+            # initialise a new nn
+            NN = FeedForwardSoftmax(3, 3, hiddenNs = [2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+            loss_func = nn.MSELoss()  # mean square error loss function
+            optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=mom)
 
-        train_loss = trainNN(train, nn, loss_func, optimizer,
-                             max_epoch=500000,
-                             loss_target=0.15,
-                             method='stochastic',
-                             plot=False,
-                             verbosity=False)  # train the nn on our data
+            train_loss = trainNN(train, NN, loss_func, optimizer,
+                                 max_epoch=500000,
+                                 loss_target=0.08,
+                                 method='stochastic',
+                                 plot=False,
+                                 verbosity=False)  # train the nn on our data
 
-        # test on the validation set
-        valid_preds = nn.forward(tu.extract_hparams(valid))
-        cfm = vu.confusion_matrix(tu.extract_targets(valid),
-                                  tu.binary_to_labels(valid_preds),
-                                  classes=[0, 1, 2])
-        classes = {0: "good", 1: "neutral", 2: "bad"}
+            # test on the validation set
+            valid_preds = NN.forward(tu.extract_hparams(valid))
+            cfm = vu.confusion_matrix(tu.extract_targets(valid),
+                                      tu.binary_to_labels(valid_preds),
+                                      classes=[0, 1, 2])
+            classes = {0: "good", 1: "neutral", 2: "bad"}
+            for _class in classes:
+                p, r, f1 = vu.precision_recall_F1(cfm, _class)
+                fs[_class].append(f1)
+
         for _class in classes:
-            p, r, f1 = vu.precision_recall_F1(cfm, _class)
-            f1s.loc[mom, classes[_class]] = f1
+            f1s.loc[mom, classes[_class]] = sum(fs[_class])/len(fs[_class])
+
+    f1s['Mean F-Score'] = f1s.mean(axis=1)
 
     f1s = f1s.reset_index().melt(id_vars=['index']).rename(columns={"index": "momentum",
                                                                     "value": "f-score",
@@ -255,14 +311,17 @@ def insurability_testlosstarget():
 
     train, valid, test = tu.scale01(train, [train, valid, test])  # normalise the data
 
-    losstargets = np.arange(0.2, 0.07, -0.005)
+    train = tu.power_up(train,2,6.5)
+    valid = tu.power_up(valid,2,6.5)
+
+    losstargets = np.arange(0.2, 0.05, -0.01)
 
     f1s = pd.DataFrame(data=0,
                        index=losstargets,
                        columns=["Good", "Neutral",
                                 "Bad"])  # holder to record the f1 score on validation set for different powers
 
-    for loss in tqdm(losstargets):
+    for loss in losstargets:
         # initialise a new NN
         NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
         loss_func = nn.MSELoss()  # mean square error loss function
@@ -273,7 +332,7 @@ def insurability_testlosstarget():
                              loss_target=loss,
                              method='stochastic',
                              plot=False,
-                             verbosity=False)  # train the NN on our data
+                             verbosity=True)  # train the NN on our data
 
         # test on the validation set
         valid_preds = NN.forward(tu.extract_hparams(valid))
@@ -304,39 +363,46 @@ def insurability_testpowers():
 
     train, valid, test = tu.scale01(train, [train, valid, test])  # normalise the data
 
-    powers = np.arange(0.5, 3, 0.1)
+    powers = np.arange(1, 10, 0.5)
 
     f1s = pd.DataFrame(data=0,
                        index=powers,
                        columns=["Good", "Neutral",
                                 "Bad"])  # holder to record the f1 score on validation set for different powers
 
-    for p in tqdm(powers):
-        # initialise a new NN
-        NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
-        loss_func = nn.MSELoss()  # mean square error loss function
-        optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
+    for pow in powers:
+        fs = {0:[],1:[],2:[]}
+        print('power: ',pow)
+        for n in range(0,5):
+            # initialise a new NN
+            NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+            loss_func = nn.MSELoss()  # mean square error loss function
+            optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
 
-        _train = tu.power_up(train, 2, p)
-        _valid = tu.power_up(valid, 2, p)
+            _train = tu.power_up(train, 2, pow) #raise the 2nd column (cigarettes) to a power
+            _valid = tu.power_up(valid, 2, pow)
 
-        train_loss = trainNN(_train, NN, loss_func, optimizer,
-                             max_epoch=500000,
-                             loss_target=0.15,
-                             method='stochastic',
-                             plot=False,
-                             verbosity=False)  # train the NN on our data
+            train_loss = trainNN(_train, NN, loss_func, optimizer,
+                                 max_epoch=500000,
+                                 loss_target=0.08,
+                                 method='stochastic',
+                                 plot=False,
+                                 verbosity=True)  # train the NN on our data
 
-        # test on the validation set
-        valid_preds = NN.forward(tu.extract_hparams(_valid))
-        cfm = vu.confusion_matrix(tu.extract_targets(_valid),
-                                  tu.binary_to_labels(valid_preds),
-                                  classes=[0, 1, 2])
-        classes = {0: "Good", 1: "Neutral", 2: "Bad"}
+            # test on the validation set
+            valid_preds = NN.forward(tu.extract_hparams(_valid))
+            cfm = vu.confusion_matrix(tu.extract_targets(_valid),
+                                      tu.binary_to_labels(valid_preds),
+                                      classes=[0, 1, 2])
+            classes = {0: "Good", 1: "Neutral", 2: "Bad"}
+            for _class in classes:
+                p, r, f1 = vu.precision_recall_F1(cfm, _class)
+                fs[_class].append(f1)
+
         for _class in classes:
-            p, r, f1 = vu.precision_recall_F1(cfm, _class)
-            f1s.loc[p, classes[_class]] = f1
+            f1s.loc[pow, classes[_class]] = sum(fs[_class])/len(fs[_class])
 
+    f1s['Mean F-Score'] = f1s.mean(axis=1)
     f1s = f1s.reset_index().melt(id_vars=['index']).rename(columns={"index": "Exponent",
                                                                     "value": "F-Score",
                                                                     "variable": "Classification"})
@@ -353,6 +419,9 @@ def classify_insurability():
 
     train, valid, test = tu.scale01(train, [train, valid, test])  # normalise the data
 
+    train = tu.power_up(train,2,6.5)
+    test = tu.power_up(test,2,6.5)
+
     # initialise a new NN
     NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
     loss_func = nn.MSELoss()  # mean square error loss function
@@ -360,7 +429,7 @@ def classify_insurability():
 
     train_loss = trainNN(train, NN, loss_func, optimizer,
                          max_epoch=500000,
-                         loss_target=0.15,
+                         loss_target=0.03,
                          method='stochastic',
                          plot=False)  # train the NN on our data
 
@@ -426,7 +495,7 @@ def learningcurve_mnist():
     return
 
 
-def classify_mnist():
+def mnist_testvarthresh():
     train = read_mnist('mnist_train.csv')
     valid = read_mnist('mnist_valid.csv')
     test = read_mnist('mnist_test.csv')
@@ -444,7 +513,113 @@ def classify_mnist():
     test = tu.data_bin(test)
 
     # run data through variance filter
-    train_lowD, test_lowD = tu.low_variance_filter(train, test, 60)
+    varthreshes = range(0,90,5)
+
+    f1s = pd.DataFrame(data=0,
+                       index=varthreshes,
+                       columns=range(0,10))
+
+    for thresh in varthreshes:
+        print('-------')
+        print(thresh)
+        train_lowD, valid_lowD = tu.low_variance_filter(train, valid, thresh)
+
+        # initialise a new NN
+        NN = FeedForwardSoftmax(len(train[0][1]), 10, hiddenNs=[10], bias=True)
+        loss_func = nn.CrossEntropyLoss()  # mean square error loss function
+        optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
+
+        losscurve = trainNN(train, NN, loss_func, optimizer,
+                             loss_target = 1.60,
+                             max_epoch=300000,
+                             method='stochastic',
+                             plot=False)  # train the NN on our data
+
+        valid_preds = NN.forward(tu.extract_hparams(valid)) #generate predictions
+
+        #generate confusion matrix
+        cfm = vu.confusion_matrix(tu.extract_targets(valid),
+                                  tu.binary_to_labels(valid_preds),
+                                  classes=range(10))
+
+        classes = range(10)
+        for _class in classes:
+            p, r, f1 = vu.precision_recall_F1(cfm, _class)
+            f1s.loc[thresh, _class] = f1
+
+    f1s['Mean F-Score'] = f1s.mean(axis=1)
+    #f1s = f1s.reset_index().melt(id_vars=['index']).rename(columns={"index": "Variance Threshold",
+    #                                                                "value": "F-Score",
+    #                                                                "variable": "Classification"})
+
+    fig2 = plt.figure()
+    ax2 = plt.subplot(111)
+    sns.lineplot(data=f1s['Mean F-Score'])
+    plt.suptitle("Effect of variance threshold filter on performance")
+    return
+
+
+def classify_mnist():
+    train = read_mnist('mnist_train.csv')
+    test = read_mnist('mnist_test.csv')
+    #show_mnist('mnist_test.csv', 'pixels')
+
+    # insert code to train a neural network with an architecture of your choice
+    # (a FFNN is fine) and produce evaluation metrics
+
+    # with mnist, we need to turn the data from strings into integers
+    train, test = tu.str2int([train, test])
+
+    # turn data to binary
+    train = tu.data_bin(train)
+    test = tu.data_bin(test)
+
+    train_lowD, valid_lowD = tu.low_variance_filter(train, test, 50)
+
+    # initialise a new NN
+    NN = FeedForwardSoftmax(len(train[0][1]), 10, hiddenNs=[10], bias=True)
+    loss_func = nn.CrossEntropyLoss()  # mean square error loss function
+    optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
+
+    losscurve = trainNN(train, NN, loss_func, optimizer,
+                         loss_target = 1.50,
+                         max_epoch=300000,
+                         method='stochastic',
+                         plot=False)  # train the NN on our data
+
+    test_preds = NN.forward(tu.extract_hparams(test)) #generate predictions
+
+    #generate confusion matrix
+    cfm = vu.confusion_matrix(tu.extract_targets(test),
+                              tu.binary_to_labels(test_preds),
+                              classes=range(10))
+
+    print('---- confusion matrix ----')
+    print(cfm)
+    classes = range(0,10)
+    for _class in classes:
+        p, r, f1 = vu.precision_recall_F1(cfm, _class)
+        print("class {} f1: {}".format(_class, f1))
+    return
+
+
+
+def mnist_learningcurve():
+    train = read_mnist('mnist_train.csv')
+    valid = read_mnist('mnist_valid.csv')
+    test = read_mnist('mnist_test.csv')
+    #show_mnist('mnist_test.csv', 'pixels')
+
+    # insert code to train a neural network with an architecture of your choice
+    # (a FFNN is fine) and produce evaluation metrics
+
+    # with mnist, we need to turn the data from strings into integers
+    train, valid, test = tu.str2int([train, valid, test])
+
+    # turn data to binary
+    train = tu.data_bin(train)
+    valid = tu.data_bin(valid)
+    test = tu.data_bin(test)
 
     # initialise a new NN
     NN = FeedForwardSoftmax(len(train[0][1]), 10, hiddenNs=[10], bias=True)
@@ -456,6 +631,71 @@ def classify_mnist():
                          method='stochastic',
                          plot=True)  # train the NN on our data
 
+    return
+
+
+def mnist_testL2():
+    train = read_mnist('mnist_train.csv')
+    valid = read_mnist('mnist_valid.csv')
+
+    #show_mnist('mnist_test.csv', 'pixels')
+
+    # insert code to train a neural network with an architecture of your choice
+    # (a FFNN is fine) and produce evaluation metrics
+
+    # with mnist, we need to turn the data from strings into integers
+    train, valid = tu.str2int([train, valid])
+
+    # turn data to binary
+    train = tu.data_bin(train)
+    valid = tu.data_bin(valid)
+
+    train_lowD, valid_lowD = tu.low_variance_filter(train, valid, 50)
+
+    # run data through variance filter
+    alphas = [1e-5,1e-4,1e-3]
+
+    f1s = pd.DataFrame(data=0,
+                       index=alphas,
+                       columns=range(0,10))
+
+    for a in alphas:
+        print('a: ',a)
+        # initialise a new NN
+        NN = FeedForwardSoftmax(len(train[0][1]), 10, hiddenNs=[10], bias=True)
+        loss_func = nn.CrossEntropyLoss()  # mean square error loss function
+        optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
+
+        losscurve = trainNN(train, NN, loss_func, optimizer,
+                             loss_target = 1.60,
+                             max_epoch=500000,
+                             method='stochastic',
+                             plot=False,
+                             _lambda = a)  # train the NN on our data
+
+        valid_preds = NN.forward(tu.extract_hparams(valid)) #generate predictions
+
+        #generate confusion matrix
+        cfm = vu.confusion_matrix(tu.extract_targets(valid),
+                                  tu.binary_to_labels(valid_preds),
+                                  classes=range(10))
+
+        classes = range(10)
+        for _class in classes:
+            p, r, f1 = vu.precision_recall_F1(cfm, _class)
+            f1s.loc[a, _class] = f1
+
+    f1s['Mean F-Score'] = f1s.mean(axis=1)
+    f1s_2 = f1s.reset_index().melt(id_vars=['index']).rename(columns={"index": "Exponent",
+                                                                    "value": "F-Score",
+                                                                    "variable": "Classification"})
+    fig1 = plt.figure()
+    ax1 = plt.subplot(111)
+    sns.lineplot(data=f1s['Mean F-Score'], ax = ax1)
+    #fig2 = plt.figure()
+    #ax2 = plt.subplot(111)
+    #sns.lineplot(data=f1s_2, x='Threshold', y='F-Score', hue='Classification',ax = ax2)
+    #plt.suptitle("Effect of regularisation strength on performance")
     return
 
 
@@ -484,11 +724,15 @@ def main():
     # insurability_testL2()
     # insurability_testbias()
     # insurability_testmomentum()
+    # insurability_learningcurve_differentmoms()
     # insurability_testlosstarget()
-    insurability_testpowers()
-    # classify_mnist()
+    # insurability_testpowers()
+    # mnist_learningcurve()
     # classify_mnist_reg()
     # classify_insurability_manual()
+    # mnist_testvarthresh()
+    # classify_mnist()
+    mnist_testL2()
 
 
 if __name__ == "__main__":
