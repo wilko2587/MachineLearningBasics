@@ -9,7 +9,7 @@ import seaborn as sns
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
-from NN import FeedForwardSoftmax, trainNN, generate_learning_curve
+from NN import FeedForwardSoftmax, trainNN, manualtrainNN, generate_learning_curve
 import transformation_utils as tu
 import validation_utils as vu
 import matplotlib.pyplot as plt
@@ -828,10 +828,44 @@ def classify_insurability_manual():
 
     # reimplement classify_insurability() without using a PyTorch optimizer.
     # this part may be simpler without using a class for the FFNN
+    train, valid, test = tu.scale01(train, [train, valid, test])  # normalise the data
+
+    train = tu.power_up(train, 2, 7.5)
+    test = tu.power_up(test, 2, 7.5)
+
+    # initialise a new NN
+    NN = FeedForwardSoftmax(3, 3, hiddenNs=[2], bias=True)  # 3 inputs, 2 hidden, 3 outputs as per slides 11-8.
+    loss_func = nn.CrossEntropyLoss()  # mean square error loss function
+    # optimizer = torch.optim.SGD(NN.parameters(), lr=1e-3, momentum=0.9)
+    # train_loss = trainNN(train, NN, loss_func, optimizer,
+    #                      max_epoch=500000,
+    #                      loss_target=0.65,
+    #                      method='stochastic',
+    #                      plot=False)  # train the NN on our data
+
+    train_loss = manualtrainNN(train, NN, loss_func,
+                         max_epoch=500000,
+                         loss_target=0.65,
+                         method='stochastic',
+                         plot=False)  # train the NN on our data
+
+    # test on the validation set
+    test_preds = NN.forward(tu.extract_hparams(test))
+    cfm = vu.confusion_matrix(tu.extract_targets(test),
+                              tu.binary_to_labels(test_preds),
+                              classes=[0, 1, 2])
+
+    print('--- confusion matrix ---')
+    print(cfm)
+    classes = {0: "good", 1: "neutral", 2: "bad"}
+    for _class in classes:
+        p, r, f1 = vu.precision_recall_F1(cfm, _class)
+        print("class {} f1: {}".format(classes[_class], f1))
+    return
 
 
 def main():
-    # classify_insurability()
+    classify_insurability()
     # univariate_insurability()
     # insurability_learningcurve()
     # insurability_testbias()
@@ -841,7 +875,7 @@ def main():
     # insurability_testpowers()
     # mnist_learningcurve()
     # mnist_learningcurveL2()
-    classify_mnist_reg()
+    # classify_mnist_reg()
     # classify_insurability_manual()
     # mnist_testvarthresh()
     # classify_mnist()
