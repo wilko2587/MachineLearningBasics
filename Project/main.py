@@ -1,3 +1,15 @@
+'''
+NOTES
+-> because we have a lot of features, some that may not be relevant, i want to try L1 regularization
+    L1 Functionality is now added into the ff.trainNN() function. I have put in L1 and L2 regularisation terms.
+    Note that if we have too much time on our hands, we can use both of these in tandem/combination with eachother.
+    This is a common method called an "elastic net", which gives a bit of the benefit of both L1 and L2 methods.
+
+-> For L1 regularisation in particular, we should progress by cross-validating the dataset into multiple parts
+to work out which parameters are useless with a higher degree of certainty. Some modules normally have this functionality
+built in, but I'm not sure about pytorch.
+'''
+
 import feedforward as ff
 import datareader as dr
 import transformation_utils as tu
@@ -26,4 +38,4 @@ losses = ff.trainNN(train, net, loss, optimizer,
                     _lambdaL1=0.01,
                     _lambdaL2=0)
 
-### because we have a lot of features, some that may not be relevant, i want to try L1 regularization
+
