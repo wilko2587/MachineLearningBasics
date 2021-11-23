@@ -228,11 +228,11 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
                 _lambdaL2=_lambdaL2)
 
         # calculate training loss
-        train_preds = model.forward(Xtrain)
+        train_preds = model.forward(Xtrain, outMethod=False)
         train_loss = loss_func(ytrain_bin, train_preds).item()
 
         # calculate validation loss
-        valid_preds = model.forward(Xvalid)
+        valid_preds = model.forward(Xvalid, outMethod=False)
         valid_loss = loss_func(yvalid_bin, valid_preds).item()
 
         train_losses.append(train_loss)
