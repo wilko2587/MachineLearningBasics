@@ -192,9 +192,14 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
 def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch,
                             method="batch", plot=True, _lambda=0):
     '''
+
+    NEEDS UPDATING TO MATCH UPDATES IN trainNN()
+
     for a model, with train data and valid data + other params, plot a training curve using loss as
     the metric. Plots training epoch vs loss separately for training data and validation data.
     '''
+
+    print('do not use -> needs updating in accordance with trainNN() updates (lambdaL1, lambdaL1, minibatch...')
 
     epochs = range(1, max_epoch, 1000)
     D_epoch = epochs[1] - epochs[0]

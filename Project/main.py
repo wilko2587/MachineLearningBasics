@@ -13,6 +13,7 @@ built in, but I'm not sure about pytorch.
 import feedforward as ff
 import datareader as dr
 import transformation_utils as tu
+import validation_utils as vu
 from torch import nn
 import torch
 
@@ -22,15 +23,16 @@ train, valid, test = dr.generate_sets(catdata, splits=[70, 15, 15])
 train, valid, test = tu.scale01(train, [train, valid, test])
 
 # lets make a simple feed forward NN with one hidden layer, softmax output
-net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[3])  # N x 3 x 3 neural net
+net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20,20],
+                            outputMethod=)  # N x 3 x 3 neural net
 loss = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
+optimizer = torch.optim.SGD(net.parameters(), lr=1e-2, momentum=0.9)
 
 losses = ff.trainNN(train, net, loss, optimizer,
-                    max_epoch=100000,
-                    loss_target=0.72,
+                    max_epoch=200000,
+                    loss_target=0.30,
                     method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-                    minibatch_size=100,
+                    minibatch_size=300,
                     plot=True,
                     verbosity=True,
 
@@ -38,3 +40,16 @@ losses = ff.trainNN(train, net, loss, optimizer,
                     # elastic net
                     _lambdaL1=0.01,
                     _lambdaL2=0)
+
+test_predictions = tu.binary_to_labels(net.forward(test[0]))
+test_true = test[1].squeeze()
+
+cm = vu.confusion_matrix(test_true,test_predictions,classes = [0,1,2])
+F10 = vu.precision_recall_F1(cm,0)[2]
+F11 = vu.precision_recall_F1(cm,1)[2]
+F12 = vu.precision_recall_F1(cm,2)[2]
+
+print('--- confusion matrix ---')
+print(cm)
+
+print('F-measures \n class 0: {} \n class 1: {} \n class 2: {}'.format(F10,F11,F12))
