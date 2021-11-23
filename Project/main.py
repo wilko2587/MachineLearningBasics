@@ -23,23 +23,27 @@ train, valid, test = dr.generate_sets(catdata, splits=[70, 15, 15])
 train, valid, test = tu.scale01(train, [train, valid, test])
 
 # lets make a simple feed forward NN with one hidden layer, softmax output
-net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20,20],
-                            outputMethod=)  # N x 3 x 3 neural net
+net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20, 20])  # N x 3 x 3 neural net
 loss = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), lr=1e-2, momentum=0.9)
+optimizer = torch.optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
 
-losses = ff.trainNN(train, net, loss, optimizer,
-                    max_epoch=200000,
-                    loss_target=0.30,
-                    method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-                    minibatch_size=300,
-                    plot=True,
-                    verbosity=True,
+ff.generate_learning_curve(train, valid, net, loss, optimizer,
+                           max_epoch = 100000,
+                           method = 'minibatch',
+                           minibatch_size=300)
 
-                    # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
-                    # elastic net
-                    _lambdaL1=0.01,
-                    _lambdaL2=0)
+#losses = ff.trainNN(train, net, loss, optimizer,
+#                    max_epoch=100000,
+#                    loss_target=0.30,
+#                    method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+#                    minibatch_size=300,
+#                    plot=True,
+#                    verbosity=True,
+#
+#                    # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+#                    # elastic net
+#                    _lambdaL1=0.00,
+#                    _lambdaL2=0)
 
 test_predictions = tu.binary_to_labels(net.forward(test[0]))
 test_true = test[1].squeeze()

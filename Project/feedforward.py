@@ -59,12 +59,13 @@ class FeedForwardSoftmax(nn.Module):
         for i in range(len(layer_sizes) - 1):  # build the architecture
             self._layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1], bias=bias))
 
-    def forward(self, x):
+    def forward(self, x, outMethod = True):
         """
         Performs a forward pass of the network by for-looping through the layers in sequence, passing a vector
         x from one layer to the next until the output.
 
         :param: x = input vector to the network
+        :param: outMethod: True/False, whether to use a predetermined transformation on the output (eg: Softmax)
         returns network output
         """
         # assert our vector x is a tensor
@@ -72,7 +73,8 @@ class FeedForwardSoftmax(nn.Module):
 
         for i in range(len(self._layers)):  # iterate through the layers, passing x from one layer to the next
             x = self._layers[i](x)
-            x = self._methods[i](x)
+            if i != len(self._layers) - 1 and outMethod:
+                x = self._methods[i](x)
         return x
 
     def get_weights(self):
@@ -140,7 +142,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
             raise (NameError("Kwarg 'method' must be either 'batch' or 'stochastic'"))
 
         # make predictions
-        pred = model.forward(_X)
+        pred = model.forward(_X, outMethod = False)
 
         # calculate the loss
         loss = loss_func(pred.unsqueeze(0), _y.unsqueeze(0))
@@ -155,7 +157,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
         loss.backward()
         optimizer.step()
 
-        full_loss = loss_func(model.forward(X), ybin).item()
+        full_loss = loss_func(model.forward(X, outMethod = False), ybin).item()
         train_loss.append(full_loss)
         epoch += 1
 
@@ -190,16 +192,12 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
 
 
 def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch,
-                            method="batch", plot=True, _lambda=0):
+                            method="batch", plot=True,
+                            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100):
     '''
-
-    NEEDS UPDATING TO MATCH UPDATES IN trainNN()
-
     for a model, with train data and valid data + other params, plot a training curve using loss as
     the metric. Plots training epoch vs loss separately for training data and validation data.
     '''
-
-    print('do not use -> needs updating in accordance with trainNN() updates (lambdaL1, lambdaL1, minibatch...')
 
     epochs = range(1, max_epoch, 1000)
     D_epoch = epochs[1] - epochs[0]
@@ -208,10 +206,10 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
 
     # set up the data
     Xtrain = train[0]
-    ytrain = train[1]
+    ytrain = train[1].squeeze()
     ytrain_bin = tu.labels_to_binary(ytrain, Noutputs)
     Xvalid = valid[0]
-    yvalid = valid[1]
+    yvalid = valid[1].squeeze()
     yvalid_bin = tu.labels_to_binary(yvalid, Noutputs)
 
     train_losses = []  # containers to plot learning curves
@@ -226,7 +224,8 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
                 method=method,
                 plot=False,
                 verbosity=False,
-                _lambda=_lambda)
+                _lambdaL1=_lambdaL1,
+                _lambdaL2=_lambdaL2)
 
         # calculate training loss
         train_preds = model.forward(Xtrain)
