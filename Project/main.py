@@ -27,25 +27,26 @@ net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20, 20])  # N x 3 x 3
 loss = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
 
-ff.generate_learning_curve(train, valid, net, loss, optimizer,
-                           max_epoch = 100000,
-                           method = 'minibatch',
-                           minibatch_size=300)
+#ff.generate_learning_curve(train, valid, net, loss, optimizer,
+#                           max_epoch = 100000,
+#                           method = 'minibatch',
+#                           minibatch_size=300)
 
-#losses = ff.trainNN(train, net, loss, optimizer,
-#                    max_epoch=100000,
-#                    loss_target=0.30,
-#                    method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-#                    minibatch_size=300,
-#                    plot=True,
-#                    verbosity=True,
-#
-#                    # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
-#                    # elastic net
-#                    _lambdaL1=0.00,
-#                    _lambdaL2=0)
+losses = ff.trainNN(train, net, loss, optimizer,
+                    max_epoch=100000,
+                    loss_target=0.30,
+                    method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+                    minibatch_size=300,
+                    plot=True,
+                    verbosity=True,
 
-test_predictions = tu.binary_to_labels(net.forward(test[0]))
+                    # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+                    # elastic net
+                    _lambdaL1=0.00,
+                    _lambdaL2=0,
+                    outMethod = True)
+
+test_predictions = tu.binary_to_labels(net.forward(test[0], outMethod=True))
 test_true = test[1].squeeze()
 
 cm = vu.confusion_matrix(test_true,test_predictions,classes = [0,1,2])

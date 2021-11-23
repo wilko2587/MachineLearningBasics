@@ -89,7 +89,8 @@ class FeedForwardSoftmax(nn.Module):
 
 def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
             loss_target=0.1, method="batch", plot=True, verbosity=True,
-            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100):
+            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100,
+            outMethod = True):
     '''
     takes a dataset, and a model (such as FeedForwardSoftmax), a loss function, and a
     pytorch optimizer and trains the model using a batch method
@@ -105,6 +106,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
     :param: _lambdaL2: the regularisation constant for L2
     :param: _lambdaL1: the regularisation constant for L1
     :param: minibatch_size: the size of the minibatch to be used if method = minibatch
+    :param: outMethod: True/False depending if we want to run the NN output through a softmax or not when calculating losses
     '''
 
     model.train()  # tell the model we're training
@@ -142,7 +144,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
             raise (NameError("Kwarg 'method' must be either 'batch' or 'stochastic'"))
 
         # make predictions
-        pred = model.forward(_X, outMethod = False)
+        pred = model.forward(_X, outMethod = outMethod)
 
         # calculate the loss
         loss = loss_func(pred.unsqueeze(0), _y.unsqueeze(0))
@@ -157,7 +159,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
         loss.backward()
         optimizer.step()
 
-        full_loss = loss_func(model.forward(X, outMethod = False), ybin).item()
+        full_loss = loss_func(model.forward(X, outMethod = outMethod), ybin).item()
         train_loss.append(full_loss)
         epoch += 1
 
