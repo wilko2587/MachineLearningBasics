@@ -87,7 +87,7 @@ class FeedForwardSoftmax(nn.Module):
 
 def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
             loss_target=0.1, method="batch", plot=True, verbosity=True,
-            _lambdaL1=0, _lambdaL2=0):
+            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100):
     '''
     takes a dataset, and a model (such as FeedForwardSoftmax), a loss function, and a
     pytorch optimizer and trains the model using a batch method
@@ -98,10 +98,11 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
     :param: optimizer: torch.optim object -> our optimizing function
     :param: max_epoch: maximum number of iterations we'll allow before force-stopping
     :param: loss_target: the target loss we're aiming for -> if this is reached the training will stop
-    :param: method: either "batch" or "stochastic".
+    :param: method: either "batch" or "stochastic" or "minibatch".
     :poram: plot: True/False. If true, matplotlib called to plot the loss vs epoch
     :param: _lambdaL2: the regularisation constant for L2
     :param: _lambdaL1: the regularisation constant for L1
+    :param: minibatch_size: the size of the minibatch to be used if method = minibatch
     '''
 
     model.train()  # tell the model we're training
@@ -128,6 +129,13 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
             randomi = randint(0, len(X) - 1)
             _X = X[randomi]
             _y = ybin[randomi]
+        elif method.lower() == "minibatch":
+            minibatch_indices = []
+            for i in range(minibatch_size):
+                minibatch_indices.append(randint(0, len(X) - 1))
+            minibatch_indices = torch.tensor(minibatch_indices).unique()
+            _X = torch.index_select(X,0,minibatch_indices)
+            _y = torch.index_select(ybin,0,minibatch_indices)
         else:
             raise (NameError("Kwarg 'method' must be either 'batch' or 'stochastic'"))
 

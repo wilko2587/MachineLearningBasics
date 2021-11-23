@@ -29,7 +29,8 @@ optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
 losses = ff.trainNN(train, net, loss, optimizer,
                     max_epoch=100000,
                     loss_target=0.72,
-                    method='batch',  # pick "batch" or "stochastic"
+                    method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+                    minibatch_size=100,
                     plot=True,
                     verbosity=True,
 
@@ -37,5 +38,3 @@ losses = ff.trainNN(train, net, loss, optimizer,
                     # elastic net
                     _lambdaL1=0.01,
                     _lambdaL2=0)
-
-

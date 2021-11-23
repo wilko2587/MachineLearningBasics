@@ -19,6 +19,7 @@ def softmax(x):
         return torch.div(torch.exp(x),torch.sum(torch.exp(x),1).unsqueeze(1))
     elif Ndims == 1:
         return torch.div(torch.exp(x),torch.sum(torch.exp(x)))
+
 def softmax_derivative(s):
     jacobian = torch.diag(s)
 
@@ -84,7 +85,7 @@ class FeedForwardSoftmax(nn.Module):
         for i in range(len(layer_sizes) - 1):  # build the architecture
             self._layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1], bias=bias))
 
-    def forward(self, x):
+    def forward(self, x, _bool):
         """
         Performs a forward pass of the network by for-looping through the layers in sequence, passing a vector
         x from one layer to the next until the output.
@@ -97,6 +98,8 @@ class FeedForwardSoftmax(nn.Module):
 
         for i in range(len(self._layers)): #iterate through the layers, passing x from one layer to the next
             x = self._layers[i](x)
+            if i != 0 and i != len(self._layers)-1 and _bool == True:
+                x = nn.Sigmoid(x) # if hidden layer, sigmoid
         return softmax(x)
 
     def get_weights(self):
@@ -122,7 +125,7 @@ class FeedForwardSoftmax(nn.Module):
 
 def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
             loss_target = 0.1, method = "batch", plot=True, verbosity=True,
-            _lambda = 0):
+            _lambda = 0, _bool = False):
     '''
     takes a dataset, and a model (such as FeedForwardSoftmax), a loss function, and a
     pytorch optimizer and trains the model using a batch method
@@ -165,7 +168,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
             raise(NameError("Kwarg 'method' must be either 'batch' or 'stochastic'"))
 
         # make predictions
-        pred = model.forward(_X)
+        pred = model.forward(_X, _bool = _bool)
 
         # calculate the loss
         loss = loss_func(pred.unsqueeze(0), _y.unsqueeze(0))
@@ -179,7 +182,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch = 10000,
         loss.backward()
         optimizer.step()
 
-        full_loss = loss_func(model.forward(X), ybin).item()
+        full_loss = loss_func(model.forward(X,_bool=_bool), ybin).item()
         train_loss.append(full_loss)
         epoch += 1
 

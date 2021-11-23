@@ -752,7 +752,7 @@ def mnist_learningcurvesL2_comparison():
                          loss_target = -1,
                          max_epoch=200000,
                          method='stochastic',
-                         plot=False)  # train the NN on our data
+                         plot=False, _bool=False)  # train the NN on our data
 
     NN = FeedForwardSoftmax(len(train[0][1]), 10, hiddenNs=[10], bias=True)
     loss_func = nn.CrossEntropyLoss()  # mean square error loss function
@@ -762,15 +762,15 @@ def mnist_learningcurvesL2_comparison():
                          loss_target = -1,
                          max_epoch=200000,
                          method='stochastic',
-                         plot=False)  # train the NN on our data
+                         plot=False, _bool=True)  # train the NN on our data
 
     f = plt.figure()
-    plt.plot(losscurve1, label="No Regularisation")
-    plt.plot(losscurve2, label="Lambda = 2e-3")
+    plt.plot(losscurve1, label="Linear hidden layer")
+    plt.plot(losscurve2, label="Sigmoid hidden layer")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.legend()
-    plt.suptitle("Learning curves with/without regularisation")
+    plt.suptitle("Learning curves with/without Sigmoid in hidden layer")
     return
 
 
@@ -865,7 +865,7 @@ def classify_insurability_manual():
 
 
 def main():
-    classify_insurability()
+    # classify_insurability()
     # univariate_insurability()
     # insurability_learningcurve()
     # insurability_testbias()
@@ -879,7 +879,7 @@ def main():
     # classify_insurability_manual()
     # mnist_testvarthresh()
     # classify_mnist()
-    # mnist_learningcurvesL2_comparison()
+    mnist_learningcurvesL2_comparison()
     # mnist_testL2()
 
 
