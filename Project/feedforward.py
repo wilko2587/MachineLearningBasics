@@ -195,7 +195,8 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
 
 def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch,
                             method="batch", plot=True,
-                            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100):
+                            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100,
+                            outMethod=True):
     '''
     for a model, with train data and valid data + other params, plot a training curve using loss as
     the metric. Plots training epoch vs loss separately for training data and validation data.
@@ -220,27 +221,28 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
     for each in epochs:
         # train our model for another D_epochs using training data.
         # Set loss_target negative so its guaranteed to train for D_epochs
-        trainNN(copy.deepcopy(train), model, loss_func, optimizer,
+        losses = trainNN(copy.deepcopy(train), model, loss_func, optimizer,
                 max_epoch=D_epoch,
                 loss_target=-1,
                 method=method,
+                minibatch_size=minibatch_size,
                 plot=False,
                 verbosity=False,
                 _lambdaL1=_lambdaL1,
                 _lambdaL2=_lambdaL2)
 
         # calculate training loss
-        train_preds = model.forward(Xtrain, outMethod=False)
-        train_loss = loss_func(ytrain_bin, train_preds).item()
+        train_preds = model.forward(Xtrain, outMethod=outMethod)
+        train_loss = loss_func(train_preds,ytrain_bin).item()
 
         # calculate validation loss
-        valid_preds = model.forward(Xvalid, outMethod=False)
-        valid_loss = loss_func(yvalid_bin, valid_preds).item()
+        valid_preds = model.forward(Xvalid, outMethod=outMethod)
+        valid_loss = loss_func(valid_preds,yvalid_bin).item()
 
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
 
-        print('Epoch: {} | training acc: {} | validation acc: {}'.format(
+        print('Epoch: {} | training loss: {} | validation loss: {}'.format(
             each, round(train_loss, 4), round(valid_loss, 4)), end='\r')
     print('\n')
 
