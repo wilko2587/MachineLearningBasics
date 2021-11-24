@@ -7,6 +7,8 @@ import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.mixture import GaussianMixture
 import numpy as np
 import pandas as pd
 
@@ -70,7 +72,7 @@ def neural_net():
 
     return None
 
-def rf():
+def models():
     '''
     I removed id (not needed for any analysis), as well as bnp, a1c, and chol because of high degree of missingness.
     Transformed gender and smoking to numeric.
@@ -125,17 +127,16 @@ def rf():
     conf_matrix = vu.confusion_matrix(predicts_tensor, test_labels_tensor)
     classes = {0:'Not HF', 1: 'Stage C', 2: 'Stage D'}
 
-    print('Model 1')
+    print('Baseline RF')
     for each in classes:
         precision, recall, f1 = vu.precision_recall_F1(conf_matrix,each)
         print(f'{classes[each]}: Precision: {round(precision,2)}, Recall: {round(recall,2)}, F1: {round(f1,2)}')
-
 
     # RF model 2 - tried removing unimportant features, didn't help
     not_important = list()
 
     for x,y in zip(train_df,rf.feature_importances_):
-        if y < 0.01:
+        if y < 0.05:
             not_important.append(x)
 
     train_trim_df = train_df.drop(not_important,axis=1)
@@ -144,17 +145,52 @@ def rf():
     rf2.fit(train_trim_df,train_labels)
     predicts2 = rf2.predict(test_trim_df)
 
-    # Model Performance
-    predicts_tensor = torch.tensor(predicts2)
+    # Trimmed RF Performance
+    predicts_tensor2 = torch.tensor(predicts2)
     test_labels_tensor2 = torch.tensor(test_labels)
-    conf_matrix = vu.confusion_matrix(predicts_tensor, test_labels_tensor2)
-    classes = {0:'Not HF', 1: 'Stage C', 2: 'Stage D'}
+    conf_matrix2 = vu.confusion_matrix(predicts_tensor2, test_labels_tensor2)
 
-    print('Model 2')
+    print('RF trimmed')
+
     for each in classes:
-        precision, recall, f1 = vu.precision_recall_F1(conf_matrix,each)
+        precision, recall, f1 = vu.precision_recall_F1(conf_matrix2,each)
         print(f'{classes[each]}: Precision: {round(precision,2)}, Recall: {round(recall,2)}, F1: {round(f1,2)}')
+
+    # K nearest neighbors
+    k_list = np.arange(2,20,5)
+
+    for k in k_list:
+        neigh = KNeighborsClassifier(n_neighbors=k)
+        neigh.fit(train_df,train_labels)
+        predicts3 = neigh.predict(test_df)
+
+        # KNN Performance
+        predicts_tensor3 = torch.tensor(predicts3)
+        test_labels_tensor3 = torch.tensor(test_labels)
+        conf_matrix3 = vu.confusion_matrix(predicts_tensor3, test_labels_tensor3)
+
+        print(f'k{k}')
+
+        for each in classes:
+            precision, recall, f1 = vu.precision_recall_F1(conf_matrix3, each)
+            print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
+
+    # Gaussian mixture model
+    gaus = GaussianMixture(n_components=3,random_state=0)
+    gaus.fit(train_df,train_labels)
+    predicts4 = gaus.predict(test_df)
+
+    # Model Performance
+    predicts_tensor4 = torch.tensor(predicts4)
+    test_labels_tensor4 = torch.tensor(test_labels)
+    conf_matrix4 = vu.confusion_matrix(predicts_tensor4, test_labels_tensor4)
+
+    print('Gaussian mixture model')
+
+    for each in classes:
+        precision, recall, f1 = vu.precision_recall_F1(conf_matrix4, each)
+        print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
 
 if __name__ == '__main__':
     # neural_net()
-    rf()
+    models() #RF, RF trimmed, KNN, Gaussian mixture model
