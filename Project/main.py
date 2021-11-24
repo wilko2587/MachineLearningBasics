@@ -78,6 +78,8 @@ def models():
     I removed id (not needed for any analysis), as well as bnp, a1c, and chol because of high degree of missingness.
     Transformed gender and smoking to numeric.
     Imputed missing values as mean. Scaled data to mean 0, same SD as prior.
+    Ran 5 models: baseline RF, RF with not important elements removed, KNN, Gaussian mixture model, and gradient boosting classifier
+    All stink.
     '''
 
     # Load data, drop irrelevant or missing, convert to numeric
@@ -166,7 +168,7 @@ def models():
     test_labels_tensor3 = torch.tensor(test_labels)
     conf_matrix3 = vu.confusion_matrix(predicts_tensor3, test_labels_tensor3)
 
-    print(f'k{k}')
+    print('k=5')
 
     for each in classes:
         precision, recall, f1 = vu.precision_recall_F1(conf_matrix3, each)
@@ -188,7 +190,7 @@ def models():
         print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
 
     # Gradient boosting classifier
-    gbm = GradientBoostingClassifier(n_estimators=10000, learning_rate=0.1, max_depth=3, random_state=0)
+    gbm = GradientBoostingClassifier(n_estimators=1000, learning_rate=1, max_depth=3, random_state=0)
     gbm.fit(train_df,train_labels)
     predicts5 = gbm.predict(test_df)
 
