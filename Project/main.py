@@ -76,11 +76,11 @@ def rf():
     Transformed gender and smoking to numeric.
     Imputed missing values as mean. Scaled data to mean 0, same SD as prior.
     '''
-    data = dr.read('deid_full_data_cont.csv')
 
+    # Load data, drop irrelevant or missing, convert to numeric
+    data = dr.read('deid_full_data_cont.csv')
     exclude = ['id','bnp','a1c','chol'] # drop id because it isn't useful, values with high missingness
     data.drop(columns=exclude, axis=1, inplace=True)
-
     data['gender'].replace(to_replace=['Male', 'Female',], value=[0, 1], inplace=True) # make numeric
     smoke_cat = data['smoke'].unique()
     data['smoke'].replace(to_replace=smoke_cat, value=np.arange(11), inplace=True)
@@ -95,14 +95,8 @@ def rf():
     final_col = train_data.columns # saving column names for later
 
     # Putting labels in a format sklearn needs
-    train_labels = list()
-    test_labels = list()
-
-    for each in train_Y.to_numpy():
-        train_labels.append(each[0])
-
-    for each in test_Y.to_numpy():
-        test_labels.append(each[0])
+    train_labels = [x[0] for x in train_Y.to_numpy()]
+    test_labels = [x[0] for x in test_Y.to_numpy()]
 
     # Imputing values
     simp_imp = SimpleImputer(strategy='mean').fit(train_data)
@@ -120,24 +114,46 @@ def rf():
     train_df.columns = final_col
     test_df.columns = final_col
 
-    # Creating and running basic RF model
-    rf = RandomForestClassifier(random_state = 0)
+    # RF model
+    rf = RandomForestClassifier(random_state = 0, n_estimators=100)
     rf.fit(train_df,train_labels)
     predicts = rf.predict(test_df)
 
+    # Model Performance
     predicts_tensor = torch.tensor(predicts)
     test_labels_tensor = torch.tensor(test_labels)
-
     conf_matrix = vu.confusion_matrix(predicts_tensor, test_labels_tensor)
-
     classes = {0:'Not HF', 1: 'Stage C', 2: 'Stage D'}
 
+    print('Model 1')
     for each in classes:
         precision, recall, f1 = vu.precision_recall_F1(conf_matrix,each)
-        print(f'{classes[each]} \nPrecision: {precision} \nRecall: {recall} \nF1: {f1}')
+        print(f'{classes[each]}: Precision: {round(precision,2)}, Recall: {round(recall,2)}, F1: {round(f1,2)}')
 
-    # print(conf_matrix)
-    # print(vu.confusion_matrix(test_labels,predicts))
+
+    # RF model 2 - tried removing unimportant features, didn't help
+    not_important = list()
+
+    for x,y in zip(train_df,rf.feature_importances_):
+        if y < 0.01:
+            not_important.append(x)
+
+    train_trim_df = train_df.drop(not_important,axis=1)
+    test_trim_df = test_df.drop(not_important,axis=1)
+    rf2 = RandomForestClassifier(random_state = 0, n_estimators=100)
+    rf2.fit(train_trim_df,train_labels)
+    predicts2 = rf2.predict(test_trim_df)
+
+    # Model Performance
+    predicts_tensor = torch.tensor(predicts2)
+    test_labels_tensor2 = torch.tensor(test_labels)
+    conf_matrix = vu.confusion_matrix(predicts_tensor, test_labels_tensor2)
+    classes = {0:'Not HF', 1: 'Stage C', 2: 'Stage D'}
+
+    print('Model 2')
+    for each in classes:
+        precision, recall, f1 = vu.precision_recall_F1(conf_matrix,each)
+        print(f'{classes[each]}: Precision: {round(precision,2)}, Recall: {round(recall,2)}, F1: {round(f1,2)}')
 
 if __name__ == '__main__':
     # neural_net()
