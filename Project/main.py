@@ -4,6 +4,11 @@ import transformation_utils as tu
 import validation_utils as vu
 from torch import nn
 import torch
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+import numpy as np
+import pandas as pd
 
 def neural_net():
     '''
@@ -66,7 +71,41 @@ def neural_net():
     return None
 
 def rf():
-    pass
+    x,Y = dr.read_cont() # load data
+
+    
+
+    labels = list()
+
+    for each in Y.to_numpy():
+        labels.append(each[0])
+
+    exclude = ['id','bnp','a1c','chol'] # drop id because it isn't useful, values with high missingness
+    x.drop(columns = exclude, axis=1, inplace=True)
+
+    x['gender'].replace(to_replace=['Male', 'Female',], value=[0, 1], inplace=True) # make numeric
+    smoke_cat = x['smoke'].unique()
+    x['smoke'].replace(to_replace=smoke_cat,value=np.arange(11),inplace=True)
+    final_col = x.columns
+
+    # Missing values imputed as mean
+    # Data scaled to mean = 0, var = 1
+
+    simp_imp = SimpleImputer(strategy='mean').fit(x)
+    x_imp = simp_imp.transform(x)
+
+    scaler = StandardScaler().fit(x_imp)
+    x_final = scaler.transform(x_imp)
+
+    x = pd.DataFrame(x_final)
+    x.columns = final_col
+
+    rf = RandomForestClassifier(random_state = 0)
+    rf.fit(x,labels)
+    print(rf)
+
+
 
 if __name__ == '__main__':
-    neural_net()
+    # neural_net()
+    rf()
