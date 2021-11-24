@@ -73,7 +73,7 @@ def neural_net():
 def rf():
     x,Y = dr.read_cont() # load data
 
-    
+    # print(type(x),type(Y))
 
     labels = list()
 
@@ -102,10 +102,11 @@ def rf():
 
     rf = RandomForestClassifier(random_state = 0)
     rf.fit(x,labels)
-    print(rf)
+    print(rf.score(x,labels)) # 99% accuracy!!! but I haven't split train/test :)
+    # print(rf)
 
 
 
 if __name__ == '__main__':
     # neural_net()
-    rf()
+    rf() 
