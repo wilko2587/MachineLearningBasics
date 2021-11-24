@@ -5,7 +5,7 @@ import validation_utils as vu
 from torch import nn
 import torch
 
-def nn():
+def neural_net():
     '''
     NOTES
     -> because we have a lot of features, some that may not be relevant, i want to try L1 regularization
@@ -69,4 +69,4 @@ def rf():
     pass
 
 if __name__ == '__main__':
-    nn()
+    neural_net()
