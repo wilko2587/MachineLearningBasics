@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.mixture import GaussianMixture
+from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
 import pandas as pd
 
@@ -147,8 +148,7 @@ def models():
 
     # Trimmed RF Performance
     predicts_tensor2 = torch.tensor(predicts2)
-    test_labels_tensor2 = torch.tensor(test_labels)
-    conf_matrix2 = vu.confusion_matrix(predicts_tensor2, test_labels_tensor2)
+    conf_matrix2 = vu.confusion_matrix(predicts_tensor2, test_labels_tensor)
 
     print('RF trimmed')
 
@@ -156,24 +156,21 @@ def models():
         precision, recall, f1 = vu.precision_recall_F1(conf_matrix2,each)
         print(f'{classes[each]}: Precision: {round(precision,2)}, Recall: {round(recall,2)}, F1: {round(f1,2)}')
 
-    # K nearest neighbors
-    k_list = np.arange(2,20,5)
+    # K nearest neighbors (k=5, all choices were bad)
+    neigh = KNeighborsClassifier(n_neighbors=5)
+    neigh.fit(train_df,train_labels)
+    predicts3 = neigh.predict(test_df)
 
-    for k in k_list:
-        neigh = KNeighborsClassifier(n_neighbors=k)
-        neigh.fit(train_df,train_labels)
-        predicts3 = neigh.predict(test_df)
+    # KNN Performance
+    predicts_tensor3 = torch.tensor(predicts3)
+    test_labels_tensor3 = torch.tensor(test_labels)
+    conf_matrix3 = vu.confusion_matrix(predicts_tensor3, test_labels_tensor3)
 
-        # KNN Performance
-        predicts_tensor3 = torch.tensor(predicts3)
-        test_labels_tensor3 = torch.tensor(test_labels)
-        conf_matrix3 = vu.confusion_matrix(predicts_tensor3, test_labels_tensor3)
+    print(f'k{k}')
 
-        print(f'k{k}')
-
-        for each in classes:
-            precision, recall, f1 = vu.precision_recall_F1(conf_matrix3, each)
-            print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
+    for each in classes:
+        precision, recall, f1 = vu.precision_recall_F1(conf_matrix3, each)
+        print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
 
     # Gaussian mixture model
     gaus = GaussianMixture(n_components=3,random_state=0)
@@ -182,8 +179,7 @@ def models():
 
     # Model Performance
     predicts_tensor4 = torch.tensor(predicts4)
-    test_labels_tensor4 = torch.tensor(test_labels)
-    conf_matrix4 = vu.confusion_matrix(predicts_tensor4, test_labels_tensor4)
+    conf_matrix4 = vu.confusion_matrix(predicts_tensor4, test_labels_tensor)
 
     print('Gaussian mixture model')
 
@@ -191,6 +187,21 @@ def models():
         precision, recall, f1 = vu.precision_recall_F1(conf_matrix4, each)
         print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
 
+    # Gradient boosting classifier
+    gbm = GradientBoostingClassifier(n_estimators=10000, learning_rate=0.1, max_depth=3, random_state=0)
+    gbm.fit(train_df,train_labels)
+    predicts5 = gbm.predict(test_df)
+
+    # Model Performance
+    predicts_tensor5 = torch.tensor(predicts5)
+    conf_matrix5 = vu.confusion_matrix(predicts_tensor5, test_labels_tensor)
+
+    print('gradient boosting classifier')
+
+    for each in classes:
+        precision, recall, f1 = vu.precision_recall_F1(conf_matrix4, each)
+        print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
+
 if __name__ == '__main__':
     # neural_net()
-    models() #RF, RF trimmed, KNN, Gaussian mixture model
+    models() #RF, RF trimmed, KNN, Gaussian mixture model, gradient boosting classifier
