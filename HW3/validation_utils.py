@@ -3,7 +3,7 @@ import pandas as pd
 
 def confusion_matrix(expected, predicted, classes=[0,1,2]):
     '''
-    builds a confucion matrix for expected and predicted values using pandas dataframe
+    builds a confusion matrix for expected and predicted values using pandas dataframe
 
     :expected: 1D tensor of expected values
     :predicted: 1D tensor of predicted values

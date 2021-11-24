@@ -71,42 +71,74 @@ def neural_net():
     return None
 
 def rf():
-    x,Y = dr.read_cont() # load data
-
-    # print(type(x),type(Y))
-
-    labels = list()
-
-    for each in Y.to_numpy():
-        labels.append(each[0])
+    '''
+    I removed id (not needed for any analysis), as well as bnp, a1c, and chol because of high degree of missingness.
+    Transformed gender and smoking to numeric.
+    Imputed missing values as mean. Scaled data to mean 0, same SD as prior.
+    '''
+    data = dr.read('deid_full_data_cont.csv')
 
     exclude = ['id','bnp','a1c','chol'] # drop id because it isn't useful, values with high missingness
-    x.drop(columns = exclude, axis=1, inplace=True)
+    data.drop(columns=exclude, axis=1, inplace=True)
 
-    x['gender'].replace(to_replace=['Male', 'Female',], value=[0, 1], inplace=True) # make numeric
-    smoke_cat = x['smoke'].unique()
-    x['smoke'].replace(to_replace=smoke_cat,value=np.arange(11),inplace=True)
-    final_col = x.columns
+    data['gender'].replace(to_replace=['Male', 'Female',], value=[0, 1], inplace=True) # make numeric
+    smoke_cat = data['smoke'].unique()
+    data['smoke'].replace(to_replace=smoke_cat, value=np.arange(11), inplace=True)
 
-    # Missing values imputed as mean
-    # Data scaled to mean = 0, var = 1
+    # 80/20 train/test split
+    train = data.sample(frac=0.8, random_state=2)
+    test = data.drop(train.index)
 
-    simp_imp = SimpleImputer(strategy='mean').fit(x)
-    x_imp = simp_imp.transform(x)
+    train_data, train_Y = dr.split_hyperparams_target(train,'stage')
+    test_data, test_Y = dr.split_hyperparams_target(test,'stage')
 
-    scaler = StandardScaler().fit(x_imp)
-    x_final = scaler.transform(x_imp)
+    final_col = train_data.columns # saving column names for later
 
-    x = pd.DataFrame(x_final)
-    x.columns = final_col
+    # Putting labels in a format sklearn needs
+    train_labels = list()
+    test_labels = list()
 
+    for each in train_Y.to_numpy():
+        train_labels.append(each[0])
+
+    for each in test_Y.to_numpy():
+        test_labels.append(each[0])
+
+    # Imputing values
+    simp_imp = SimpleImputer(strategy='mean').fit(train_data)
+    train_imp = simp_imp.transform(train_data)
+    test_imp = simp_imp.transform(test_data)
+
+    # Scaling
+    scaler = StandardScaler().fit(train_imp)
+    train_clean = scaler.transform(train_imp)
+    test_clean = scaler.transform(test_imp)
+
+    # Putting things back as a df
+    train_df = pd.DataFrame(train_clean)
+    test_df = pd.DataFrame(test_clean)
+    train_df.columns = final_col
+    test_df.columns = final_col
+
+    # Creating and running basic RF model
     rf = RandomForestClassifier(random_state = 0)
-    rf.fit(x,labels)
-    print(rf.score(x,labels)) # 99% accuracy!!! but I haven't split train/test :)
-    # print(rf)
+    rf.fit(train_df,train_labels)
+    predicts = rf.predict(test_df)
 
+    predicts_tensor = torch.tensor(predicts)
+    test_labels_tensor = torch.tensor(test_labels)
 
+    conf_matrix = vu.confusion_matrix(predicts_tensor, test_labels_tensor)
+
+    classes = {0:'Not HF', 1: 'Stage C', 2: 'Stage D'}
+
+    for each in classes:
+        precision, recall, f1 = vu.precision_recall_F1(conf_matrix,each)
+        print(f'{classes[each]} \nPrecision: {precision} \nRecall: {recall} \nF1: {f1}')
+
+    # print(conf_matrix)
+    # print(vu.confusion_matrix(test_labels,predicts))
 
 if __name__ == '__main__':
     # neural_net()
-    rf() 
+    rf()
