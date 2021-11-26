@@ -59,7 +59,7 @@ class FeedForwardSoftmax(nn.Module):
         for i in range(len(layer_sizes) - 1):  # build the architecture
             self._layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1], bias=bias))
 
-    def forward(self, x, outMethod = True):
+    def forward(self, x, outMethod=True):
         """
         Performs a forward pass of the network by for-looping through the layers in sequence, passing a vector
         x from one layer to the next until the output.
@@ -89,8 +89,8 @@ class FeedForwardSoftmax(nn.Module):
 
 def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
             loss_target=0.1, method="batch", plot=True, verbosity=True,
-            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100,
-            outMethod = True):
+            _lambdaL1=0, _lambdaL2=0, minibatch_size=100,
+            outMethod=True):
     '''
     takes a dataset, and a model (such as FeedForwardSoftmax), a loss function, and a
     pytorch optimizer and trains the model using a batch method
@@ -116,9 +116,9 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
 
     # set up the data
     X = dataset[0]
-    y = dataset[1].squeeze()
+    y = dataset[1].squeeze().to(torch.long)
 
-    ybin = tu.labels_to_binary(y, Noutputs)
+    # ybin = tu.labels_to_binary(y, Noutputs)
 
     full_loss = 1e8  # initialise to a value somewhere above the threshold
     epoch = 0  # counter for which training epoch we are in
@@ -128,26 +128,26 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
     while full_loss > loss_target and epoch < max_epoch:
         if method.lower() == "batch":  # if batch -> use all the training data in each iteration
             _X = X
-            _y = ybin
+            _y = y
         elif method.lower() == 'stochastic':  # if stochastic -> use one randomly selected example for each epoch
             randomi = randint(0, len(X) - 1)
             _X = X[randomi]
-            _y = ybin[randomi]
+            _y = y[randomi]
         elif method.lower() == "minibatch":
             minibatch_indices = []
             for i in range(minibatch_size):
                 minibatch_indices.append(randint(0, len(X) - 1))
             minibatch_indices = torch.tensor(minibatch_indices).unique()
-            _X = torch.index_select(X,0,minibatch_indices)
-            _y = torch.index_select(ybin,0,minibatch_indices)
+            _X = torch.index_select(X, 0, minibatch_indices)
+            _y = torch.index_select(y, 0, minibatch_indices)
         else:
             raise (NameError("Kwarg 'method' must be either 'batch' or 'stochastic'"))
 
         # make predictions
-        pred = model.forward(_X, outMethod = outMethod)
+        pred = model.forward(_X, outMethod=outMethod)
 
         # calculate the loss
-        loss = loss_func(pred.unsqueeze(0), _y.unsqueeze(0))
+        loss = loss_func(pred, _y)
 
         # deal with regularization
         l2_norm = sum(p.pow(2.0).sum() for p in model.parameters()).item()
@@ -159,7 +159,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
         loss.backward()
         optimizer.step()
 
-        full_loss = loss_func(model.forward(X, outMethod = outMethod), ybin).item()
+        full_loss = loss_func(model.forward(X, outMethod=outMethod), y).item()
         train_loss.append(full_loss)
         epoch += 1
 
@@ -195,7 +195,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
 
 def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch,
                             method="batch", plot=True,
-                            _lambdaL1=0, _lambdaL2=0, minibatch_size = 100,
+                            _lambdaL1=0, _lambdaL2=0, minibatch_size=100,
                             outMethod=True):
     '''
     for a model, with train data and valid data + other params, plot a training curve using loss as
@@ -222,22 +222,22 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
         # train our model for another D_epochs using training data.
         # Set loss_target negative so its guaranteed to train for D_epochs
         losses = trainNN(copy.deepcopy(train), model, loss_func, optimizer,
-                max_epoch=D_epoch,
-                loss_target=-1,
-                method=method,
-                minibatch_size=minibatch_size,
-                plot=False,
-                verbosity=False,
-                _lambdaL1=_lambdaL1,
-                _lambdaL2=_lambdaL2)
+                         max_epoch=D_epoch,
+                         loss_target=-1,
+                         method=method,
+                         minibatch_size=minibatch_size,
+                         plot=False,
+                         verbosity=False,
+                         _lambdaL1=_lambdaL1,
+                         _lambdaL2=_lambdaL2)
 
         # calculate training loss
         train_preds = model.forward(Xtrain, outMethod=outMethod)
-        train_loss = loss_func(train_preds,ytrain_bin).item()
+        train_loss = loss_func(train_preds, ytrain_bin).item()
 
         # calculate validation loss
         valid_preds = model.forward(Xvalid, outMethod=outMethod)
-        valid_loss = loss_func(valid_preds,yvalid_bin).item()
+        valid_loss = loss_func(valid_preds, yvalid_bin).item()
 
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)

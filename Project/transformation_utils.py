@@ -1,5 +1,6 @@
 import seaborn as sns
 import math_utils as mu
+import math
 import copy
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,52 +9,69 @@ import torch
 
 sns.set_theme(style="darkgrid")
 
-def univariate(data,hparams, targets):
+
+def univariate(data, hparams, targets):
     '''
     Function to plot the univariate relationships.
     ie: looking at individual hypermareters at a time.
     Y can take 3 values (1,0,0; 0,1,0; 0,0,1).
     Vary the hyperparameter, and see how each Y changes to view the underlying relationships.
 
-    :param: data = data we're analysing, in demeter's format
-    :hparams: names of the hyperparameters in 'data'
-    :targets: dictionary mapping the target onto a label
+    :param: data = data we're analysing, in james's format
+    :hparams: list of names of the hyperparameters in 'data'
+    :targets: dictionary mapping the target onto a label (ie: 0-> no heart disease, 2 -> advanced heart disease)
     '''
 
-    #split out the hyperparams (X) from the targets (y)
-    X = pd.DataFrame([d[1] for d in data])
+    # split out the hyperparams (X) from the targets (y)
+    X = pd.DataFrame(data[0].tolist())
     X.columns = hparams
-    y = pd.DataFrame([d[0] for d in data])
-    y.columns = [targets[i] for i in y.columns] #name the target variables
 
-    ylabel = pd.DataFrame([d[0].index(1) for d in data]) #get the true label of y (0,1,2 instead of [1,0,0];[0,1,0];[0,0,1])
+    if type(data[1]) != torch.Tensor:
+        y = pd.DataFrame(labels_to_binary(torch.tensor(data[1].values).squeeze(), 3).tolist())
+    else:
+        y = pd.DataFrame(labels_to_binary(data[1].squeeze(), 3).tolist())
+    y.columns = [targets[i] for i in y.columns]  # name the target variables
+
+    ylabel = pd.DataFrame(data[1].tolist())  # get the true label of y (0,1,2 instead of [1,0,0];[0,1,0];[0,0,1])
     ylabel.columns = ['ylabel']
+    params_to_plot = X.columns.to_list()
+    Nplots = math.ceil(len(params_to_plot) / 3.)  # the number of plots we need (3 plots per figure)
+    for plotcount in range(Nplots):
+        fig, axs = plt.subplots(1, 3, figsize=(15,4))
+        axs = {params_to_plot[i]: axs[i] for i in range(3)}  # nasty way of mapping axes to axes for later use
+        for subplot in range(
+                min(3, len(params_to_plot))):  # for each hyperparmeter lets look at the relationship to the target y
+            hparam = params_to_plot.pop(0)
+            ax = axs[hparam]
+            plotdata = pd.DataFrame(X[hparam])
 
-    axs = plt.subplots(1,len(X.columns))
-    axs = {X.columns[i]:axs[1][i] for i in range(len(X.columns))} #nasty way of mapping axes to axes for later use
-    for hparam in X.columns: #for each hyperparmeter lets look at the relationship to the target y
-        ax = axs[hparam]
-        plotdata = pd.DataFrame(X[hparam])
+            # bin the hyperparam
+            bins = np.linspace(X[hparam].min(), X[hparam].max(), 20)  # create 20 bins
+            plotdata['binned'] = pd.cut(X[hparam], bins, labels=bins[:-1])
 
-        # bin the hyperparam
-        bins = np.linspace(X[hparam].min(), X[hparam].max(),20) #create 20 bins
-        plotdata['binned'] = pd.cut(X[hparam], bins,labels=bins[:-1])
-
-        # concatenate to leave us with dataframe with first column being a hyperparameter, the rest of the columns
-        #   being y
-        concat = pd.concat([plotdata,y,ylabel],axis=1)
-
-        for i in y.columns:
-            sns.lineplot(data = concat,
-                         x = 'binned',
-                         y = i,
-                         estimator = np.mean,
-                         ax= ax,
-                         label=i)
-        ax.set_xlabel('hyperparam: '+str(hparam))
-        ax.set_ylabel('Observed Probability')
-        ax.set_title(hparam)
-        ax.legend()
+            # concatenate to leave us with dataframe with first column being a hyperparameter, the rest of the columns
+            #   being y
+            concat = pd.concat([plotdata, y, ylabel], axis=1)
+            concat_grouped = concat.groupby('binned').agg('mean').reset_index()
+            for i in y.columns:
+                #sns.lineplot(data=concat,
+                #             x='binned',
+                #             y=i,
+                #             estimator=np.mean,
+                #             ax=ax,
+                #             label=i)
+                sns.regplot(data=concat_grouped,
+                            x='binned',
+                            y=i,
+                            ax=ax,
+                            label=i,
+                            order=5,
+                            scatter_kws={'s':2})
+            ax.set_xlabel('hyperparam: ' + str(hparam))
+            ax.set_ylabel('Observed Probability')
+            ax.set_ylim([0,1])
+            ax.set_title(hparam)
+            ax.legend()
 
 
 def stepify(data, column, threshold):
@@ -67,7 +85,7 @@ def stepify(data, column, threshold):
     '''
     for row in data:
         row[1][column] = int(row[1][column] >= threshold)
-    return data #that was easy...
+    return data  # that was easy...
 
 
 def power_up(data, column, power):
@@ -85,7 +103,7 @@ def power_up(data, column, power):
     datacopy = copy.deepcopy(data)
     for row in datacopy:
         new_data.append(row)
-        new_data[-1][1][column] = new_data[-1][1][column]**power
+        new_data[-1][1][column] = new_data[-1][1][column] ** power
     return new_data
 
 
@@ -107,9 +125,10 @@ def Zscore(train, items_to_norm):
 
         for item in items_to_norm:
             for row in item:
-                row[1][i] = (row[1][i] - mean)/std
+                row[1][i] = (row[1][i] - mean) / std
 
     return items_to_norm
+
 
 def scale01(train, items_to_norm):
     '''
@@ -119,7 +138,7 @@ def scale01(train, items_to_norm):
     _max = train[0].max(axis=0).values
     _min = train[0].min(axis=0).values
     for item in items_to_norm:
-        item[0] = (item[0] - _min)/(_max-_min)
+        item[0] = (item[0] - _min) / (_max - _min)
     return items_to_norm
 
 
@@ -132,7 +151,7 @@ def labels_to_binary(ys, Noutputs):
     ys = ys.tolist()
     for row in ys:  # reformat the labelled data so y=2 --> [0,0,1] (to match the NN output)
         n = int(row)
-        row = [0]*Noutputs
+        row = [0] * Noutputs
         row[n] = 1
         new_ys.append(row)
     new_ys = torch.tensor(new_ys)
@@ -144,10 +163,10 @@ def binary_to_labels(ys):
     '''
     converts y = [0,0,1] into 2 etc (to match labels output) for insurability data
     '''
-    return torch.argmax(ys,1)
+    return torch.argmax(ys, 1)
 
 
-#def extract_hparams(data):
+# def extract_hparams(data):
 #    '''
 #    function to extract the hyperparameters from demeter's data format
 #    '''
@@ -159,7 +178,7 @@ def binary_to_labels(ys):
 #    return hparams
 #
 #
-#def extract_targets(data):
+# def extract_targets(data):
 #    '''
 #    function to extract the targets from demeter's data format
 #    '''
@@ -194,7 +213,7 @@ def low_variance_filter(train_data, validation_data, pctile_thresh):
 
     reduced_train = [[data[0], [data[1][x] for x in pixels_to_keep]] for data in train_data]
     reduced_valid = [[data[0], [data[1][x] for x in pixels_to_keep]] for data in validation_data]
-    print('--> {} dimensions in input; {} dimensions in output'.format(len(train_data[0][1]),len(reduced_train[0][1])))
+    print('--> {} dimensions in input; {} dimensions in output'.format(len(train_data[0][1]), len(reduced_train[0][1])))
     return reduced_train, reduced_valid
 
 
@@ -208,8 +227,28 @@ def str2int(list_of_data):
     list_out = []
     for data in list_of_data:
         for row in data:
-            row[0] = [int(row[0])] #first convert the target
-            row[1] =  [int(i) for i in row[1]] #second convert the hparams
+            row[0] = [int(row[0])]  # first convert the target
+            row[1] = [int(i) for i in row[1]]  # second convert the hparams
         list_out.append(data)
     return list_out
 
+
+def cut_topbottom(data,n):
+    '''
+    cuts the largest/smallest n values (2*n rows total) from a tensor data[0] for each column
+    :param: data: list of tensors (X,y)
+    :param: n: number of rows to cut
+    :returns: tensor
+    '''
+    X = data[0]
+    y = data[1]
+
+    #get indices of largest n and smallest n items in X, for each column
+    topindices = torch.topk(X,n,dim=0)[1].flatten()
+    botindices = torch.topk(X,n,dim=0,largest=False)[1].flatten()
+    dropindices = torch.concat([topindices,botindices]).unique()
+    allindices = torch.tensor([i for i in range(len(X)) if i not in dropindices])
+
+    X_cut = torch.index_select(X, 0, allindices)
+    y_cut = torch.index_select(y, 0, allindices)
+    return (X_cut, y_cut)

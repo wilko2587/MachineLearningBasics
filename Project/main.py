@@ -29,31 +29,31 @@ def neural_net():
     train, valid, test = tu.scale01(train, [train, valid, test])
 
     # lets make a simple feed forward NN with one hidden layer, softmax output
-    net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20, 20])  # N x 3 x 3 neural net
+    net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[10])  # N x 3 x 3 neural net
     loss = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=1e-5, momentum=0.)
+    optimizer = torch.optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
 
-    ff.generate_learning_curve(train, valid, net, loss, optimizer,
-                               max_epoch = 100000,
-                               method = 'batch',
-                               minibatch_size=300,
-                               outMethod=True,
-                               _lambdaL1=0,
-                               _lambdaL2=0)
+#    ff.generate_learning_curve(train, valid, net, loss, optimizer,
+#                               max_epoch = 100000,
+#                               method = 'batch',
+#                               minibatch_size=300,
+#                               outMethod=True,
+#                               _lambdaL1=0,
+#                               _lambdaL2=0)
 
-    #losses = ff.trainNN(train, net, loss, optimizer,
-    #                    max_epoch=100000,
-    #                    loss_target=0.47,
-    #                    method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-    #                    minibatch_size=300,
-    #                    plot=True,
-    #                    verbosity=True,
-    #
-    #                    # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
-    #                    # elastic net
-    #                    _lambdaL1=1e-6,
-    #                    _lambdaL2=0,
-    #                    outMethod = True)
+    losses = ff.trainNN(train, net, loss, optimizer,
+                        max_epoch=200000,
+                        loss_target=0.2,
+                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+                        minibatch_size=300,
+                        plot=True,
+                        verbosity=True,
+
+                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+                        # elastic net
+                        _lambdaL1=0.,
+                        _lambdaL2=0.,
+                        outMethod = False)
 
     test_predictions = tu.binary_to_labels(net.forward(valid[0], outMethod=True))
     test_true = valid[1].squeeze()
@@ -105,8 +105,22 @@ def rf():
     print(rf.score(x,labels)) # 99% accuracy!!! but I haven't split train/test :)
     # print(rf)
 
+def univariate():
+    '''
+    function to test the univariate relationships between the continuous data and the target variables
+    '''
+    X,y = dr.read_cont(dropna=True) # load data
+    X = X.drop(columns=['id','gender','ace_arb','aldo','bb','ino','loop','arni','sglt2','stat','thia',
+                                    'xanthine','albumin','bnp','smoke']) # drop non-continuous hyperparams
 
+    train, valid, test = dr.generate_sets((X,y), splits=[70,15,15])
+
+    #I want to drop the top/bottom 3 values for each parameter -> testing showed these ruined the plots
+    train = tu.cut_topbottom(train, 100)
+
+    tu.univariate(train, X.columns.to_list(), {0:"Stage 0", 1:"Stage 1",2:"Stage 2"})
 
 if __name__ == '__main__':
+    univariate()
     # neural_net()
-    rf() 
+    # rf()

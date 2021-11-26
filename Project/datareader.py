@@ -22,22 +22,28 @@ def split_hyperparams_target(data, targetvar):
     return hparams, target
 
 
-def read_cont():
+def read_cont(dropna=False):
     '''
     read the continuous data
+    :param: dropna: True if we drop samples containing any NaN term
     '''
     filename = "deid_full_data_cont.csv"
     data = read(filename)
+    if dropna:
+        data = data.dropna(axis=0)
     hparams, target = split_hyperparams_target(data, "stage")
     return (hparams, target)
 
 
-def read_cat():
+def read_cat(dropna=False):
     '''
     read the categorical data
+    :param: dropna: True if we drop samples containing any NaN term
     '''
     filename = "deid_full_data_cat.csv"
     data = read(filename)
+    if dropna:
+        data = data.dropna(axis=0)
     hparams, target = split_hyperparams_target(data, "stage_category_int")
     hparams = dc.explode(hparams)
     return (hparams, target)

@@ -55,6 +55,6 @@ def explode(df, remove_unknown=False):
                 unique = unique[unique != "Unknown"]
             for item in unique:
                 expcol = (df[col] == item).astype(int)
-                expcol.name = df[col].name + '_' + item  # create new column name
+                expcol.name = str(df[col].name) + '_' + str(item)  # create new column name
                 exploded = pd.concat([exploded, expcol], axis=1)
     return exploded
