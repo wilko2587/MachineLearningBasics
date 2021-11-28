@@ -83,12 +83,14 @@ def models():
 
     data = dr.read('deid_full_data_cont.csv')
 
-    exclude = ['id','bnp','a1c','chol'] # drop id because it isn't useful, values highly missing
-    data.drop(columns=exclude, axis=1, inplace=True)
-
+    data.drop(columns='id',axis=1,inplace=True) # do not need id
     data['gender'].replace(to_replace=['Male', 'Female',], value=[0, 1], inplace=True) # make gender/smoke numeric
+    data['bnp'].replace(to_replace=['a'], value=['nan'],inplace=True) #typo in BNP data somewhere
     smoke_cat = data['smoke'].unique()
     data['smoke'].replace(to_replace=smoke_cat, value=np.arange(11), inplace=True)
+
+    # exclude = ['bnp', 'a1c','chol'] # dropping highly misisng data didn't make difference
+    # data.drop(columns=exclude, axis=1, inplace=True)
 
     train = data.sample(frac=0.8, random_state=2)
     test = data.drop(train.index)
