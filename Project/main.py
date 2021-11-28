@@ -32,33 +32,31 @@ def neural_net():
     train, valid, test = tu.scale01(train, [train, valid, test])
 
     # lets make a simple feed forward NN with one hidden layer, softmax output
-    net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20, 20])  # N x 3 x 3 neural net
-    net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[10])  # N x 3 x 3 neural net
+    net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20])
     loss = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=1e-5, momentum=0.)
     optimizer = torch.optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
 
-    #ff.generate_learning_curve(train, valid, net, loss, optimizer,
-    #                           max_epoch = 100000,
-    #                           method = 'batch',
-    #                           minibatch_size=300,
-    #                           outMethod=True,
-    #                           _lambdaL1=0,
-    #                           _lambdaL2=0)
+    ff.generate_learning_curve(train, valid, net, loss, optimizer,
+                               max_epoch = 100000,
+                               method = 'minibatch',
+                               minibatch_size=300,
+                               outMethod=False,
+                               _lambdaL1=0,
+                               _lambdaL2=0)
 
-    losses = ff.trainNN(train, net, loss, optimizer,
-                        max_epoch=200000,
-                        loss_target=0.2,
-                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-                        minibatch_size=300,
-                        plot=True,
-                        verbosity=True,
-
-                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
-                        # elastic net
-                        _lambdaL1=0.,
-                        _lambdaL2=0.,
-                        outMethod = False)
+#    losses = ff.trainNN(train, net, loss, optimizer,
+#                        max_epoch=100000,
+#                        loss_target=0.4,
+#                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+#                        minibatch_size=300,
+#                        plot=True,
+#                        verbosity=True,
+#
+#                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+#                        # elastic net
+#                        _lambdaL1=0.,
+#                        _lambdaL2=0.,
+#                        outMethod = False)
 
     test_predictions = tu.binary_to_labels(net.forward(valid[0], outMethod=True))
     test_true = valid[1].squeeze()
@@ -71,7 +69,7 @@ def neural_net():
     print('--- confusion matrix ---')
     print(cm)
 
-    print('F-measures \n class 0: {} \n class 1: {} \n class 2: {}'.format(F10,F11,F12))
+    print('F-measures \n no HF: {} \n Stage C: {} \n Stage D: {}'.format(F10,F11,F12))
 
     return None
 
@@ -160,5 +158,5 @@ def univariate():
 
 if __name__ == '__main__':
     # univariate()
-    # neural_net()
-    models() # trying different models in sklearn. you guys can tweak this easily
+    neural_net()
+    # models() # trying different models in sklearn. you guys can tweak this easily

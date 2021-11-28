@@ -229,7 +229,8 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
                          plot=False,
                          verbosity=False,
                          _lambdaL1=_lambdaL1,
-                         _lambdaL2=_lambdaL2)
+                         _lambdaL2=_lambdaL2,
+                         outMethod=outMethod)
 
         # calculate training loss
         train_preds = model.forward(Xtrain, outMethod=outMethod)
