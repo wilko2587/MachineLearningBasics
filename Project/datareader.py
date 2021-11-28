@@ -45,6 +45,7 @@ def read_cat(dropna=False):
     data = read(filename)
     if dropna:
         data = data.dropna(axis=0)
+    data = data.drop(columns='id')
     hparams, target = split_hyperparams_target(data, "stage_category_int")
     hparams = dc.explode(hparams)
     return (hparams, target)

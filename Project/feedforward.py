@@ -210,10 +210,10 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
     # set up the data
     Xtrain = train[0]
     ytrain = train[1].squeeze()
-    ytrain_bin = tu.labels_to_binary(ytrain, Noutputs)
+    #ytrain_bin = tu.labels_to_binary(ytrain, Noutputs)
     Xvalid = valid[0]
     yvalid = valid[1].squeeze()
-    yvalid_bin = tu.labels_to_binary(yvalid, Noutputs)
+    #yvalid_bin = tu.labels_to_binary(yvalid, Noutputs)
 
     train_losses = []  # containers to plot learning curves
     valid_losses = []
@@ -234,11 +234,11 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
 
         # calculate training loss
         train_preds = model.forward(Xtrain, outMethod=outMethod)
-        train_loss = loss_func(train_preds, ytrain_bin).item()
+        train_loss = loss_func(train_preds, ytrain.type(torch.long)).item()
 
         # calculate validation loss
         valid_preds = model.forward(Xvalid, outMethod=outMethod)
-        valid_loss = loss_func(valid_preds, yvalid_bin).item()
+        valid_loss = loss_func(valid_preds, yvalid.type(torch.long)).item()
 
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)

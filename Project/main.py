@@ -13,6 +13,73 @@ import numpy as np
 import pandas as pd
 
 
+def compound_neural_net():
+    '''
+    2 neural nets -> first separates HD from no-HD. Second separates Stage C from stage D
+    '''
+
+    catdata = dr.read_cat()
+
+    train, valid, test = dr.generate_sets(catdata, splits=[70, 15, 15])
+    trainHD, validHD, testHD = tu.joinclass(train, 1, 2), tu.joinclass(valid, 1, 2), tu.joinclass(test, 1, 2)
+    trainCD, validCD, testCD = tu.filter(train, [1, 2]), tu.filter(valid, [1, 2]), tu.filter(test, [1, 2])
+    trainHD, validHD, testHD = tu.scale01(trainHD, [trainHD, validHD, testHD])
+    trainCD, validCD, testCD = tu.scale01(trainHD, [trainCD, validCD, testCD])
+
+    netHD = ff.FeedForwardSoftmax(len(trainHD[0][0]), 2, hiddenNs=[20])
+    netCD = ff.FeedForwardSoftmax(len(trainCD[0][0]), 2, hiddenNs=[20])
+
+    loss = nn.CrossEntropyLoss()
+    optimizerHD = torch.optim.SGD(netHD.parameters(), lr=1e-4, momentum=0.9)
+    optimizerCD = torch.optim.SGD(netCD.parameters(), lr=1e-4, momentum=0.9)
+
+#    ff.generate_learning_curve(trainHD, validHD, netHD, loss, optimizerHD,
+#                               max_epoch=50000,
+#                               method='minibatch',
+#                               minibatch_size=300,
+#                               outMethod=False,
+#                               _lambdaL1=0,
+#                               _lambdaL2=0)
+
+    ff.generate_learning_curve(trainCD, validCD, netCD, loss, optimizerCD,
+                               max_epoch=50000,
+                               method='minibatch',
+                               minibatch_size=300,
+                               outMethod=False,
+                               _lambdaL1=0,
+                               _lambdaL2=0)
+
+
+#    losses = ff.trainNN(train, net, loss, optimizer,
+#                        max_epoch=100000,
+#                        loss_target=0.4,
+#                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+#                        minibatch_size=300,
+#                        plot=True,
+#                        verbosity=True,
+#
+#                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+#                        # elastic net
+#                        _lambdaL1=0.,
+#                        _lambdaL2=0.,
+#                        outMethod = False)
+
+#    test_predictions = tu.binary_to_labels(net.forward(valid[0], outMethod=True))
+#    test_true = valid[1].squeeze()
+#
+#    cm = vu.confusion_matrix(test_true,test_predictions,classes = [0,1,2])
+#    F10 = vu.precision_recall_F1(cm,0)[2]
+#    F11 = vu.precision_recall_F1(cm,1)[2]
+#    F12 = vu.precision_recall_F1(cm,2)[2]
+#
+#    print('--- confusion matrix ---')
+#    print(cm)
+#
+#    print('F-measures \n no HF: {} \n Stage C: {} \n Stage D: {}'.format(F10,F11,F12))
+#
+#    return None
+
+
 def neural_net():
     '''
     NOTES
@@ -37,41 +104,42 @@ def neural_net():
     optimizer = torch.optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
 
     ff.generate_learning_curve(train, valid, net, loss, optimizer,
-                               max_epoch = 100000,
-                               method = 'minibatch',
+                               max_epoch=100000,
+                               method='minibatch',
                                minibatch_size=300,
                                outMethod=False,
                                _lambdaL1=0,
                                _lambdaL2=0)
 
-#    losses = ff.trainNN(train, net, loss, optimizer,
-#                        max_epoch=100000,
-#                        loss_target=0.4,
-#                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-#                        minibatch_size=300,
-#                        plot=True,
-#                        verbosity=True,
-#
-#                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
-#                        # elastic net
-#                        _lambdaL1=0.,
-#                        _lambdaL2=0.,
-#                        outMethod = False)
+    #    losses = ff.trainNN(train, net, loss, optimizer,
+    #                        max_epoch=100000,
+    #                        loss_target=0.4,
+    #                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+    #                        minibatch_size=300,
+    #                        plot=True,
+    #                        verbosity=True,
+    #
+    #                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+    #                        # elastic net
+    #                        _lambdaL1=0.,
+    #                        _lambdaL2=0.,
+    #                        outMethod = False)
 
     test_predictions = tu.binary_to_labels(net.forward(valid[0], outMethod=True))
     test_true = valid[1].squeeze()
 
-    cm = vu.confusion_matrix(test_true,test_predictions,classes = [0,1,2])
-    F10 = vu.precision_recall_F1(cm,0)[2]
-    F11 = vu.precision_recall_F1(cm,1)[2]
-    F12 = vu.precision_recall_F1(cm,2)[2]
+    cm = vu.confusion_matrix(test_true, test_predictions, classes=[0, 1, 2])
+    F10 = vu.precision_recall_F1(cm, 0)[2]
+    F11 = vu.precision_recall_F1(cm, 1)[2]
+    F12 = vu.precision_recall_F1(cm, 2)[2]
 
     print('--- confusion matrix ---')
     print(cm)
 
-    print('F-measures \n no HF: {} \n Stage C: {} \n Stage D: {}'.format(F10,F11,F12))
+    print('F-measures \n no HF: {} \n Stage C: {} \n Stage D: {}'.format(F10, F11, F12))
 
     return None
+
 
 def models():
     '''
@@ -81,9 +149,9 @@ def models():
 
     data = dr.read('deid_full_data_cont.csv')
 
-    data.drop(columns='id',axis=1,inplace=True) # do not need id
-    data['gender'].replace(to_replace=['Male', 'Female',], value=[0, 1], inplace=True) # make gender/smoke numeric
-    data['bnp'].replace(to_replace=['a'], value=['nan'],inplace=True) #typo in BNP data somewhere
+    data.drop(columns='id', axis=1, inplace=True)  # do not need id
+    data['gender'].replace(to_replace=['Male', 'Female', ], value=[0, 1], inplace=True)  # make gender/smoke numeric
+    data['bnp'].replace(to_replace=['a'], value=['nan'], inplace=True)  # typo in BNP data somewhere
     smoke_cat = data['smoke'].unique()
     data['smoke'].replace(to_replace=smoke_cat, value=np.arange(11), inplace=True)
 
@@ -93,35 +161,35 @@ def models():
     train = data.sample(frac=0.8, random_state=2)
     test = data.drop(train.index)
 
-    train_data, train_Y = dr.split_hyperparams_target(train,'stage') # split data from label
-    test_data, test_Y = dr.split_hyperparams_target(test,'stage')
+    train_data, train_Y = dr.split_hyperparams_target(train, 'stage')  # split data from label
+    test_data, test_Y = dr.split_hyperparams_target(test, 'stage')
 
-    final_col = train_data.columns # saving column names for later
+    final_col = train_data.columns  # saving column names for later
 
-    simp_imp = SimpleImputer(strategy='mean').fit(train_data) # impute missing values as mean
+    simp_imp = SimpleImputer(strategy='mean').fit(train_data)  # impute missing values as mean
     train_imp = simp_imp.transform(train_data)
     test_imp = simp_imp.transform(test_data)
 
-    scaler = StandardScaler().fit(train_imp) # scale values to mean 0, perserve variance
+    scaler = StandardScaler().fit(train_imp)  # scale values to mean 0, perserve variance
     train_clean = scaler.transform(train_imp)
     test_clean = scaler.transform(test_imp)
 
-    train_df = pd.DataFrame(train_clean) # make things df again
+    train_df = pd.DataFrame(train_clean)  # make things df again
     test_df = pd.DataFrame(test_clean)
     train_df.columns = final_col
     test_df.columns = final_col
 
-    train_labels = [x[0] for x in train_Y.to_numpy()] # convert to format sklearn likes
+    train_labels = [x[0] for x in train_Y.to_numpy()]  # convert to format sklearn likes
     test_labels = [x[0] for x in test_Y.to_numpy()]
 
-#########################################################################################
+    #########################################################################################
 
     # Now try different models
-    rf = RandomForestClassifier(random_state = 0, n_estimators=100)
-    knn =  KNeighborsClassifier(n_neighbors=5)
+    rf = RandomForestClassifier(random_state=0, n_estimators=100)
+    knn = KNeighborsClassifier(n_neighbors=5)
     log = LogisticRegression(random_state=0)
 
-    models = [rf, knn,log]
+    models = [rf, knn, log]
 
     for model in models:
         model.fit(train_df, train_labels)
@@ -130,33 +198,35 @@ def models():
         predicts_tensor = torch.tensor(predicts)
         test_labels_tensor = torch.tensor(test_labels)
         conf_matrix = vu.confusion_matrix(predicts_tensor, test_labels_tensor)
-        classes = {0:'Not HF', 1: 'Stage C', 2: 'Stage D'}
+        classes = {0: 'Not HF', 1: 'Stage C', 2: 'Stage D'}
 
         print(model)
 
         for each in classes:
-            precision, recall, f1 = vu.precision_recall_F1(conf_matrix,each)
-            print(f'{classes[each]}: Precision: {round(precision,2)}, Recall: {round(recall,2)}, F1: {round(f1,2)}')
+            precision, recall, f1 = vu.precision_recall_F1(conf_matrix, each)
+            print(f'{classes[each]}: Precision: {round(precision, 2)}, Recall: {round(recall, 2)}, F1: {round(f1, 2)}')
 
         print('----------------------------------------------------------------')
+
 
 def univariate():
     '''
     function to test the univariate relationships between the continuous data and the target variables
     '''
-    X,y = dr.read_cont(dropna=True) # load data
-    X = X.drop(columns=['id','gender','ace_arb','aldo','bb','ino','loop','arni','sglt2','stat','thia',
-                                    'xanthine','albumin','bnp','smoke']) # drop non-continuous hyperparams
+    X, y = dr.read_cont(dropna=True)  # load data
+    X = X.drop(columns=['id', 'gender', 'ace_arb', 'aldo', 'bb', 'ino', 'loop', 'arni', 'sglt2', 'stat', 'thia',
+                        'xanthine', 'albumin', 'bnp', 'smoke'])  # drop non-continuous hyperparams
 
-    train, valid, test = dr.generate_sets((X,y), splits=[70,15,15])
+    train, valid, test = dr.generate_sets((X, y), splits=[70, 15, 15])
 
-    #I want to drop the top/bottom 3 values for each parameter -> testing showed these ruined the plots
+    # I want to drop the top/bottom 3 values for each parameter -> testing showed these ruined the plots
     train = tu.cut_topbottom(train, 100)
 
-    tu.univariate(train, X.columns.to_list(), {0:"Stage 0", 1:"Stage 1",2:"Stage 2"})
+    tu.univariate(train, X.columns.to_list(), {0: "Stage 0", 1: "Stage 1", 2: "Stage 2"})
 
 
 if __name__ == '__main__':
     # univariate()
-    neural_net()
+    # neural_net()
+    compound_neural_net()
     # models() # trying different models in sklearn. you guys can tweak this easily

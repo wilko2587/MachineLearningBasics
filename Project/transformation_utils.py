@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from itertools import compress
 
 sns.set_theme(style="darkgrid")
 
@@ -37,7 +38,7 @@ def univariate(data, hparams, targets):
     params_to_plot = X.columns.to_list()
     Nplots = math.ceil(len(params_to_plot) / 3.)  # the number of plots we need (3 plots per figure)
     for plotcount in range(Nplots):
-        fig, axs = plt.subplots(1, 3, figsize=(15,4))
+        fig, axs = plt.subplots(1, 3, figsize=(15, 4))
         axs = {params_to_plot[i]: axs[i] for i in range(3)}  # nasty way of mapping axes to axes for later use
         for subplot in range(
                 min(3, len(params_to_plot))):  # for each hyperparmeter lets look at the relationship to the target y
@@ -54,7 +55,7 @@ def univariate(data, hparams, targets):
             concat = pd.concat([plotdata, y, ylabel], axis=1)
             concat_grouped = concat.groupby('binned').agg('mean').reset_index()
             for i in y.columns:
-                #sns.lineplot(data=concat,
+                # sns.lineplot(data=concat,
                 #             x='binned',
                 #             y=i,
                 #             estimator=np.mean,
@@ -66,10 +67,10 @@ def univariate(data, hparams, targets):
                             ax=ax,
                             label=i,
                             order=5,
-                            scatter_kws={'s':2})
+                            scatter_kws={'s': 2})
             ax.set_xlabel('hyperparam: ' + str(hparam))
             ax.set_ylabel('Observed Probability')
-            ax.set_ylim([0,1])
+            ax.set_ylim([0, 1])
             ax.set_title(hparam)
             ax.legend()
 
@@ -142,6 +143,29 @@ def scale01(train, items_to_norm):
     return items_to_norm
 
 
+def joinclass(data, class1, class2):
+    '''
+    from data, turns class2 into class1
+    '''
+    x = copy.deepcopy(data[1])
+    x[x == class2] = class1
+    return [data[0], x]
+
+
+def filter(data, conditions, map=None):
+    '''
+    removes rows from data[0] and data[1] (hyperparams and target) depending on if target is equal to the items
+    in list "conditions"
+    '''
+
+    index_bool = [i in conditions for i in data[1]]
+    indices_to_keep = [i for i, x in enumerate(index_bool) if x]
+    hparams = data[0].index_select(0,torch.tensor(indices_to_keep))
+    target = data[1].index_select(0, torch.tensor(indices_to_keep))
+    target_renorm = torch.tensor([int(y-target.min()) for y in target])
+    return [hparams, target_renorm]
+
+
 def labels_to_binary(ys, Noutputs):
     '''
     converts y = 2 into [0,0,1] etc (to match NN output). Number of items in list should be given by number of output
@@ -149,8 +173,9 @@ def labels_to_binary(ys, Noutputs):
     '''
     new_ys = []
     ys = ys.tolist()
+    unique = list(set(ys))
     for row in ys:  # reformat the labelled data so y=2 --> [0,0,1] (to match the NN output)
-        n = int(row)
+        n = unique.index(row)
         row = [0] * Noutputs
         row[n] = 1
         new_ys.append(row)
@@ -233,7 +258,7 @@ def str2int(list_of_data):
     return list_out
 
 
-def cut_topbottom(data,n):
+def cut_topbottom(data, n):
     '''
     cuts the largest/smallest n values (2*n rows total) from a tensor data[0] for each column
     :param: data: list of tensors (X,y)
@@ -243,10 +268,10 @@ def cut_topbottom(data,n):
     X = data[0]
     y = data[1]
 
-    #get indices of largest n and smallest n items in X, for each column
-    topindices = torch.topk(X,n,dim=0)[1].flatten()
-    botindices = torch.topk(X,n,dim=0,largest=False)[1].flatten()
-    dropindices = torch.concat([topindices,botindices]).unique()
+    # get indices of largest n and smallest n items in X, for each column
+    topindices = torch.topk(X, n, dim=0)[1].flatten()
+    botindices = torch.topk(X, n, dim=0, largest=False)[1].flatten()
+    dropindices = torch.concat([topindices, botindices]).unique()
     allindices = torch.tensor([i for i in range(len(X)) if i not in dropindices])
 
     X_cut = torch.index_select(X, 0, allindices)
