@@ -38,8 +38,8 @@ def compound_neural_net():
     loss = nn.CrossEntropyLoss()
     optimizerHD = torch.optim.SGD(netHD.parameters(), lr=1e-1, momentum=0.9)
     optimizerCD = torch.optim.SGD(netCD.parameters(), lr=1e-1, momentum=0.9)
-    schedulerHD = lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)
-    schedulerCD = lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)
+    schedulerHD = torch.optim.lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)
+    schedulerCD = torch.optim.lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)
     optimizerHD.step()
     schedulerHD.step()
     optimizerCD.step()
@@ -262,8 +262,8 @@ def univariate():
 
 if __name__ == '__main__':
     # univariate()
-    # compound_neural_net()
-    neural_net()
+    compound_neural_net()
+    # neural_net()
     # vote_score()
 
 
