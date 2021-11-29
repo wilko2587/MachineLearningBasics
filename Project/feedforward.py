@@ -24,7 +24,7 @@ def softmax(x):
 
 class FeedForwardSoftmax(nn.Module):
     def __init__(self, inputN, outputN, hiddenNs=None, bias=True,
-                 inputMethod=nn.Sigmoid, hiddenMethods=[], outputMethod=nn.Softmax):
+                 inputMethod=nn.Sigmoid, hiddenMethods=[]):
         """
         Feed-forward linear neural network, using softmax at the output layer to normalise the outputs.
 
@@ -35,7 +35,6 @@ class FeedForwardSoftmax(nn.Module):
         :param: bias = True/False bool. If True pytorch will add a bias term into the calculations
         :param: inputMethod = nn.Module object. transformation to apply to the input layer
         :param: hiddenMethods = list of nn.Module objects. transformation to apply to the hidden layers
-        :param: outputMethod = nn.Module object. transformation to apply to the output layer
 
         """
 
@@ -54,7 +53,7 @@ class FeedForwardSoftmax(nn.Module):
         # initialise container for the methods list (transformation for each layer, eg: sigmoid)
         self._methods = [inputMethod()] \
                         + [x() for x in hiddenMethods] \
-                        + [outputMethod()]
+                        + [nn.Softmax(dim=1)]
 
         for i in range(len(layer_sizes) - 1):  # build the architecture
             self._layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1], bias=bias))
@@ -73,7 +72,9 @@ class FeedForwardSoftmax(nn.Module):
 
         for i in range(len(self._layers)):  # iterate through the layers, passing x from one layer to the next
             x = self._layers[i](x)
-            if i != len(self._layers) - 1 and outMethod:
+            if i != len(self._layers) - 1:
+                x = self._methods[i](x)
+            elif i == len(self._layers) - 1 and outMethod:
                 x = self._methods[i](x)
         return x
 

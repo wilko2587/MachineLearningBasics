@@ -166,6 +166,25 @@ def filter(data, conditions, map=None):
     return [hparams, target_renorm]
 
 
+def equalize_portions(data):
+    '''
+    make sure the target (data[1]) contains equal representations of each class
+    '''
+    target = data[1].flatten()
+    uniques = list(set(target.tolist()))
+    smallest_size = min([len(target[target==i]) for i in uniques])
+
+    new_hparams = []
+    new_targets = []
+    for _class in uniques:
+        class_hparams = data[0][target==_class][0:smallest_size]
+        class_targets = data[1][target==_class][0:smallest_size]
+        new_hparams.append(class_hparams)
+        new_targets.append(class_targets)
+    return torch.cat(new_hparams), \
+           torch.cat(new_targets)
+
+
 def labels_to_binary(ys, Noutputs):
     '''
     converts y = 2 into [0,0,1] etc (to match NN output). Number of items in list should be given by number of output

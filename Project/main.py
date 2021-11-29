@@ -21,63 +21,83 @@ def compound_neural_net():
     catdata = dr.read_cat()
 
     train, valid, test = dr.generate_sets(catdata, splits=[70, 15, 15])
-    trainHD, validHD, testHD = tu.joinclass(train, 1, 2), tu.joinclass(valid, 1, 2), tu.joinclass(test, 1, 2)
-    trainCD, validCD, testCD = tu.filter(train, [1, 2]), tu.filter(valid, [1, 2]), tu.filter(test, [1, 2])
-    trainHD, validHD, testHD = tu.scale01(trainHD, [trainHD, validHD, testHD])
-    trainCD, validCD, testCD = tu.scale01(trainHD, [trainCD, validCD, testCD])
+    train, valid, test = tu.scale01(train, [train, valid, test])
+    trainHD, validHD = tu.joinclass(train, 1, 2), tu.joinclass(valid, 1, 2)
+    trainCD, validCD = tu.filter(train, [1, 2]), tu.filter(valid, [1, 2])
+    trainHD = tu.equalize_portions(trainHD) # make sure we have equal numbers of classes in the training set
+    trainCD = tu.equalize_portions(trainCD)
 
     netHD = ff.FeedForwardSoftmax(len(trainHD[0][0]), 2, hiddenNs=[20])
     netCD = ff.FeedForwardSoftmax(len(trainCD[0][0]), 2, hiddenNs=[20])
 
     loss = nn.CrossEntropyLoss()
-    optimizerHD = torch.optim.SGD(netHD.parameters(), lr=1e-4, momentum=0.9)
-    optimizerCD = torch.optim.SGD(netCD.parameters(), lr=1e-4, momentum=0.9)
+    optimizerHD = torch.optim.SGD(netHD.parameters(), lr=1e-3, momentum=0.9)
+    optimizerCD = torch.optim.SGD(netCD.parameters(), lr=1e-3, momentum=0.9)
 
-#    ff.generate_learning_curve(trainHD, validHD, netHD, loss, optimizerHD,
-#                               max_epoch=50000,
-#                               method='minibatch',
-#                               minibatch_size=300,
-#                               outMethod=False,
-#                               _lambdaL1=0,
-#                               _lambdaL2=0)
+    #ff.generate_learning_curve(trainHD, validHD, netHD, loss, optimizerHD,
+    #                           max_epoch=50000,
+    #                           method='minibatch',
+    #                           minibatch_size=300,
+    #                           outMethod=False,
+    #                           _lambdaL1=0,
+    #                           _lambdaL2=0)
 
-    ff.generate_learning_curve(trainCD, validCD, netCD, loss, optimizerCD,
-                               max_epoch=50000,
-                               method='minibatch',
-                               minibatch_size=300,
-                               outMethod=False,
-                               _lambdaL1=0,
-                               _lambdaL2=0)
+    #ff.generate_learning_curve(trainCD, validCD, netCD, loss, optimizerCD,
+    #                           max_epoch=50000,
+    #                           method='minibatch',
+    #                           minibatch_size=300,
+    #                           outMethod=False,
+    #                           _lambdaL1=0,
+    #                           _lambdaL2=0)
 
 
-#    losses = ff.trainNN(train, net, loss, optimizer,
-#                        max_epoch=100000,
-#                        loss_target=0.4,
-#                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-#                        minibatch_size=300,
-#                        plot=True,
-#                        verbosity=True,
-#
-#                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
-#                        # elastic net
-#                        _lambdaL1=0.,
-#                        _lambdaL2=0.,
-#                        outMethod = False)
+    lossesHD = ff.trainNN(trainHD, netHD, loss, optimizerHD,
+                        max_epoch=100000,
+                        loss_target=0.25,
+                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+                        minibatch_size=300,
+                        plot=True,
+                        verbosity=True,
 
-#    test_predictions = tu.binary_to_labels(net.forward(valid[0], outMethod=True))
-#    test_true = valid[1].squeeze()
-#
-#    cm = vu.confusion_matrix(test_true,test_predictions,classes = [0,1,2])
-#    F10 = vu.precision_recall_F1(cm,0)[2]
-#    F11 = vu.precision_recall_F1(cm,1)[2]
-#    F12 = vu.precision_recall_F1(cm,2)[2]
-#
-#    print('--- confusion matrix ---')
-#    print(cm)
-#
-#    print('F-measures \n no HF: {} \n Stage C: {} \n Stage D: {}'.format(F10,F11,F12))
-#
-#    return None
+                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+                        # elastic net
+                        _lambdaL1=0.,
+                        _lambdaL2=0.,
+                        outMethod = False)
+
+    lossesCD = ff.trainNN(trainCD, netCD, loss, optimizerCD,
+                        max_epoch=100000,
+                        loss_target=0.25,
+                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+                        minibatch_size=300,
+                        plot=True,
+                        verbosity=True,
+
+                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+                        # elastic net
+                        _lambdaL1=0.,
+                        _lambdaL2=0.,
+                        outMethod = False)
+
+
+    HD_predictions = tu.binary_to_labels(netHD.forward(valid[0], outMethod=True)) #predictions of HD
+    CD_predictions = tu.binary_to_labels(netCD.forward(valid[0], outMethod=True)) #predictions of Stage C or D
+    test_predictions = CD_predictions + 1
+    test_predictions[HD_predictions==0] = 0
+
+    test_true = valid[1].squeeze()
+
+    cm = vu.confusion_matrix(test_true,test_predictions,classes = [0,1,2])
+    F10 = vu.precision_recall_F1(cm,0)[2]
+    F11 = vu.precision_recall_F1(cm,1)[2]
+    F12 = vu.precision_recall_F1(cm,2)[2]
+
+    print('--- confusion matrix ---')
+    print(cm)
+
+    print('F-measures \n no HF: {} \n Stage C: {} \n Stage D: {}'.format(F10,F11,F12))
+
+    return None
 
 
 def neural_net():
@@ -101,29 +121,29 @@ def neural_net():
     # lets make a simple feed forward NN with one hidden layer, softmax output
     net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20])
     loss = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
+    optimizer = torch.optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
 
-    ff.generate_learning_curve(train, valid, net, loss, optimizer,
-                               max_epoch=100000,
-                               method='minibatch',
-                               minibatch_size=300,
-                               outMethod=False,
-                               _lambdaL1=0,
-                               _lambdaL2=0)
+    # ff.generate_learning_curve(train, valid, net, loss, optimizer,
+    #                            max_epoch=100000,
+    #                            method='minibatch',
+    #                            minibatch_size=300,
+    #                            outMethod=False,
+    #                            _lambdaL1=0,
+    #                            _lambdaL2=0)
 
-    #    losses = ff.trainNN(train, net, loss, optimizer,
-    #                        max_epoch=100000,
-    #                        loss_target=0.4,
-    #                        method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
-    #                        minibatch_size=300,
-    #                        plot=True,
-    #                        verbosity=True,
-    #
-    #                        # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
-    #                        # elastic net
-    #                        _lambdaL1=0.,
-    #                        _lambdaL2=0.,
-    #                        outMethod = False)
+    losses = ff.trainNN(train, net, loss, optimizer,
+                            max_epoch=100000,
+                            loss_target=0.4,
+                            method='minibatch',  # pick "batch" or "stochastic" or "minibatch"
+                            minibatch_size=300,
+                            plot=True,
+                            verbosity=True,
+
+                            # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
+                            # elastic net
+                            _lambdaL1=0.,
+                            _lambdaL2=0.,
+                            outMethod = False)
 
     test_predictions = tu.binary_to_labels(net.forward(valid[0], outMethod=True))
     test_true = valid[1].squeeze()
@@ -227,6 +247,6 @@ def univariate():
 
 if __name__ == '__main__':
     # univariate()
-    # neural_net()
-    compound_neural_net()
+    neural_net()
+    # compound_neural_net()
     # models() # trying different models in sklearn. you guys can tweak this easily
