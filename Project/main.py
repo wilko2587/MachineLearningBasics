@@ -4,6 +4,7 @@ import transformation_utils as tu
 import validation_utils as vu
 from torch import nn
 import torch
+import torch.optim.lr_scheduler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
@@ -34,9 +35,14 @@ def compound_neural_net():
     netCD = ff.FeedForwardSoftmax(len(trainCD[0][0]), 2, hiddenNs=[20])
 
     loss = nn.CrossEntropyLoss()
-    optimizerHD = torch.optim.SGD(netHD.parameters(), lr=1e-3, momentum=0.9)
-    optimizerCD = torch.optim.SGD(netCD.parameters(), lr=1e-3, momentum=0.9)
-
+    optimizerHD = torch.optim.SGD(netHD.parameters(), lr=1e-1, momentum=0.9)
+    optimizerCD = torch.optim.SGD(netCD.parameters(), lr=1e-1, momentum=0.9)
+    schedulerHD = lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)
+    schedulerCD = lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)    optimizerHD.step()
+    schedulerHD.step()
+    optimizerCD.step()
+    optimizerHD.step()
+    
     #ff.generate_learning_curve(trainHD, validHD, netHD, loss, optimizerHD,
     #                           max_epoch=50000,
     #                           method='minibatch',
