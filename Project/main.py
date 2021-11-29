@@ -38,7 +38,8 @@ def compound_neural_net():
     optimizerHD = torch.optim.SGD(netHD.parameters(), lr=1e-1, momentum=0.9)
     optimizerCD = torch.optim.SGD(netCD.parameters(), lr=1e-1, momentum=0.9)
     schedulerHD = lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)
-    schedulerCD = lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)    optimizerHD.step()
+    schedulerCD = lr_scheduler.ConstantLR(optimizerHD, factor=0.2222222, total_iters=5, last_epoch=- 1, verbose=False)
+    optimizerHD.step()
     schedulerHD.step()
     optimizerCD.step()
     optimizerHD.step()
@@ -171,7 +172,6 @@ def neural_net():
 
 
 def models():
-
     '''
     Beginning is all data prep.
     After this, data stored as (train_df, test_df) and labels as (train_labels, test_labels)
@@ -185,7 +185,7 @@ def models():
     smoke_cat = data['smoke'].unique()
     data['smoke'].replace(to_replace=smoke_cat, value=np.arange(11), inplace=True)
 
-    # exclude = ['bnp', 'a1c','chol'] # dropping highly misisng data didn't make difference
+    # exclude = ['bnp', 'a1c','chol'] # dropping highly missing data didn't make difference
     # data.drop(columns=exclude, axis=1, inplace=True)
 
     train = data.sample(frac=0.8, random_state=2)
@@ -200,11 +200,8 @@ def models():
     train_imp = simp_imp.transform(train_data)
     test_imp = simp_imp.transform(test_data)
 
-<<<<<<< Updated upstream
-    scaler = StandardScaler().fit(train_imp)  # scale values to mean 0, perserve variance
-=======
+
     scaler = StandardScaler().fit(train_imp) # scale to mean 0, std 1
->>>>>>> Stashed changes
     train_clean = scaler.transform(train_imp)
     test_clean = scaler.transform(test_imp)
 
@@ -216,16 +213,6 @@ def models():
     train_labels = [x[0] for x in train_Y.to_numpy()]  # convert to format sklearn likes
     test_labels = [x[0] for x in test_Y.to_numpy()]
 
-<<<<<<< Updated upstream
-    #########################################################################################
-
-    # Now try different models
-    rf = RandomForestClassifier(random_state=0, n_estimators=100)
-    knn = KNeighborsClassifier(n_neighbors=5)
-    log = LogisticRegression(random_state=0)
-
-    models = [rf, knn, log]
-=======
     '''
     Model training: 
     Data - train_df, test_df
@@ -238,7 +225,6 @@ def models():
     svm = SGDClassifier(max_iter=1000, tol=1e-3)
 
     models = [rf, knn, log, svm]
->>>>>>> Stashed changes
 
     for model in models:
         model.fit(train_df, train_labels)
@@ -276,12 +262,8 @@ def univariate():
 
 if __name__ == '__main__':
     # univariate()
-<<<<<<< Updated upstream
-    neural_net()
     # compound_neural_net()
-    # models() # trying different models in sklearn. you guys can tweak this easily
-=======
     # neural_net()
-    models() # trying different models in sklearn. you guys can tweak this easily
+    models()
 
->>>>>>> Stashed changes
+
