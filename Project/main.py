@@ -9,8 +9,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def compound_neural_net():
@@ -162,6 +165,7 @@ def neural_net():
 
 
 def models():
+
     '''
     Beginning is all data prep.
     After this, data stored as (train_df, test_df) and labels as (train_labels, test_labels)
@@ -190,7 +194,11 @@ def models():
     train_imp = simp_imp.transform(train_data)
     test_imp = simp_imp.transform(test_data)
 
+<<<<<<< Updated upstream
     scaler = StandardScaler().fit(train_imp)  # scale values to mean 0, perserve variance
+=======
+    scaler = StandardScaler().fit(train_imp) # scale to mean 0, std 1
+>>>>>>> Stashed changes
     train_clean = scaler.transform(train_imp)
     test_clean = scaler.transform(test_imp)
 
@@ -202,6 +210,7 @@ def models():
     train_labels = [x[0] for x in train_Y.to_numpy()]  # convert to format sklearn likes
     test_labels = [x[0] for x in test_Y.to_numpy()]
 
+<<<<<<< Updated upstream
     #########################################################################################
 
     # Now try different models
@@ -210,6 +219,20 @@ def models():
     log = LogisticRegression(random_state=0)
 
     models = [rf, knn, log]
+=======
+    '''
+    Model training: 
+    Data - train_df, test_df
+    Labels - train_labels, test_labels
+    '''
+
+    rf = RandomForestClassifier(random_state = 0, n_estimators=100, max_features=20)
+    knn =  KNeighborsClassifier(n_neighbors=5)
+    log = LogisticRegression(random_state=0, multi_class='multinomial',solver='lbfgs',C=10) #softmax regression
+    svm = SGDClassifier(max_iter=1000, tol=1e-3)
+
+    models = [rf, knn, log, svm]
+>>>>>>> Stashed changes
 
     for model in models:
         model.fit(train_df, train_labels)
@@ -247,6 +270,12 @@ def univariate():
 
 if __name__ == '__main__':
     # univariate()
+<<<<<<< Updated upstream
     neural_net()
     # compound_neural_net()
     # models() # trying different models in sklearn. you guys can tweak this easily
+=======
+    # neural_net()
+    models() # trying different models in sklearn. you guys can tweak this easily
+
+>>>>>>> Stashed changes
