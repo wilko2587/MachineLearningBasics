@@ -263,8 +263,8 @@ def univariate():
 if __name__ == '__main__':
     # univariate()
     # compound_neural_net()
-    # neural_net()
-    vote_score()
+    neural_net()
+    # vote_score()
 
 
 
