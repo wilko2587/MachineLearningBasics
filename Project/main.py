@@ -10,12 +10,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import SGDClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import VotingClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 
 def compound_neural_net():
     '''
@@ -171,10 +172,13 @@ def neural_net():
     return None
 
 
-def models():
+def vote_score():
     '''
     Beginning is all data prep.
     After this, data stored as (train_df, test_df) and labels as (train_labels, test_labels)
+    FYI - I tried PCA but there is basically a linear increase in the explained variance by increasing dimensions
+    in our dataset. It didn't help by cutting any dimensions.
+    In the end, random forest, support vector machine, and gradient boosting classifier were best.
     '''
 
     data = dr.read('deid_full_data_cont.csv')
@@ -213,18 +217,14 @@ def models():
     train_labels = [x[0] for x in train_Y.to_numpy()]  # convert to format sklearn likes
     test_labels = [x[0] for x in test_Y.to_numpy()]
 
-    '''
-    Model training: 
-    Data - train_df, test_df
-    Labels - train_labels, test_labels
-    '''
+    # Finally, training models!
 
-    rf = RandomForestClassifier(random_state = 0, n_estimators=100, max_features=20)
-    knn =  KNeighborsClassifier(n_neighbors=5)
-    log = LogisticRegression(random_state=0, multi_class='multinomial',solver='lbfgs',C=10) #softmax regression
-    svm = SGDClassifier(max_iter=1000, tol=1e-3)
+    rf = RandomForestClassifier(random_state = 0, n_estimators=1000, max_features=0.5,oob_score=True)
+    svm = SVC(kernel='poly', degree=3, coef0=1, C=5, probability=True)
+    gbt = GradientBoostingClassifier(max_depth=1, n_estimators=1000,learning_rate=0.5)
+    voting_clf = VotingClassifier(estimators=[('rf',rf), ('svc',svm), ('gbt',gbt)],voting='hard')
 
-    models = [rf, knn, log, svm]
+    models = [rf, svm, gbt, voting_clf]
 
     for model in models:
         model.fit(train_df, train_labels)
@@ -264,6 +264,12 @@ if __name__ == '__main__':
     # univariate()
     # compound_neural_net()
     # neural_net()
-    models()
+    vote_score()
+
+
+
+
+
+
 
 
