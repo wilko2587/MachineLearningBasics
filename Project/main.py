@@ -220,7 +220,7 @@ def vote_score():
     # Finally, training models!
 
     rf = RandomForestClassifier(random_state = 0, n_estimators=1000, max_features=0.5,oob_score=True)
-    svm = SVC(kernel='poly', degree=8, coef0=1, C=5, probability=True)
+    svm = SVC(kernel='poly', degree=3, coef0=1, C=5)
     gbt = GradientBoostingClassifier(max_depth=1, n_estimators=1000,learning_rate=0.5)
     voting_clf = VotingClassifier(estimators=[('rf',rf), ('svc',svm), ('gbt',gbt)],voting='hard')
 
@@ -262,9 +262,9 @@ def univariate():
 
 if __name__ == '__main__':
     # univariate()
-    compound_neural_net()
+    # compound_neural_net()
     # neural_net()
-    # vote_score()
+    vote_score()
 
 
 
