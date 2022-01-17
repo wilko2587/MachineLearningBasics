@@ -46,6 +46,14 @@ class my_corpus():
             text = text + ' ' + token
         return(text)
 
+    def token_counts(self, corpus_tok)
+        tok_cnt = {}
+        for tok in corpus_tok:
+            tok_cnt[tok] = corpus_tok.count(tok)
+            if tok_cnt[tok] < 3:
+                # corpus_tok = re.sub(r"\bword\b", "unk", corpus_tok)
+                corpus_tok.replace(tok, 'unk')
+
 def tokens(sequence):
     return sent_tokenize(sequence)
     
