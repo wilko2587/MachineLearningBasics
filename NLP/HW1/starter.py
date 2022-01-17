@@ -29,7 +29,7 @@ class my_corpus():
         
         return(text)
 
-def lowercase(sequence):
+def tokens(sequence):
     return sent_tokenize(sequence)
     
 def main():
@@ -46,9 +46,9 @@ def main():
     print(' ')
     print('this is the encoded text: %s' % text)
 
-    lower = lowercase(text)
+    lower = tokens(text)
     print(' ')
-    print('this is the lowercase text: %s' % text)
+    print('this is the tokenized text: %s' % text)
     
 if __name__ == "__main__":
     main()
