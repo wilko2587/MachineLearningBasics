@@ -24,7 +24,7 @@ def softmax(x):
 
 class FeedForwardSoftmax(nn.Module):
     def __init__(self, inputN, outputN, hiddenNs=None, bias=True,
-                 inputMethod=nn.Sigmoid, hiddenMethods=[], outputMethod=nn.Softmax):
+                 inputMethod=nn.Sigmoid, hiddenMethods=[]):
         """
         Feed-forward linear neural network, using softmax at the output layer to normalise the outputs.
 
@@ -35,7 +35,6 @@ class FeedForwardSoftmax(nn.Module):
         :param: bias = True/False bool. If True pytorch will add a bias term into the calculations
         :param: inputMethod = nn.Module object. transformation to apply to the input layer
         :param: hiddenMethods = list of nn.Module objects. transformation to apply to the hidden layers
-        :param: outputMethod = nn.Module object. transformation to apply to the output layer
 
         """
 
@@ -54,7 +53,7 @@ class FeedForwardSoftmax(nn.Module):
         # initialise container for the methods list (transformation for each layer, eg: sigmoid)
         self._methods = [inputMethod()] \
                         + [x() for x in hiddenMethods] \
-                        + [outputMethod()]
+                        + [nn.Softmax(dim=1)]
 
         for i in range(len(layer_sizes) - 1):  # build the architecture
             self._layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1], bias=bias))
@@ -73,7 +72,9 @@ class FeedForwardSoftmax(nn.Module):
 
         for i in range(len(self._layers)):  # iterate through the layers, passing x from one layer to the next
             x = self._layers[i](x)
-            if i != len(self._layers) - 1 and outMethod:
+            if i != len(self._layers) - 1:
+                x = self._methods[i](x)
+            elif i == len(self._layers) - 1 and outMethod:
                 x = self._methods[i](x)
         return x
 
@@ -210,10 +211,10 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
     # set up the data
     Xtrain = train[0]
     ytrain = train[1].squeeze()
-    ytrain_bin = tu.labels_to_binary(ytrain, Noutputs)
+    #ytrain_bin = tu.labels_to_binary(ytrain, Noutputs)
     Xvalid = valid[0]
     yvalid = valid[1].squeeze()
-    yvalid_bin = tu.labels_to_binary(yvalid, Noutputs)
+    #yvalid_bin = tu.labels_to_binary(yvalid, Noutputs)
 
     train_losses = []  # containers to plot learning curves
     valid_losses = []
@@ -229,15 +230,16 @@ def generate_learning_curve(train, valid, model, loss_func, optimizer, max_epoch
                          plot=False,
                          verbosity=False,
                          _lambdaL1=_lambdaL1,
-                         _lambdaL2=_lambdaL2)
+                         _lambdaL2=_lambdaL2,
+                         outMethod=outMethod)
 
         # calculate training loss
         train_preds = model.forward(Xtrain, outMethod=outMethod)
-        train_loss = loss_func(train_preds, ytrain_bin).item()
+        train_loss = loss_func(train_preds, ytrain.type(torch.long)).item()
 
         # calculate validation loss
         valid_preds = model.forward(Xvalid, outMethod=outMethod)
-        valid_loss = loss_func(valid_preds, yvalid_bin).item()
+        valid_loss = loss_func(valid_preds, yvalid.type(torch.long)).item()
 
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
