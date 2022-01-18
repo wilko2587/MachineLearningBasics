@@ -74,9 +74,11 @@ class my_corpus():
 
         unk = '<UNK>'
         self._tokens_threshold = list()
+        self._tokens_removed = list()
 
         for each in self._tokens:
             if self._tokencount[each] < threshold:
+                self._tokens_removed.append(each)
                 self._tokens_threshold.append(unk)
             else:
                 self._tokens_threshold.append(each)
