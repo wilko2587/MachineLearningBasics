@@ -1,0 +1,98 @@
+﻿id,age,gender,bmi,blood_pressure_category,smoking_status,ace_arb,aldosterone,beta_blocker,inotrope,loop_diuretic,sacubitril_valsartan,sglt2_inhibitor,statin,thiazide,xanthine_oxidase_inhibitors,albumin,bnp,bun,creatinine,hemoglobin,hemoglobin_a1c,lymphocytes,platelet,rdw,sodium,total_cholesterol,wbc,lvef_category,stage_category_int
+1,80,Female,Obese Class I,Elevated,Former Smoker,0,0,0,0,1,0,0,0,0,0,Normal,Unknown,Normal,Normal,Low,Unknown,Normal,Normal,Normal,Low,Normal,Normal,HFrEF,1
+2,64,Male,Obese Class II,Elevated,Never Smoker,1,1,1,0,1,1,0,0,0,0,Normal,Unknown,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+3,58,Female,Overweight,Normal,Never Smoker,1,1,1,0,1,1,0,0,0,0,Normal,High,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+4,86,Female,Normal,Normal,Never Smoker,0,0,1,0,1,0,0,1,0,0,Low,High,High,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+5,80,Male,Underweight,Normal,Never Smoker,0,0,1,0,1,0,0,1,0,0,Normal,High,High,Normal,Normal,Diabetes,Normal,Normal,High,Normal,Normal,Normal,HFsEF,1
+6,73,Male,Obese Class I,Elevated,Never Smoker,0,1,0,0,1,0,0,0,0,0,Normal,High,High,Normal,Normal,Pre-Diabetes,Normal,Normal,Normal,Normal,Unknown,Normal,HFrEF,1
+7,97,Male,Overweight,Normal,Never Smoker,0,1,1,0,1,0,0,0,0,0,Normal,High,High,Normal,Normal,Unknown,Low,Normal,High,Low,Unknown,Normal,HFsEF,2
+8,86,Male,Obese Class II,Low,Former Smoker,0,0,1,0,1,0,0,1,1,1,Low,High,High,High,Low,Pre-Diabetes,Low,Low,High,Low,Normal,High,HFrEF,2
+9,79,Female,Overweight,Hypertensive Stage II,Former Smoker,0,0,0,0,0,0,0,0,0,0,Unknown,Unknown,Normal,Normal,Normal,Unknown,Unknown,Normal,Normal,Normal,Unknown,Normal,HFrEF,1
+10,71,Male,Obese Class III,Normal,Never Smoker,0,0,0,1,1,0,0,1,0,0,Normal,High,High,Normal,Low,Unknown,Low,Normal,High,Normal,Unknown,Normal,HFsEF,2
+11,72,Male,Overweight,Normal,Never Smoker,0,1,0,0,1,0,0,0,1,0,Normal,High,High,Normal,Low,Normal,Low,Normal,High,Normal,Unknown,Normal,HFrEF,2
+12,47,Female,Obese Class II,Normal,Never Smoker,0,1,1,1,1,0,0,0,0,0,Normal,Normal,Normal,Normal,High,Normal,Low,Normal,Normal,Normal,Normal,High,HFsEF,1
+13,64,Female,Normal,Normal,Never Smoker,1,1,0,0,0,1,0,0,0,0,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+14,72,Female,Normal,Normal,Current Every Day Smoker,0,0,1,0,1,0,0,1,0,0,Low,High,Normal,Normal,Low,Normal,Normal,High,High,Normal,High,High,HFrEF,2
+15,57,Female,Obese Class I,Hypertensive Stage II,Former Smoker,0,0,0,0,0,0,0,0,0,0,Normal,Unknown,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+16,88,Male,Obese Class I,Normal,Never Smoker,0,1,1,0,1,0,0,1,0,0,Normal,High,High,Normal,Low,Unknown,Low,Normal,Normal,Normal,Unknown,Normal,HFrEF,1
+17,70,Female,Obese Class I,Hypertensive Stage II,Former Smoker,1,0,1,0,1,1,0,1,0,0,Normal,High,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,High,Normal,HFrEF,1
+18,82,Female,Overweight,Elevated,Former Smoker,1,0,0,0,1,1,0,0,0,1,Low,High,Normal,Normal,Normal,Unknown,Low,Normal,Normal,Normal,Unknown,Normal,HFrEF,1
+19,61,Female,Obese Class I,Normal,Former Smoker,0,0,0,0,1,0,0,1,0,0,Normal,High,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+20,56,Female,Overweight,Normal,Never Smoker,1,0,0,0,0,1,0,1,0,0,Normal,High,High,Normal,High,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+21,76,Female,Obese Class II,Normal,Never Smoker,1,1,0,0,1,1,0,1,1,1,Normal,High,High,Normal,Normal,Diabetes,Normal,Low,Normal,Low,Unknown,Normal,HFsEF,2
+22,54,Female,Overweight,Normal,Never Smoker,0,1,1,0,1,0,0,1,1,0,Normal,High,High,Normal,Normal,Unknown,Low,Normal,Normal,Low,Normal,High,HFsEF,1
+23,50,Male,Obese Class III,Hypertension Stage I,Former Smoker,1,1,1,0,1,1,0,0,0,0,Normal,High,High,Normal,High,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+24,72,Female,Normal,Normal,Never Smoker,0,0,1,0,1,0,0,0,0,1,Normal,Unknown,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+25,72,Female,Obese Class I,Normal,Former Smoker,0,0,0,0,1,0,0,0,1,0,Normal,Normal,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+27,52,Female,Overweight,Hypertension Stage I,Never Smoker,0,0,0,0,1,0,0,1,1,0,Normal,High,High,High,Low,Diabetes,Low,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+28,86,Female,Overweight,Elevated,Former Smoker,0,1,1,1,1,0,0,1,0,0,Low,High,High,High,Low,Pre-Diabetes,Low,Normal,High,Normal,Normal,High,HFrEF,1
+29,74,Male,Overweight,Hypertension Stage I,Former Smoker,1,1,1,0,0,1,0,1,0,0,Normal,High,Normal,Normal,Normal,Normal,Normal,Normal,Normal,Normal,High,Normal,HFrEF,1
+30,70,Female,Normal,Hypertension Stage I,Former Smoker,0,1,1,0,1,0,0,1,1,0,Normal,High,High,Normal,Normal,Pre-Diabetes,Normal,Normal,High,Normal,Normal,Normal,HFsEF,1
+31,56,Female,Underweight,Normal,Former Smoker,0,0,0,0,0,0,0,0,0,0,Normal,High,High,Normal,High,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+33,55,Female,Overweight,Normal,Never Smoker,1,1,1,1,1,1,0,1,0,1,Low,High,High,High,Low,Diabetes,Low,Normal,High,Normal,Unknown,Normal,HFsEF,2
+34,95,Female,Obese Class I,Low,Never Smoker,1,1,0,0,1,1,0,0,0,0,Normal,High,High,Normal,Normal,Diabetes,Normal,High,Normal,Normal,Unknown,High,HFsEF,1
+35,61,Female,Normal,Elevated,Never Smoker,0,1,0,0,1,0,0,0,0,0,Normal,High,High,Normal,Unknown,Unknown,Unknown,Unknown,Unknown,Normal,Unknown,Unknown,HFrEF,1
+36,54,Male,Obese Class I,Hypertension Stage I,Current Some Day Smoker,0,0,0,0,0,0,0,1,0,0,Normal,Unknown,Normal,Normal,Normal,Diabetes,Normal,Normal,High,Normal,Normal,High,HFrEF,1
+37,60,Female,Overweight,Hypertension Stage I,Current Some Day Smoker,0,0,0,0,1,0,0,0,0,0,Normal,High,High,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Unknown,Normal,HFsEF,1
+38,65,Female,Obese Class I,Normal,Never Smoker,0,0,0,0,0,0,0,0,0,0,Normal,High,High,Normal,Normal,Unknown,Low,Normal,High,Normal,Unknown,Normal,HFrEF,2
+39,81,Male,Overweight,Normal,Former Smoker,0,0,1,0,1,0,0,1,0,1,Normal,High,High,Normal,Low,Pre-Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+40,73,Female,Normal,Normal,Never Smoker,0,1,0,0,1,0,0,1,1,0,Normal,High,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,2
+41,62,Male,Obese Class III,Hypertension Stage I,Never Smoker,0,1,1,0,1,0,0,0,0,0,Normal,Unknown,Normal,Normal,Normal,Pre-Diabetes,Low,Normal,High,Normal,Unknown,High,HFrEF,1
+42,44,Female,Obese Class III,Normal,Former Smoker,0,0,0,0,1,0,0,0,0,0,Unknown,Normal,Normal,Normal,Unknown,Unknown,Unknown,Unknown,Unknown,Normal,Unknown,Unknown,HFsEF,1
+43,75,Male,Normal,Normal,Former Smoker,1,1,1,0,1,1,0,0,0,1,Normal,High,High,Normal,Normal,Unknown,Low,High,Normal,Normal,Unknown,High,HFsEF,2
+44,75,Male,Overweight,Hypertensive Stage II,Never Smoker,0,1,1,0,1,0,0,1,1,0,Low,High,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,High,High,HFrEF,1
+45,65,Male,Overweight,Normal,Former Smoker,1,1,0,0,1,1,0,1,0,0,High,High,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+46,70,Female,Overweight,Normal,Former Smoker,0,1,1,0,1,0,0,0,0,0,Normal,High,High,High,Normal,Diabetes,Low,Normal,High,Normal,Normal,Normal,HFsEF,1
+47,93,Male,Normal,Normal,Never Smoker,0,0,0,0,1,0,0,0,0,0,Low,High,High,Normal,Low,Unknown,Low,High,High,Normal,Normal,High,HFrEF,1
+48,71,Male,Obese Class II,Elevated,Former Smoker,0,0,0,0,1,0,0,0,0,1,Normal,High,Normal,High,Normal,Unknown,Low,Normal,High,Normal,Normal,High,HFrEF,1
+49,63,Female,Normal,Normal,Former Smoker,0,1,1,1,1,0,0,1,0,0,Low,High,High,Normal,Normal,Pre-Diabetes,Low,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+50,31,Male,Obese Class III,Hypertension Stage I,Never Smoker,1,1,0,1,1,1,0,0,0,0,Normal,High,Normal,Normal,Low,Diabetes,Normal,Normal,High,Normal,Unknown,Normal,HFsEF,2
+51,76,Male,Normal,Hypertension Stage I,Former Smoker,0,0,1,0,1,0,0,1,0,0,Normal,High,High,Normal,Low,Diabetes,Low,Normal,Normal,Normal,High,Normal,HFrEF,1
+52,73,Female,Underweight,Low,Current Every Day Smoker,0,0,1,1,1,0,0,1,0,0,Low,High,High,Normal,Low,Unknown,Low,Low,High,Normal,Normal,High,HFsEF,2
+53,70,Female,Obese Class I,Normal,Never Smoker,0,0,1,1,1,0,0,1,0,0,Normal,High,High,High,Low,Pre-Diabetes,Normal,Normal,High,Normal,Normal,Normal,HFrEF,1
+54,64,Male,Obese Class II,Hypertensive Stage II,Former Smoker,0,0,1,1,1,0,0,1,0,0,Normal,High,Normal,Normal,Low,Normal,Normal,Normal,High,Normal,Normal,High,HFsEF,1
+55,54,Female,Overweight,Normal,Never Smoker,0,0,1,0,0,0,0,1,0,0,Normal,Unknown,High,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+56,93,Female,Normal,Normal,Never Smoker,0,0,0,0,1,0,0,1,0,1,Normal,High,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+57,65,Female,Obese Class I,Elevated,Former Smoker,0,1,1,0,1,0,0,0,1,0,Normal,High,Normal,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,High,Normal,HFrEF,1
+58,86,Female,Underweight,Normal,Former Smoker,0,1,1,0,1,0,0,0,0,0,Normal,High,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Unknown,Normal,HFsEF,1
+59,59,Female,Obese Class II,Hypertension Stage I,Never Smoker,0,0,1,0,0,0,0,0,0,0,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,HFrEF,1
+60,61,Female,Overweight,Hypertension Stage I,Former Smoker,0,0,1,0,1,0,0,0,0,0,Normal,High,High,Normal,Normal,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+61,84,Female,Overweight,Normal,Never Smoker,0,1,0,0,1,0,0,0,1,0,Normal,High,High,High,Normal,Unknown,Low,Low,High,Low,Normal,Normal,HFsEF,2
+62,47,Female,Obese Class II,Hypertension Stage I,Former Smoker,0,0,0,0,1,0,0,1,0,0,Normal,High,Normal,Normal,High,Unknown,Low,Normal,Normal,Normal,Unknown,High,HFsEF,1
+63,50,Male,Obese Class III,Hypertension Stage I,Never Smoker,0,1,1,0,0,0,1,0,0,0,Normal,High,High,Normal,Normal,Normal,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,2
+64,74,Male,Obese Class III,Hypertension Stage I,Never Smoker,0,0,0,0,0,0,0,0,0,0,Normal,High,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Unknown,Normal,HFsEF,1
+65,55,Female,Obese Class II,Hypertension Stage I,Light Tobacco Smoker,1,0,0,0,0,1,1,1,0,0,Normal,Unknown,High,Normal,High,Diabetes,Normal,Normal,Normal,Normal,High,Normal,HFrEF,1
+66,73,Male,Normal,Normal,Former Smoker,1,0,0,0,1,1,0,1,0,0,Normal,High,High,Normal,Normal,Unknown,Low,Normal,High,Normal,Unknown,Normal,HFsEF,2
+67,82,Female,Normal,Normal,Former Smoker,0,0,1,0,1,0,0,1,0,0,Normal,High,High,Normal,Normal,Unknown,Normal,Normal,High,Normal,Normal,Normal,HFsEF,2
+68,46,Female,Overweight,Normal,Former Smoker,0,0,1,0,0,0,0,0,0,0,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,HFrEF,1
+69,91,Male,Normal,Hypertensive Stage II,Never Smoker,0,1,1,0,1,0,0,1,0,0,Low,Unknown,High,Normal,Low,Diabetes,Low,Low,High,Normal,Normal,Normal,HFrEF,1
+70,40,Male,Overweight,Normal,Never Smoker,0,1,0,0,0,0,0,0,0,0,Normal,Unknown,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Unknown,Normal,HFrEF,1
+72,53,Female,Obese Class III,Hypertension Stage I,Never Smoker,1,0,0,0,1,0,0,1,0,0,Normal,High,High,Normal,Normal,Diabetes,Low,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+73,60,Female,Obese Class II,Normal,Never Smoker,1,0,1,0,0,1,0,1,0,0,Normal,High,Normal,Normal,Normal,Pre-Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,2
+74,90,Male,Normal,Hypertensive Stage II,Never Smoker,0,0,0,0,1,0,0,1,0,0,Normal,High,High,Normal,Normal,Normal,Normal,Normal,Normal,Normal,Unknown,Normal,HFrEF,1
+75,72,Male,Obese Class I,Hypertension Stage I,Never Smoker,0,1,1,0,0,0,0,0,0,0,Unknown,Unknown,Normal,Normal,Unknown,Diabetes,Unknown,Unknown,Unknown,Normal,Normal,Unknown,HFrEF,1
+76,40,Female,Obese Class III,Hypertensive Stage II,Never Smoker,0,0,1,0,1,0,0,0,0,0,Low,High,Normal,Normal,Normal,Pre-Diabetes,Normal,Normal,Normal,Normal,Unknown,Normal,HFsEF,1
+77,63,Male,Obese Class II,Normal,Former Smoker,0,0,0,0,1,0,0,0,0,0,Normal,High,High,Normal,High,Unknown,Normal,Low,High,Normal,Normal,Normal,HFrEF,1
+78,79,Female,Overweight,Hypertension Stage I,Never Smoker,1,0,0,0,1,1,0,1,0,0,Normal,High,High,Normal,Low,Diabetes,Low,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+79,66,Male,Obese Class II,Low,Former Smoker,0,0,1,0,0,0,0,1,0,0,Normal,High,High,High,Normal,Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+80,69,Female,Normal,Hypertensive Stage II,Former Smoker,0,0,0,1,0,0,0,1,0,0,Low,Unknown,Normal,High,Low,Normal,Low,Low,Normal,Normal,Normal,Normal,HFsEF,1
+81,45,Male,Normal,Normal,Former Smoker,1,0,1,0,1,1,0,0,0,0,Normal,Unknown,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Unknown,Normal,HFsEF,1
+82,89,Male,Obese Class II,Normal,Never Smoker,0,1,1,1,1,0,0,1,0,0,Low,High,High,High,Low,Unknown,Low,High,High,Normal,Normal,High,HFsEF,2
+83,48,Female,Obese Class I,Normal,Former Smoker,0,0,0,0,0,0,0,0,0,0,Normal,High,High,Normal,High,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+84,59,Male,Normal,Normal,Former Smoker,1,1,0,1,1,1,0,1,0,0,Normal,Unknown,High,Normal,Normal,Pre-Diabetes,Normal,Normal,High,Normal,Normal,Normal,HFsEF,2
+85,47,Female,Overweight,Normal,Never Smoker,0,0,0,0,1,0,0,0,1,0,Normal,High,High,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+86,63,Female,Obese Class I,Normal,Former Smoker,0,1,1,0,1,0,0,0,0,0,Normal,High,High,Normal,Normal,Pre-Diabetes,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+87,89,Male,Normal,Hypertensive Stage II,Never Smoker,0,0,1,0,1,0,0,1,0,0,Normal,High,Normal,Normal,Normal,Unknown,High,Low,Normal,Normal,Normal,High,HFrEF,1
+88,87,Female,Normal,Normal,Former Smoker,0,0,1,0,1,0,0,1,0,0,Low,High,Normal,Normal,Low,Unknown,Normal,Normal,High,Normal,Unknown,High,HFsEF,1
+89,75,Female,Obese Class III,Hypertensive Stage II,Former Smoker,0,0,0,0,1,0,0,1,0,0,Normal,High,High,Normal,Normal,Diabetes,Normal,Normal,High,Normal,Normal,Normal,HFsEF,1
+90,63,Male,Obese Class I,Elevated,Never Smoker,0,0,1,0,1,0,0,1,1,0,Normal,High,High,Normal,Low,Diabetes,Normal,Normal,High,Normal,Normal,Normal,HFrEF,1
+91,89,Female,Overweight,Normal,Former Smoker,0,1,1,0,1,0,0,0,0,0,Normal,High,High,High,Low,Pre-Diabetes,Low,Normal,High,Normal,Normal,High,HFrEF,2
+92,68,Female,Overweight,Normal,Former Smoker,0,1,0,0,1,0,0,1,0,0,Normal,High,High,Normal,High,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+93,94,Female,Normal,Normal,Former Smoker,0,0,1,0,1,0,0,1,0,0,Low,High,High,Normal,Normal,Normal,Normal,Normal,High,Normal,Normal,Normal,HFsEF,1
+94,78,Female,Overweight,Low,Never Smoker,0,0,0,0,0,0,0,0,0,0,Normal,High,Normal,Normal,Normal,Unknown,Normal,Normal,Normal,Normal,Normal,Normal,HFsEF,1
+95,78,Female,Normal,Elevated,Former Smoker,0,0,0,0,1,0,0,0,0,0,Low,High,High,Normal,Low,Unknown,Low,Normal,High,Normal,Unknown,Normal,HFsEF,1
+96,66,Female,Obese Class III,Normal,Former Smoker,0,1,0,0,1,0,0,1,1,0,Low,High,High,High,Normal,Diabetes,Low,Low,High,Normal,Unknown,Normal,HFsEF,2
+97,56,Female,Normal,Hypertensive Stage II,Never Smoker,0,0,1,0,1,0,0,0,0,0,Normal,Unknown,High,High,Low,Diabetes,Low,Normal,High,Low,Unknown,Normal,HFrEF,1
+98,78,Female,Overweight,Hypertension Stage I,Former Smoker,1,1,1,1,1,1,0,0,0,0,Normal,High,High,High,Normal,Unknown,Normal,Normal,Normal,Normal,Unknown,Normal,HFsEF,2
+99,39,Female,Obese Class II,Normal,Current Every Day Smoker,0,0,0,0,1,0,0,1,0,0,Normal,High,High,Normal,Normal,Unknown,High,Normal,Normal,Normal,Normal,Normal,HFrEF,1
+100,44,Female,Obese Class III,Elevated,Never Smoker,0,0,0,0,0,0,0,1,0,0,Unknown,Normal,Normal,Normal,Unknown,Unknown,Unknown,Unknown,Unknown,Normal,Normal,Unknown,HFrEF,1

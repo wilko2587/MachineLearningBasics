@@ -129,6 +129,7 @@ def neural_net():
     train, valid, test = dr.generate_sets(catdata, splits=[70, 15, 15])
     train, valid, test = tu.scale01(train, [train, valid, test])
 
+
     # lets make a simple feed forward NN with one hidden layer, softmax output
     net = ff.FeedForwardSoftmax(len(train[0][0]), 3, hiddenNs=[20])
     loss = nn.CrossEntropyLoss()
@@ -152,8 +153,8 @@ def neural_net():
 
                             # L1 and L2 regularisation strengths. NB: you can use a combination of both - this is called an
                             # elastic net
-                            _lambdaL1=0.,
-                            _lambdaL2=0.,
+                            _lambdaL1=1.,
+                            _lambdaL2=0,
                             outMethod = False)
 
     test_predictions = tu.binary_to_labels(net.forward(valid[0], outMethod=True))
@@ -263,8 +264,9 @@ def univariate():
 if __name__ == '__main__':
     # univariate()
     # compound_neural_net()
-    # neural_net()
-    vote_score()
+    neural_net()
+    # vote_score()
+
 
 
 

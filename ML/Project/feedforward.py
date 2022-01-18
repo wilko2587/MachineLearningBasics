@@ -161,6 +161,7 @@ def trainNN(dataset, model, loss_func, optimizer, max_epoch=10000,
         optimizer.step()
 
         full_loss = loss_func(model.forward(X, outMethod=outMethod), y).item()
+        print(full_loss)
         train_loss.append(full_loss)
         epoch += 1
 
