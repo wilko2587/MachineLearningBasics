@@ -54,6 +54,16 @@ class my_corpus():
             text = text + ' ' + token
 
         return(text)
+    
+    #traverses tokens in tokenized list corpus_tok, identifies numbers and classifies as either year or int
+    def conv_to_year_int(self, corpus_tok):
+        for tok in corpus_tok:
+            if int(tok) != null:
+                if len(tok) == 4:
+                    corpus_tok.replace(tok, '<year>')
+                else:
+                    corpus_tok.replace(tok, '<int>')
+        return corpus_tok
 
     def token_counts(self, corpus_tok):
         tok_cnt = {}
@@ -63,6 +73,7 @@ class my_corpus():
             if tok_cnt[tok] < 3:
                 # corpus_tok = re.sub(r"\bword\b", "unk", corpus_tok)
                 corpus_tok.replace(tok, 'unk')
+        return corpus_tok
 
     def threshold(self,threshold):
         '''
