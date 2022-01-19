@@ -7,22 +7,24 @@ nltk.download('punkt')
 class my_corpus():
     def __init__(self, params):
         super().__init__() 
-        
-        self.params = params
 
         print('setting parameters')
+        self.params = params
+
         print('building corpus')
+        token_list = list()
 
-        with open('source_text.txt') as f:
-            lines = f.readlines()
+        with open(('source_text.txt')) as f:
+            for line in f:
+                tokens = nltk.word_tokenize(line.strip().lower())
+                for tok in tokens:
+                    token_list.append(tok)
 
-        fulltext = ' '.join(lines).lower()
+        unique_tokens = list(set(token_list))
 
-        tokens = nltk.word_tokenize(fulltext)
-        unique_tokens = list(set(tokens))
+        self._tokens = token_list
 
-
-        self._tokens = tokens
+        print('building token map')
         self._tokenmap = {unique_tokens[i]:i for i in range(len(unique_tokens))}
 
     def replace_numbers(self):
@@ -127,8 +129,15 @@ if __name__ == "__main__":
     # main()
 
     corpus = my_corpus(None)
-
+    #
     # for each in corpus._tokens:
     #     if re.search('^[12][0-9]{3}$', each):
     #         print(each)
 
+    # token = list()
+    #
+    # with open(('source_text.txt')) as f:
+    #     for line in f:
+    #         tokens = nltk.word_tokenize(line.strip().lower())
+    #         for tok in tokens:
+    #             token.append(tok)
