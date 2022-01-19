@@ -19,15 +19,17 @@ class my_corpus():
 
         tokens = nltk.word_tokenize(fulltext)
         unique_tokens = list(set(tokens))
-        token_count = dict()
 
-        # self.token_count is now a dictionary with each token as key and value as count
-
-        for each in tokens:
-            token_count[each] = token_count.get(each,0) + 1
 
         self._tokens = tokens
         self._tokenmap = {unique_tokens[i]:i for i in range(len(unique_tokens))}
+
+    def get_counts(self):
+        token_count = dict()
+
+        for each in self._tokens:
+            token_count[each] = token_count.get(each,0) + 1
+
         self._tokencount = token_count
 
     def encode_as_ints(self, sequence):
@@ -65,22 +67,21 @@ class my_corpus():
                     corpus_tok.replace(tok, '<int>')
         return corpus_tok
 
-    def token_counts(self, corpus_tok):
-        tok_cnt = {}
-
-        for tok in corpus_tok:
-            tok_cnt[tok] = corpus_tok.count(tok)
-            if tok_cnt[tok] < 3:
-                # corpus_tok = re.sub(r"\bword\b", "unk", corpus_tok)
-                corpus_tok.replace(tok, 'unk')
-        return corpus_tok
+    # def token_counts(self, corpus_tok):
+    #     tok_cnt = {}
+    #
+    #     for tok in corpus_tok:
+    #         tok_cnt[tok] = corpus_tok.count(tok)
+    #         if tok_cnt[tok] < 3:
+    #             # corpus_tok = re.sub(r"\bword\b", "unk", corpus_tok)
+    #             corpus_tok.replace(tok, 'unk')
+    #     return corpus_tok
 
     def threshold(self,threshold):
         '''
-        Takes a threshold value.
-        Parses through token list.
-        If count of given token is less than threshold, replaces token with <UNK>.
-        Creates new list at self._tokens_threshold
+        Takes a threshold value, parses token list, replaces those below threshold with <UNK>
+        Creates new list at self._tokens_threshold.
+        Create new list with any removed tokens at self._tokens_removed
         '''
 
         unk = '<UNK>'
@@ -93,7 +94,6 @@ class my_corpus():
                 self._tokens_threshold.append(unk)
             else:
                 self._tokens_threshold.append(each)
-
 
 def tokens(sequence):
     return sent_tokenize(sequence)
