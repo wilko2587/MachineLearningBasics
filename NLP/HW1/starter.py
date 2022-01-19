@@ -28,10 +28,10 @@ class my_corpus():
 
     def replace_numbers(self):
 
-        # this mostly works for years
+        # replaces years - mostly works
         self._tokens_trimmed = [re.sub('^[12][0-9]{3}$*', '<year>', tok) for tok in corpus._tokens]
 
-        # this matches integers
+        # replaces integers
         self._tokens_trimmed = [re.sub('^[0-9]*$', '<integer>', tok) for tok in corpus._tokens_trimmed]
 
 
@@ -125,9 +125,15 @@ def main():
 
     
 if __name__ == "__main__":
-    # main()
+    # main()s
 
     corpus = my_corpus(None)
+
+    for tok in corpus._tokens:
+        if re.search('^(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$',tok):
+            print(tok)
+
+
     #
     # for each in corpus._tokens:
     #     if re.search('^[12][0-9]{3}$', each):
