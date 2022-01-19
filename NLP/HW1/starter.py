@@ -112,9 +112,6 @@ def main():
     print(' ')
     print('this is the encoded text: %s' % text)
 
-    lower = tokens(text)
-    print(' ')
-    print('this is the tokenized text: %s' % text)
     
 if __name__ == "__main__":
     # main()
