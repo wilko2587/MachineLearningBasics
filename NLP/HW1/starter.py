@@ -31,8 +31,8 @@ class my_corpus():
         It also misses ranges
         '''
 
-        self._tokens_trimmed = [re.sub('^[12][0-9]{3}$', '<year>', tok) for tok in corpus._tokens]
-        
+        self._tokens_trimmed = [re.sub('^[12][0-9]{3}$*', '<year>', tok) for tok in corpus._tokens]
+
 
     def get_counts(self):
         token_count = dict()
