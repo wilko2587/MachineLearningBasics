@@ -1,5 +1,6 @@
 import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
+import regex as re
 
 nltk.download('punkt')
 
@@ -23,6 +24,15 @@ class my_corpus():
 
         self._tokens = tokens
         self._tokenmap = {unique_tokens[i]:i for i in range(len(unique_tokens))}
+
+    def replace_numbers(self):
+        '''
+        This kind of works. It misses years with punctuations at the end ('1988.') or like 1960s.
+        It also misses ranges
+        '''
+
+        self._tokens_trimmed = [re.sub('^[12][0-9]{3}$', '<year>', tok) for tok in corpus._tokens]
+        
 
     def get_counts(self):
         token_count = dict()
@@ -117,4 +127,8 @@ if __name__ == "__main__":
     # main()
 
     corpus = my_corpus(None)
+
+    # for each in corpus._tokens:
+    #     if re.search('^[12][0-9]{3}$', each):
+    #         print(each)
 
