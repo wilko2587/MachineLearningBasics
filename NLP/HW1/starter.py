@@ -21,19 +21,18 @@ class my_corpus():
                     token_list.append(tok)
 
         unique_tokens = list(set(token_list))
-
         self._tokens = token_list
 
         print('building token map')
         self._tokenmap = {unique_tokens[i]:i for i in range(len(unique_tokens))}
 
     def replace_numbers(self):
-        '''
-        This kind of works. It misses years with punctuations at the end ('1988.') or like 1960s.
-        It also misses ranges
-        '''
 
+        # this mostly works for years
         self._tokens_trimmed = [re.sub('^[12][0-9]{3}$*', '<year>', tok) for tok in corpus._tokens]
+
+        # this matches integers
+        self._tokens_trimmed = [re.sub('^[0-9]*$', '<integer>', tok) for tok in corpus._tokens_trimmed]
 
 
     def get_counts(self):
@@ -96,7 +95,7 @@ class my_corpus():
         Create new list with any removed tokens at self._tokens_removed
         '''
 
-        unk = '<UNK>'
+        unk = '<unk>'
         self._tokens_threshold = list()
         self._tokens_removed = list()
 
