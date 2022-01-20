@@ -125,24 +125,8 @@ def main():
 
     
 if __name__ == "__main__":
-    # main()s
+    # main()
 
     corpus = my_corpus(None)
 
-    for tok in corpus._tokens:
-        if re.search('^(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$',tok):
-            print(tok)
 
-
-    #
-    # for each in corpus._tokens:
-    #     if re.search('^[12][0-9]{3}$', each):
-    #         print(each)
-
-    # token = list()
-    #
-    # with open(('source_text.txt')) as f:
-    #     for line in f:
-    #         tokens = nltk.word_tokenize(line.strip().lower())
-    #         for tok in tokens:
-    #             token.append(tok)
