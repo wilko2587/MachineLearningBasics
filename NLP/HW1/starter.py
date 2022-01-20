@@ -2,8 +2,12 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize, word_tokenize
 import regex as re
+import time
+import pandas as pd
+from collections import Counter
 
 nltk.download('punkt')
+
 
 class my_corpus():
 
@@ -22,11 +26,11 @@ class my_corpus():
                 for tok in toks:
                     token_list.append(tok)
 
-        unique_tokens = list(set(token_list)) # only keep uniques
+        unique_tokens = list(set(token_list))  # only keep uniques
 
         print('building token map')
         self._tokens = token_list
-        self._tokenmap = {unique_tokens[i]:i for i in range(len(unique_tokens))}
+        self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
 
         # self._tokenmap always needs an <unk>
         self._tokenmap['<unk>'] = len(unique_tokens)
@@ -46,12 +50,12 @@ class my_corpus():
         calls _tag_sequence to update the tokens stored within the corpus
         '''
 
-        token_list = self._tag_sequence(self._tokens) # tag the tokens as required
+        token_list = self._tag_sequence(self._tokens)  # tag the tokens as required
 
-        unique_tokens = list(set(token_list)) # only keep uniques
+        unique_tokens = list(set(token_list))  # only keep uniques
 
         self._tokens = token_list
-        self._tokenmap = {unique_tokens[i]:i for i in range(len(unique_tokens))}
+        self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
 
         # self._tokenmap always needs an <unk>
         self._tokenmap['<unk>'] = len(unique_tokens)
@@ -68,24 +72,22 @@ class my_corpus():
         sequence = [re.sub('^[0-9]*$', '<integer>', tok) for tok in sequence]  # tag integers
         sequence = [re.sub('^[0-9]+\.+[0-9]*$', '<decimal>', tok) for tok in sequence]  # tag decimals
         sequence = [re.sub('(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)',
-                              '<dayofweek>', tok) for tok in sequence]  # tag days of week
+                           '<dayofweek>', tok) for tok in sequence]  # tag days of week
         sequence = [re.sub('(Janurary|February|March|April|May|June|July|August|September|October|November|December)',
-                              '<month>', tok) for tok in sequence]  # tag month
+                           '<month>', tok) for tok in sequence]  # tag month
         sequence = [re.sub('^[0-9]+(st|nd|rd|th)',
-                              '<days>', tok) for tok in sequence]  # tag days (in date) - can have errors in this
+                           '<days>', tok) for tok in sequence]  # tag days (in date) - can have errors in this
         sequence = [re.sub('^[0-9]', '<other>', tok) for tok in sequence]  # tag all remaining numbers
 
         return sequence
-
 
     def get_counts(self):
         token_count = dict()
 
         for each in self._tokens:
-            token_count[each] = token_count.get(each,0) + 1
+            token_count[each] = token_count.get(each, 0) + 1
 
         self._tokencount = token_count
-
 
     def generate_datasets(self, split=None):
         '''
@@ -102,14 +104,16 @@ class my_corpus():
         # and "round-up" our indices to the end-of-sentence.
 
         Nwords = len(self._tokens)
-        trainend_index = int(Nwords*float(split[0]/sum(split))) # index of where the training data ends (and valid starts)
-        validend_index = int(Nwords*float(sum(split[0:1])/sum(split))) # index of where the valid data ends (and test starts)
+        trainend_index = int(
+            Nwords * float(split[0]) / sum(split))  # index of where the training data ends (and valid starts)
+        validend_index = int(
+            Nwords * float(sum(split[0:2])) / sum(split))  # index of where the valid data ends (and test starts)
 
-        d1 = self._tokens[trainend_index:].index('.') # number of extra tokens we need to move trainend_index to get
-                                                        # to the end of the sentence
+        d1 = self._tokens[trainend_index:].index('.')  # number of extra tokens we need to move trainend_index to get
+        # to the end of the sentence
 
         d2 = self._tokens[validend_index:].index('.')  # number of extra tokens we need to move validend_index to get
-                                                        # to the end of the sentence
+        # to the end of the sentence
 
         # round up trainend_index and validend_index accordingly
         trainend_index += d1
@@ -117,14 +121,13 @@ class my_corpus():
 
         traindata = self._tokens[:trainend_index]
         validdata = self._tokens[trainend_index:validend_index]
-        testdata  = self._tokens[validend_index:]
+        testdata = self._tokens[validend_index:]
 
         self._traindata = traindata
         self._validdata = validdata
         self._testdata = testdata
 
         return traindata, validdata, testdata
-
 
     def print_summary_stats(self):
         '''
@@ -157,39 +160,39 @@ class my_corpus():
             except KeyError:
                 int_represent.append(self._tokenmap['<unk>'])
 
-        return(int_represent)
-
+        return (int_represent)
 
     def encode_as_text(self, int_represent):
 
         text = ''
         print('encode this list', int_represent)
         print('as a text sequence.')
-        inv_map = {v: k for k, v in self._tokenmap.items()} #inverted self._tokenmap (switch values/keys)
+        inv_map = {v: k for k, v in self._tokenmap.items()}  # inverted self._tokenmap (switch values/keys)
 
         for i in int_represent:
             token = inv_map[i]
             text = text + ' ' + token
 
-        return(text)
+        return (text)
 
-    def threshold(self,threshold):
+
+    def threshold_old(self, threshold):
         '''
-        Takes a threshold value, parses token list, replaces those below threshold with <unk>
+        Takes a threshold value, parses token list, replaces those below threshold with <UNK>
         Creates new list at self._tokens_threshold.
         Create new list with any removed tokens at self._tokens_removed
         '''
 
         unk = '<unk>'
-        tokens_removed = list() # keep track of which tokens were omitted
-        tokens_threshold = list() # new list with thresholded tokens
+        tokens_removed = list()  # keep track of which tokens were omitted
+        tokens_threshold = self._tokens.copy()  # new list with thresholded tokens
 
-        for each in self._tokenmap.keys(): # loop through vocab
-            if self._tokens.count(each) <= threshold: # used lessthanorequal because with threshold = 3 it has more "effect"
+        for each in self._tokenmap.keys():  # loop through vocab
+            if self._tokens.count(each) <= threshold:   # used lessthanorequal because with threshold = 3 it has more "effect"
                 tokens_removed.append(each)
-                tokens_threshold.append(unk)
+                tokens_threshold[:] = [t if t != each else unk for t in tokens_threshold]
             else:
-                tokens_threshold.append(each)
+                pass
 
         unique_tokens = list(set(tokens_threshold))
         # reset self._tokens and self._tokenmap accordingly
@@ -197,15 +200,51 @@ class my_corpus():
         self._tokens = tokens_threshold
         return
 
+    def threshold(self, threshold):
+        '''
+        Takes a threshold value, parses token list, replaces those below threshold with <UNK>
+        Creates new list at self._tokens_threshold.
+        Create new list with any removed tokens at self._tokens_removed
+        '''
+
+        unk = '<unk>'
+
+        tokens_threshold = pd.Series(self._tokens.copy()) # put through pandas to get on C level
+        token_counts = Counter(self._tokens) # histogram of token counts (done on C level super fast!)
+        sorted_counts = dict(sorted(token_counts.items(), key=lambda item: item[1])) # histogram, but sorted ascending
+        thresh_index = next(i for i, v in enumerate(sorted_counts.values()) if v >= threshold) # index where counts becomes geq than threshold
+        unk_tokens = list(sorted_counts.keys())[0:thresh_index] # all the tokens whose counts were less than threshold
+        tokens_threshold[tokens_threshold.isin(unk_tokens)] = unk
+        tokens_threshold = tokens_threshold.to_list()
+        #for each in unk_tokens:  # loop through vocab
+        #    tokens_threshold[:] = [t if t != each else unk for t in tokens_threshold]
+
+        unique_tokens = list(set(tokens_threshold))
+        # reset self._tokens and self._tokenmap accordingly
+        self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
+        self._tokens = tokens_threshold
+        return
+
+
 def main():
     corpus = my_corpus(None)
+
+    t0 = time.time()
+    corpus.tag_corpus()
+    t1 = time.time()
+    print('tag time taken: ', t1 - t0)
+
+    t0 = time.time()
+    corpus.threshold(3)
+    t1 = time.time()
+    print('time taken 2: ',t1-t0)
 
     train, valid, test = corpus.generate_datasets(split=[80, 10, 10])
 
     # write to txt
-    with open('train.txt','w') as f:
+    with open('train.txt', 'w') as f:
         f.write(' '.join(train))
-    with open('valid.txt','w') as f:
+    with open('valid.txt', 'w') as f:
         f.write(' '.join(valid))
     with open('test.txt', 'w') as f:
         f.write(' '.join(test))
@@ -214,7 +253,7 @@ def main():
     print(' ')
     ints = corpus.encode_as_ints(text)
     print(' ')
-    print('integer encodeing: ',ints)
+    print('integer encodeing: ', ints)
 
     print(' ')
     text = corpus.encode_as_text(ints)
