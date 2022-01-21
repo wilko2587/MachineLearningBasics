@@ -223,11 +223,6 @@ class my_corpus():
 def main():
     corpus = my_corpus(None)
 
-    # split corpus into training/validation/test.
-    # Redefine corpus to just be the training portion
-    train, valid, test = corpus.generate_datasets(split=[80, 10, 10],
-                                                  reset_vocab_to_training=True)
-
     t0 = time.time()
     corpus.tag_corpus()
     t1 = time.time()
@@ -237,6 +232,11 @@ def main():
     corpus.threshold(3)
     t1 = time.time()
     print('threshold time taken: ', t1-t0)
+
+    # split corpus into training/validation/test.
+    # Redefine corpus to just be the training portion
+    train, valid, test = corpus.generate_datasets(split=[80, 10, 10],
+                                                  reset_vocab_to_training=True)
 
     # write to txt
     with open('train.txt', 'w') as f:
