@@ -7,6 +7,7 @@ import pandas as pd
 from collections import Counter
 
 nltk.download('punkt')
+nltk.download('stopwords')
 
 
 class my_corpus():
@@ -135,9 +136,9 @@ class my_corpus():
         '''
         train, valid, test = self.generate_datasets()
         print('======')
-        print("Number of tokens in:"
-              "--> training data: {} tokens"
-              "--> validation data: {} tokens"
+        print("Number of tokens in:\n"
+              "--> training data: {} tokens\n"
+              "--> validation data: {} tokens\n"
               "--> testing data: {} tokens\n".format(len(train), len(valid), len(test)))
 
         print("Size of vocabulary: {} tokens\n".format(len(self._tokenmap)))
@@ -175,31 +176,6 @@ class my_corpus():
 
         return (text)
 
-
-    def threshold_old(self, threshold):
-        '''
-        Takes a threshold value, parses token list, replaces those below threshold with <UNK>
-        Creates new list at self._tokens_threshold.
-        Create new list with any removed tokens at self._tokens_removed
-        '''
-
-        unk = '<unk>'
-        tokens_removed = list()  # keep track of which tokens were omitted
-        tokens_threshold = self._tokens.copy()  # new list with thresholded tokens
-
-        for each in self._tokenmap.keys():  # loop through vocab
-            if self._tokens.count(each) <= threshold:   # used lessthanorequal because with threshold = 3 it has more "effect"
-                tokens_removed.append(each)
-                tokens_threshold[:] = [t if t != each else unk for t in tokens_threshold]
-            else:
-                pass
-
-        unique_tokens = list(set(tokens_threshold))
-        # reset self._tokens and self._tokenmap accordingly
-        self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
-        self._tokens = tokens_threshold
-        return
-
     def threshold(self, threshold):
         '''
         Takes a threshold value, parses token list, replaces those below threshold with <UNK>
@@ -210,14 +186,13 @@ class my_corpus():
         unk = '<unk>'
 
         tokens_threshold = pd.Series(self._tokens.copy()) # put through pandas to get on C level
+        saved_old_tokens = self._tokens.copy()
         token_counts = Counter(self._tokens) # histogram of token counts (done on C level super fast!)
         sorted_counts = dict(sorted(token_counts.items(), key=lambda item: item[1])) # histogram, but sorted ascending
         thresh_index = next(i for i, v in enumerate(sorted_counts.values()) if v >= threshold) # index where counts becomes geq than threshold
         unk_tokens = list(sorted_counts.keys())[0:thresh_index] # all the tokens whose counts were less than threshold
         tokens_threshold[tokens_threshold.isin(unk_tokens)] = unk
         tokens_threshold = tokens_threshold.to_list()
-        #for each in unk_tokens:  # loop through vocab
-        #    tokens_threshold[:] = [t if t != each else unk for t in tokens_threshold]
 
         unique_tokens = list(set(tokens_threshold))
         # reset self._tokens and self._tokenmap accordingly
@@ -232,12 +207,12 @@ def main():
     t0 = time.time()
     corpus.tag_corpus()
     t1 = time.time()
-    print('tag time taken: ', t1 - t0)
+    print('tag time taken: ', t1-t0)
 
     t0 = time.time()
     corpus.threshold(3)
     t1 = time.time()
-    print('time taken 2: ',t1-t0)
+    print('threshold time taken: ', t1-t0)
 
     train, valid, test = corpus.generate_datasets(split=[80, 10, 10])
 
@@ -248,6 +223,9 @@ def main():
         f.write(' '.join(valid))
     with open('test.txt', 'w') as f:
         f.write(' '.join(test))
+
+    # print some summary stats
+    corpus.print_summary_stats()
 
     text = input('Please enter a test sequence to encode and recover: ')
     print(' ')
