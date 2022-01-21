@@ -170,6 +170,7 @@ class my_corpus():
         int_represent = []
         print('encode this sequence: %s' % sequence)
         print('as a list of integers.')
+        sequence = sequence.lower()
         tokens = nltk.word_tokenize(sequence)
         tokens = self._tag_sequence(tokens)
 
