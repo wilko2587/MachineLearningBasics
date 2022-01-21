@@ -35,6 +35,7 @@ class my_corpus():
 
         # self._tokenmap always needs an <unk>
         self._tokenmap['<unk>'] = len(unique_tokens)
+        self._unktokens = [] # initialise container. List holding tokens that get mapped to <unk>
 
     def get_stopwords(self):
         '''
@@ -90,7 +91,7 @@ class my_corpus():
 
         self._tokencount = token_count
 
-    def generate_datasets(self, split=None):
+    def generate_datasets(self, split=None, reset_vocab_to_training=True):
         '''
         returns three corpi, for training, validation and testing.
         :param split: list of three, determining the split. ie: [80,10,10] for an 80%, 10%, 10% split
@@ -128,6 +129,13 @@ class my_corpus():
         self._validdata = validdata
         self._testdata = testdata
 
+        if reset_vocab_to_training:
+            # this will set the corpus to the training set. validation/test data still held in self._validdata etc
+            print("NB: setting corpus to the training set")
+            unique_tokens = list(set(traindata))
+            self._tokens = traindata
+            self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
+
         return traindata, validdata, testdata
 
     def print_summary_stats(self):
@@ -146,6 +154,16 @@ class my_corpus():
         print("Number of <unk> tokens: {}\n".format(self._tokens.count("<unk>")))
 
         print("Number of stopwords: {}\n".format(len(self.get_stopwords())))
+
+        print("Size of <unk> vocab: {}\n".format(len(self._unktokens)))
+
+        print("Number of validation data tokens not in training data: {}\n".format(
+            len([t for t in self._validdata if t not in self._traindata])
+        ))
+
+        print("Number of test data tokens not in training data: {}\n".format(
+            len([t for t in self._testdata if t not in self._traindata])
+        ))
 
     def encode_as_ints(self, sequence):
 
@@ -198,11 +216,17 @@ class my_corpus():
         # reset self._tokens and self._tokenmap accordingly
         self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
         self._tokens = tokens_threshold
+        self._unktokens = unk_tokens
         return
 
 
 def main():
     corpus = my_corpus(None)
+
+    # split corpus into training/validation/test.
+    # Redefine corpus to just be the training portion
+    train, valid, test = corpus.generate_datasets(split=[80, 10, 10],
+                                                  reset_vocab_to_training=True)
 
     t0 = time.time()
     corpus.tag_corpus()
@@ -213,8 +237,6 @@ def main():
     corpus.threshold(3)
     t1 = time.time()
     print('threshold time taken: ', t1-t0)
-
-    train, valid, test = corpus.generate_datasets(split=[80, 10, 10])
 
     # write to txt
     with open('train.txt', 'w') as f:
