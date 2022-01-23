@@ -20,12 +20,17 @@ class my_corpus():
 
         print('building corpus')
         token_list = list()
+        sentence_list = list()
 
         with open(('source_text.txt')) as f:
             for line in f:
                 toks = nltk.word_tokenize(line.strip().lower())
+                sent_toks = nltk.sent_tokenize(line.strip().lower())
+
                 for tok in toks:
                     token_list.append(tok)
+                for tok in sent_toks:
+                    sentence_list.append(tok)
 
         unique_tokens = list(set(token_list))  # only keep uniques
 
@@ -75,7 +80,7 @@ class my_corpus():
         sequence = [re.sub('^[0-9]+\.+[0-9]*$', '<decimal>', tok) for tok in sequence]  # tag decimals
         sequence = [re.sub('(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)',
                            '<dayofweek>', tok) for tok in sequence]  # tag days of week
-        sequence = [re.sub('(Janurary|February|March|April|May|June|July|August|September|October|November|December)',
+        sequence = [re.sub('(January|February|March|April|May|June|July|August|September|October|November|December)',
                            '<month>', tok) for tok in sequence]  # tag month
         sequence = [re.sub('^[0-9]+(st|nd|rd|th)',
                            '<days>', tok) for tok in sequence]  # tag days (in date) - can have errors in this
@@ -138,6 +143,15 @@ class my_corpus():
 
         return traindata, validdata, testdata
 
+    def get_avg(self, l):
+        '''
+        calculates average word length for a given list of words
+        '''
+        length = [len(tok) for tok in l]
+        avg_length = sum(length)/len(length)
+
+        return avg_length
+
     def print_summary_stats(self):
         '''
         print out some basic summary stats of the corpus
@@ -164,6 +178,13 @@ class my_corpus():
         print("Number of test data tokens not in training data: {}\n".format(
             len([t for t in self._testdata if t not in self._traindata])
         ))
+
+        print("Average token length in\n"
+              "--> training data: {}\n"
+              "--> validation data: {}\n"
+              "--> testing data: {}\n".format(self.get_avg(train), self.get_avg(valid), self.get_avg(test))
+              )
+
 
     def encode_as_ints(self, sequence):
 
