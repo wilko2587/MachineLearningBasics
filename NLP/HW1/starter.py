@@ -252,6 +252,7 @@ class my_corpus():
         """
         implementation of tokenization using Huggingface Wordpiece tokenization
         """
+        print('Hugginface tokenization:')
         unk_tokens = "<UNK>"
         spl_tokens = ["<UNK>", "<SEP>", "<MASK>", "<CLS>"]
         tokenizer = Tokenizer(WordPiece(unk_tokens = unk_tokens))
