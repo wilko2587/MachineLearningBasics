@@ -5,6 +5,10 @@ import regex as re
 import time
 import pandas as pd
 from collections import Counter
+from tokenizers import Tokenizer
+from tokenizers.models import WordPiece
+from tokenizers.trainers import WordPieceTrainer
+from tokenizers.pre_tokenizers import Whitespace
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -185,6 +189,9 @@ class my_corpus():
               "--> testing data: {}\n".format(self.get_avg(train), self.get_avg(valid), self.get_avg(test))
               )
 
+        print("Number of training data tokens not in validation and test data: {}\n".format(
+            len([t for t in self._traindata if (t not in self._validdata) and (t not in self._testdata)])
+        ))
 
     def encode_as_ints(self, sequence):
 
@@ -241,6 +248,24 @@ class my_corpus():
         self._unktokens = unk_tokens
         return
 
+    def huggingface(self):
+        """
+        implementation of tokenization using Huggingface Wordpiece tokenization
+        """
+        unk_tokens = "<UNK>"
+        spl_tokens = ["<UNK>", "<SEP>", "<MASK>", "<CLS>"]
+        tokenizer = Tokenizer(WordPiece(unk_tokens = unk_tokens))
+        trainer = WordPieceTrainer(vocab_size=5000, special_tokens = spl_tokens)
+        tokenizer.pre_tokenizer = Whitespace()
+
+        tokenizer.train([f"source_text.txt"], trainer)  # training the tokenzier
+        tokenizer.save("./tokenizer-trained.json")
+        tokenizer = Tokenizer.from_file("./tokenizer-trained.json")
+        input_string = input("PLease enter a sentence to tokenize: ")
+        output = tokenizer.encode(input_string)
+
+        print("Tokenized text: ",output.tokens)
+
 
 def main():
     corpus = my_corpus(None)
@@ -270,6 +295,8 @@ def main():
 
     # print some summary stats
     corpus.print_summary_stats()
+
+    corpus.huggingface()
 
     text = input('Please enter a test sequence to encode and recover: ')
     print(' ')
