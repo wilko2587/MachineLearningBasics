@@ -82,9 +82,9 @@ class my_corpus():
         sequence = [re.sub('^[12][0-9]{3}$*', '<year>', tok) for tok in sequence]  # tag years
         sequence = [re.sub('^[0-9]*$', '<integer>', tok) for tok in sequence]  # tag integers
         sequence = [re.sub('^[0-9]+\.+[0-9]*$', '<decimal>', tok) for tok in sequence]  # tag decimals
-        sequence = [re.sub('(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)',
+        sequence = [re.sub('(monday|tuesday|wednesday|thursday|friday|saturday|sunday)',
                            '<dayofweek>', tok) for tok in sequence]  # tag days of week
-        sequence = [re.sub('(January|February|March|April|May|June|July|August|September|October|November|December)',
+        sequence = [re.sub('(january|february|march|april|may|june|july|august|september|october|november|december)',
                            '<month>', tok) for tok in sequence]  # tag month
         sequence = [re.sub('^[0-9]+(st|nd|rd|th)',
                            '<days>', tok) for tok in sequence]  # tag days (in date) - can have errors in this
@@ -162,7 +162,7 @@ class my_corpus():
         '''
         train, valid, test = self.generate_datasets()
         print('======')
-
+        print("Printing summary statistics:")
         stats = pd.DataFrame(
             {   "Metric":
                 ["Number of tokens in training data",
@@ -174,9 +174,9 @@ class my_corpus():
                 "Size of <unk> vocab",
                 "Number of validation data tokens not in training data",
                 "Number of test data tokens not in training data",
-                "Average token length in training data",
-                "Average token length in validation data",
-                "Average token length in test data",
+                "Average word length in training data",
+                "Average word length in validation data",
+                "Average word length in test data",
                 "Number of training data tokens not in validation and test data"],
                 "Result":
                 [round(len(train),2),
@@ -195,7 +195,7 @@ class my_corpus():
                 ]
             }
         )
-        print("Printing summary statistics:")
+
         print(stats)
 
     def encode_as_ints(self, sequence):
@@ -257,7 +257,7 @@ class my_corpus():
         """
         implementation of tokenization using Huggingface Wordpiece tokenization
         """
-        print('Hugginface tokenization:')
+        print('Huggingface tokenization:')
         unk_tokens = "<UNK>"
         spl_tokens = ["<UNK>", "<SEP>", "<MASK>", "<CLS>"]
         tokenizer = Tokenizer(WordPiece(unk_tokens = unk_tokens))
