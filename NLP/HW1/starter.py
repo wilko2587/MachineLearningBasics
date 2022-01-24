@@ -162,36 +162,41 @@ class my_corpus():
         '''
         train, valid, test = self.generate_datasets()
         print('======')
-        print("Number of tokens in:\n"
-              "--> training data: {} tokens\n"
-              "--> validation data: {} tokens\n"
-              "--> testing data: {} tokens\n".format(len(train), len(valid), len(test)))
 
-        print("Size of vocabulary: {} tokens\n".format(len(self._tokenmap)))
-
-        print("Number of <unk> tokens: {}\n".format(self._tokens.count("<unk>")))
-
-        print("Number of stopwords: {}\n".format(len(self.get_stopwords())))
-
-        print("Size of <unk> vocab: {}\n".format(len(self._unktokens)))
-
-        print("Number of validation data tokens not in training data: {}\n".format(
-            len([t for t in self._validdata if t not in self._traindata])
-        ))
-
-        print("Number of test data tokens not in training data: {}\n".format(
-            len([t for t in self._testdata if t not in self._traindata])
-        ))
-
-        print("Average token length in\n"
-              "--> training data: {}\n"
-              "--> validation data: {}\n"
-              "--> testing data: {}\n".format(self.get_avg(train), self.get_avg(valid), self.get_avg(test))
-              )
-
-        print("Number of training data tokens not in validation and test data: {}\n".format(
-            len([t for t in self._traindata if (t not in self._validdata) and (t not in self._testdata)])
-        ))
+        stats = pd.DataFrame(
+            {   "Metric":
+                ["Number of tokens in training data",
+                "Number of tokens in validation data",
+                "Number of tokens in test data",
+                "Size of vocabulary",
+                "Number of <unk> tokens",
+                "Number of stopwords",
+                "Size of <unk> vocab",
+                "Number of validation data tokens not in training data",
+                "Number of test data tokens not in training data",
+                "Average token length in training data",
+                "Average token length in validation data",
+                "Average token length in test data",
+                "Number of training data tokens not in validation and test data"],
+                "Result":
+                [round(len(train),2),
+                 round(len(valid),2),
+                 round(len(test),2),
+                 round(len(self._tokenmap),2),
+                 round(self._tokens.count("<unk>"),2),
+                 round(len(self.get_stopwords()),2),
+                 round(len(self._unktokens),2),
+                 round(len([t for t in self._validdata if t not in self._traindata]),2),
+                 round(len([t for t in self._testdata if t not in self._traindata]),2),
+                 round(self.get_avg(train),2),
+                 round(self.get_avg(valid),2),
+                 round(self.get_avg(test),2),
+                 round(len([t for t in self._traindata if (t not in self._validdata) and (t not in self._testdata)]),2)
+                ]
+            }
+        )
+        print("Printing summary statistics:")
+        print(stats)
 
     def encode_as_ints(self, sequence):
 
