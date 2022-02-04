@@ -100,23 +100,6 @@ class my_corpus():
 
         self._tokencount = token_count
 
-    def generate_datasets(self, split=None, reset_vocab_to_training=True):
-        '''
-        returns three corpi, for training, validation and testing.
-        :param split: list of three, determining the split. ie: [80,10,10] for an 80%, 10%, 10% split
-        '''
-        if split is None:
-            split = [80, 10, 10]
-
-        # lets use the first 80% of tokens as training, the next 10% as valid, and the final 10% as test
-        # Ideally, we don't want to split a single sentence between different data sets
-        # because we want each each dataset to be as self-contained as possible, and to make sense as
-        # a stand-alone piece. We know sentences occur often, so lets find the indices of a perfect 80/10/10 split,
-        # and "round-up" our indices to the end-of-sentence.
-
-        Nwords = len(self._tokens)
-        trainend_index = int(
-
     def get_avg(self, l):
         '''
         calculates average word length for a given list of words
@@ -130,7 +113,7 @@ class my_corpus():
         '''
         print out some basic summary stats of the corpus
         '''
-        train, valid, test = self.generate_datasets()
+        #train, valid, test = self.generate_datasets()
         print('======')
         print("Printing summary statistics:")
         stats = pd.DataFrame(
@@ -234,7 +217,7 @@ class my_corpus():
         trainer = WordPieceTrainer(vocab_size=5000, special_tokens = spl_tokens)
         tokenizer.pre_tokenizer = Whitespace()
 
-        tokenizer.train([f"source_text.txt"], trainer)  # training the tokenzier
+        tokenizer.train([f"wiki.train.txt"], trainer)  # training the tokenzier
         tokenizer.save("./tokenizer-trained.json")
         tokenizer = Tokenizer.from_file("./tokenizer-trained.json")
         input_string = input("PLease enter a sentence to tokenize: ")
@@ -257,12 +240,12 @@ def main():
     print('threshold time taken: ', t1-t0)
 
     # write to txt
-    with open('wiki.train.txt', 'w') as f:
-        f.write(' '.join(train))
-    with open('wiki.valid.txt', 'w') as f:
-        f.write(' '.join(valid))
-    with open('wiki.test.txt', 'w') as f:
-        f.write(' '.join(test))
+    #with open('wiki.train.txt', 'w') as f:
+        #f.write(' '.join(train))
+    #with open('wiki.valid.txt', 'w') as f:
+        #f.write(' '.join(valid))
+    #with open('wiki.test.txt', 'w') as f:
+        #f.write(' '.join(test))
 
     # print some summary stats
     corpus.print_summary_stats()
@@ -273,7 +256,7 @@ def main():
     print(' ')
     ints = corpus.encode_as_ints(text)
     print(' ')
-    print('integer encodeing: ', ints)
+    print('integer encoding: ', ints)
 
     print(' ')
     text = corpus.encode_as_text(ints)
