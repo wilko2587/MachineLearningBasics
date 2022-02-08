@@ -146,10 +146,21 @@ if __name__ == '__main__':
     window_size = 5
 
     model = FeedForward(vocabsize*5, [100], vocabsize)
+
+    # this puts all the embeddings in a list one after another
+    # need to stack or flatten these, and this should be input layer to model 
+
+    embeddings = list()
+    for each in traindata[0][0]:
+        embeddings.append(model.embeds(torch.tensor(traindata._tokenmap[each],dtype=torch.long)))
+    print(embeddings)
+
+
     # model.fit(traindata, validdata, lr=1e-3, batchsize=20, max_epoch=20)
 
     # lookup = torch.tensor(traindata._tokenmap['with'],dtype=torch.long)
     #
     # hello_embed = model.embeds(lookup)
     # print(hello_embed)
+
 
