@@ -13,9 +13,13 @@ from torch.utils.data import Dataset
 
 class my_corpus(Dataset):
     '''
-
-    Inherits from torch.utils.data.Dataset, with the addition of __len__() and __getitem__() methods
-    allowing efficient integration with pytorch models and a widely understandable usability
+    Differences from existing code:
+    Only kept self._tokens, self._tokenmap.
+    Len returns len(self._tokenmap.
+    Get item returns ([tokens of sliding window length], integer index from self._tokenmap of target).
+    Plan to use embedding layer in PyTorch. This will allow us to update the weights in this embedding layer
+    after each minibatch.
+    Commented out other stuff.
     '''
 
     def __init__(self, filename, windowlength=5):
@@ -39,34 +43,28 @@ class my_corpus(Dataset):
         self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
 
         print('generating embeddings...')
-        self._generate_word_embeddings()
+        # self._generate_word_embeddings()
 
         print('{} corpus initialisation complete.'.format(filename))
 
-    def _generate_word_embeddings(self):
-        embeddings = {}
-        nullvector = [0.] * len(self._tokenmap) # initialising an empty word embedding
-        for token in self._tokenmap:
-            i = self._tokenmap[token]
-            one_hot = nullvector.copy()
-            one_hot[i] = 1.
-            embeddings[token] = one_hot
-        self._embeddings = embeddings
+    # def _generate_word_embeddings(self):
+    #     embeddings = {}
+    #     nullvector = [0.] * len(self._tokenmap) # initialising an empty word embedding
+    #     for token in self._tokenmap:
+    #         i = self._tokenmap[token]
+    #         one_hot = nullvector.copy()
+    #         one_hot[i] = 1.
+    #         embeddings[token] = one_hot
+    #     self._embeddings = embeddings
 
     def __len__(self):
-        return len(self._tokens) - self._windowlength # length is entire list of tokens leaving one
-                                                            # windowlength on end
+        return len(self._tokenmap)
 
     def __getitem__(self, idx):
         tokens = self._tokens[idx:idx+self._windowlength]
-        target_token = self._tokens[idx+self._windowlength] # the following token to the window is the target
-        embeddings = []
-        for token in tokens:
-            wordvec = self._embeddings[token]
-            embeddings = embeddings + wordvec # stack the wordvecs together
-
-        target = self._embeddings[target_token]
-        return torch.tensor(embeddings), torch.tensor(target)
+        target_token = self._tokens[idx+self._windowlength]
+        target = self._tokenmap[target_token]
+        return (tokens,target)
     #
     # def get_stopwords(self):
     #     '''
@@ -129,8 +127,8 @@ class my_corpus(Dataset):
     #
     #     return avg_length
 
-    def wordvec_length(self):
-        return len(self._embeddings)
+    # def wordvec_length(self):
+    #     return len(self._embeddings)
 #
 #     def encode_as_ints(self, sequence):
 #

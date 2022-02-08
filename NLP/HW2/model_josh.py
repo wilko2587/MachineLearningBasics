@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torch.optim as optim
 import torch.nn as nn
-import txt_preprocess
+import txt_preprocess_josh
 import torch
 
 
@@ -139,18 +139,17 @@ class FeedForward(nn.Module):
 
 
 if __name__ == '__main__':
-    traindata = txt_preprocess.my_corpus('wiki.train.txt')
-    validdata = txt_preprocess.my_corpus('wiki.valid.txt')
-    #testdata = txt_preprocess.my_corpus('wiki.test.txt')
-    vocabsize = traindata.wordvec_length()
+    traindata = txt_preprocess_josh.my_corpus('wiki.train.txt')
+    validdata = txt_preprocess_josh.my_corpus('wiki.valid.txt')
+    #testdata = txt_preprocess_josh.my_corpus('wiki.test.txt')
+    vocabsize = len(traindata._tokenmap)
     window_size = 5
 
     model = FeedForward(vocabsize*5, [100], vocabsize)
     # model.fit(traindata, validdata, lr=1e-3, batchsize=20, max_epoch=20)
 
-    lookup = torch.tensor(traindata._tokenmap['with'],dtype=torch.long)
-
-
-    hello_embed = model.embeds(lookup)
-    print(hello_embed)
+    # lookup = torch.tensor(traindata._tokenmap['with'],dtype=torch.long)
+    #
+    # hello_embed = model.embeds(lookup)
+    # print(hello_embed)
 
