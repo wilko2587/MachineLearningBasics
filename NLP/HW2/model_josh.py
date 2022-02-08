@@ -29,7 +29,7 @@ def training_loop(traindata, validdata, model):
     momentum=0.9
     batchsize=100
     l2=0.
-    max_epoch=20
+    max_epoch=100
     tol=1e-4,
     verbose='vv'
 
@@ -77,10 +77,10 @@ def training_loop(traindata, validdata, model):
 
         ave_valid_loss = sum(valid_losses)/len(valid_losses)
 
-        # stopping criteria
-        if ave_train_loss <= tol:
-            reason = "Learning criteria achieved"
-            break
+        # # stopping criteria
+        # if ave_train_loss <= tol:
+        #     reason = "Learning criteria achieved"
+        #     break
 
         # print statistics
         if epoch % 1 == 0:  # print out loss as model is training
