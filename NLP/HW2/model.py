@@ -157,5 +157,5 @@ if __name__ == '__main__':
     window_size = 5
 
     model = FeedForward(vocabsize*5, [100], vocabsize)
-    model.fit(traindata, validdata)
+    model.fit(traindata, validdata, lr=1e-3, batchsize=20, max_epoch=20)
 
