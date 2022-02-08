@@ -68,7 +68,7 @@ class FeedForward(nn.Module):
 
     def fit(self, traindata, validdata,
             lr=1e-4, momentum=0.9, batchsize=100, l2=0., max_epoch=20, tol=1e-4,
-            verbose=True):
+            verbose='vv'):
         '''
 
         Trains the NN using cross entropy loss. Use just like sklearn modules :)
@@ -110,6 +110,9 @@ class FeedForward(nn.Module):
                 tloss.backward()
                 optimizer.step()
                 train_losses.append(tloss.item())
+                if verbose == 'vv':
+                    print('[%d] mid-epoch train loss: %.5f' %
+                          (epoch + 1, tloss.item()), end='\r', flush=True)
 
             ave_train_loss = sum(train_losses)/len(train_losses)
 
@@ -131,7 +134,7 @@ class FeedForward(nn.Module):
 
             # print statistics
             if epoch % 1 == 0:  # print out loss as model is training
-                if verbose:
+                if verbose == 'v' or verbose == 'vv':
                     print('[%d] train loss: %.5f valid loss: %.5f' %
                           (epoch + 1, ave_train_loss, ave_valid_loss))#, end='\r', flush=True)
 

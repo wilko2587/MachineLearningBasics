@@ -48,6 +48,8 @@ class my_corpus(Dataset):
         print('generating embeddings...')
         self._generate_word_embeddings()
 
+        print('{} corpus initialisation complete.'.format(filename))
+
     def _generate_word_embeddings(self):
         embeddings = {}
         nullvector = [0.] * len(self._tokenmap) # initialising an empty word embedding
