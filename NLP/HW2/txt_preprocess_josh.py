@@ -62,9 +62,14 @@ class my_corpus(Dataset):
 
     def __getitem__(self, idx):
         tokens = self._tokens[idx:idx+self._windowlength]
+        token_list = list()
+
+        for each in tokens:
+            token_list.append(self._tokenmap[each])
+        token_tensor = torch.tensor(token_list)
         target_token = self._tokens[idx+self._windowlength]
         target = self._tokenmap[target_token]
-        return (tokens,target)
+        return (token_tensor,target)
     #
     # def get_stopwords(self):
     #     '''
