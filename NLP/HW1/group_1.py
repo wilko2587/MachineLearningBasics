@@ -44,7 +44,7 @@ class my_corpus():
 
         # self._tokenmap always needs an <unk>
         self._tokenmap['<unk>'] = len(unique_tokens)
-        self._unktokens = [] # initialise container. List holding tokens that get mapped to <unk>
+        self._unktokens = []  # initialise container. List holding tokens that get mapped to <unk>
 
     def get_stopwords(self):
         '''
@@ -152,7 +152,7 @@ class my_corpus():
         calculates average word length for a given list of words
         '''
         length = [len(tok) for tok in l]
-        avg_length = sum(length)/len(length)
+        avg_length = sum(length) / len(length)
 
         return avg_length
 
@@ -164,36 +164,37 @@ class my_corpus():
         print('======')
         print("Printing summary statistics:")
         stats = pd.DataFrame(
-            {   "Metric":
-                ["Number of tokens in training data",
-                "Number of tokens in validation data",
-                "Number of tokens in test data",
-                "Size of vocabulary",
-                "Number of <unk> tokens",
-                "Number of stopwords",
-                "Size of <unk> vocab",
-                "Number of validation data tokens not in training data",
-                "Number of test data tokens not in training data",
-                "Average word length in training data",
-                "Average word length in validation data",
-                "Average word length in test data",
-                "Number of training data tokens not in validation and test data"],
-                "Result":
-                [round(len(train),2),
-                 round(len(valid),2),
-                 round(len(test),2),
-                 round(len(self._tokenmap),2),
-                 round(self._tokens.count("<unk>"),2),
-                 round(len(self.get_stopwords()),2),
-                 round(len(self._unktokens),2),
-                 round(len([t for t in self._validdata if t not in self._traindata]),2),
-                 round(len([t for t in self._testdata if t not in self._traindata]),2),
-                 round(self.get_avg(train),2),
-                 round(self.get_avg(valid),2),
-                 round(self.get_avg(test),2),
-                 round(len([t for t in self._traindata if (t not in self._validdata) and (t not in self._testdata)]),2)
-                ]
-            }
+            {"Metric":
+                 ["Number of tokens in training data",
+                  "Number of tokens in validation data",
+                  "Number of tokens in test data",
+                  "Size of vocabulary",
+                  "Number of <unk> tokens",
+                  "Number of stopwords",
+                  "Size of <unk> vocab",
+                  "Number of validation data tokens not in training data",
+                  "Number of test data tokens not in training data",
+                  "Average word length in training data",
+                  "Average word length in validation data",
+                  "Average word length in test data",
+                  "Number of training data tokens not in validation and test data"],
+             "Result":
+                 [round(len(train), 2),
+                  round(len(valid), 2),
+                  round(len(test), 2),
+                  round(len(self._tokenmap), 2),
+                  round(self._tokens.count("<unk>"), 2),
+                  round(len(self.get_stopwords()), 2),
+                  round(len(self._unktokens), 2),
+                  round(len([t for t in self._validdata if t not in self._traindata]), 2),
+                  round(len([t for t in self._testdata if t not in self._traindata]), 2),
+                  round(self.get_avg(train), 2),
+                  round(self.get_avg(valid), 2),
+                  round(self.get_avg(test), 2),
+                  round(len([t for t in self._traindata if (t not in self._validdata) and (t not in self._testdata)]),
+                        2)
+                  ]
+             }
         )
 
         print(stats)
@@ -237,12 +238,13 @@ class my_corpus():
 
         unk = '<unk>'
 
-        tokens_threshold = pd.Series(self._tokens.copy()) # put through pandas to get on C level
+        tokens_threshold = pd.Series(self._tokens.copy())  # put through pandas to get on C level
         saved_old_tokens = self._tokens.copy()
-        token_counts = Counter(self._tokens) # histogram of token counts (done on C level super fast!)
-        sorted_counts = dict(sorted(token_counts.items(), key=lambda item: item[1])) # histogram, but sorted ascending
-        thresh_index = next(i for i, v in enumerate(sorted_counts.values()) if v >= threshold) # index where counts becomes geq than threshold
-        unk_tokens = list(sorted_counts.keys())[0:thresh_index] # all the tokens whose counts were less than threshold
+        token_counts = Counter(self._tokens)  # histogram of token counts (done on C level super fast!)
+        sorted_counts = dict(sorted(token_counts.items(), key=lambda item: item[1]))  # histogram, but sorted ascending
+        thresh_index = next(i for i, v in enumerate(sorted_counts.values()) if
+                            v >= threshold)  # index where counts becomes geq than threshold
+        unk_tokens = list(sorted_counts.keys())[0:thresh_index]  # all the tokens whose counts were less than threshold
         tokens_threshold[tokens_threshold.isin(unk_tokens)] = unk
         tokens_threshold = tokens_threshold.to_list()
 
@@ -260,8 +262,8 @@ class my_corpus():
         print('Huggingface tokenization:')
         unk_tokens = "<UNK>"
         spl_tokens = ["<UNK>", "<SEP>", "<MASK>", "<CLS>"]
-        tokenizer = Tokenizer(WordPiece(unk_tokens = unk_tokens))
-        trainer = WordPieceTrainer(vocab_size=5000, special_tokens = spl_tokens)
+        tokenizer = Tokenizer(WordPiece(unk_tokens=unk_tokens))
+        trainer = WordPieceTrainer(vocab_size=5000, special_tokens=spl_tokens)
         tokenizer.pre_tokenizer = Whitespace()
 
         tokenizer.train([f"source_text.txt"], trainer)  # training the tokenzier
@@ -270,7 +272,7 @@ class my_corpus():
         input_string = input("PLease enter a sentence to tokenize: ")
         output = tokenizer.encode(input_string)
 
-        print("Tokenized text: ",output.tokens)
+        print("Tokenized text: ", output.tokens)
 
 
 def main():
@@ -279,12 +281,12 @@ def main():
     t0 = time.time()
     corpus.tag_corpus()
     t1 = time.time()
-    print('tag time taken: ', t1-t0)
+    print('tag time taken: ', t1 - t0)
 
     t0 = time.time()
     corpus.threshold(3)
     t1 = time.time()
-    print('threshold time taken: ', t1-t0)
+    print('threshold time taken: ', t1 - t0)
 
     # split corpus into training/validation/test.
     # Redefine corpus to just be the training portion

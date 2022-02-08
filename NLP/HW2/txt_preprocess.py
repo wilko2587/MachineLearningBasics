@@ -1,32 +1,34 @@
 import nltk
+import torch
 from nltk.corpus import stopwords
-from nltk.tokenize import sent_tokenize, word_tokenize
 import regex as re
 import time
 import pandas as pd
-from collections import Counter
 from tokenizers import Tokenizer
 from tokenizers.models import WordPiece
 from tokenizers.trainers import WordPieceTrainer
 from tokenizers.pre_tokenizers import Whitespace
-
-nltk.download('punkt')
-nltk.download('stopwords')
+from torch.utils.data import Dataset
 
 
-class my_corpus():
+class my_corpus(Dataset):
+    __doc__ = '''
+    corpus class from HW1, repurposed to handle HW2 data.
 
-    def __init__(self, params):
+    Inherits from torch.utils.data.Dataset, with the addition of __len__() and __getitem__() methods
+    allowing efficient integration with pytorch models and a widely understandable usability
+    '''
+
+    def __init__(self, filename, windowlength=5):
         super().__init__()
 
-        print('setting parameters')
-        self.params = params
+        self._windowlength = windowlength
 
-        print('building corpus')
+        print('importing data to memory...')
         token_list = list()
         sentence_list = list()
 
-        with open(('wiki.train.txt')) as f:
+        with open(filename, 'r') as f:
             for line in f:
                 toks = nltk.word_tokenize(line.strip().lower())
                 sent_toks = nltk.sent_tokenize(line.strip().lower())
@@ -36,15 +38,40 @@ class my_corpus():
                 for tok in sent_toks:
                     sentence_list.append(tok)
 
-        unique_tokens = list(set(token_list))  # only keep uniques
+        self._token_list = token_list
+        unique_tokens = list(set(self._token_list))  # only keep uniques
 
-        print('building token map')
-        self._tokens = token_list
+        print('building corpus...')
+        self._tokens = self._token_list
         self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
 
-        # self._tokenmap always needs an <unk>
-        self._tokenmap['<unk>'] = len(unique_tokens)
-        self._unktokens = [] # initialise container. List holding tokens that get mapped to <unk>
+        print('generating embeddings...')
+        self._generate_word_embeddings()
+
+    def _generate_word_embeddings(self):
+        embeddings = {}
+        nullvector = [0.] * len(self._tokenmap) # initialising an empty word embedding
+        for token in self._tokenmap:
+            i = self._tokenmap[token]
+            one_hot = nullvector.copy()
+            one_hot[i] = 1.
+            embeddings[token] = one_hot
+        self._embeddings = embeddings
+
+    def __len__(self):
+        return len(self._token_list) - self._windowlength # length is entire list of tokens leaving one
+                                                            # windowlength on end
+
+    def __getitem__(self, idx):
+        tokens = self._token_list[idx:idx+self._windowlength]
+        target_token = self._token_list[idx+self._windowlength] # the following token to the window is the target
+        embeddings = []
+        for token in tokens:
+            wordvec = self._embeddings[token]
+            embeddings = embeddings + wordvec # stack the wordvecs together
+
+        target = self._embeddings[target_token]
+        return torch.tensor(embeddings), torch.tensor(target)
 
     def get_stopwords(self):
         '''
@@ -61,15 +88,12 @@ class my_corpus():
         calls _tag_sequence to update the tokens stored within the corpus
         '''
 
-        token_list = self._tag_sequence(self._tokens)  # tag the tokens as required
+        self._token_list = self._tag_sequence(self._token_list)  # tag the tokens as required
+        self._validdata = self._tag_sequence(self._validdata)
+        self._testdata = self._tag_sequence(self._testdata)
 
-        unique_tokens = list(set(token_list))  # only keep uniques
-
-        self._tokens = token_list
+        unique_tokens = list(set(self._token_list))  # update the unique tokens in the corpus
         self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
-
-        # self._tokenmap always needs an <unk>
-        self._tokenmap['<unk>'] = len(unique_tokens)
         return
 
     def _tag_sequence(self, sequence):
@@ -102,54 +126,16 @@ class my_corpus():
 
     def get_avg(self, l):
         '''
+
         calculates average word length for a given list of words
         '''
         length = [len(tok) for tok in l]
-        avg_length = sum(length)/len(length)
+        avg_length = sum(length) / len(length)
 
         return avg_length
 
-    def print_summary_stats(self):
-        '''
-        print out some basic summary stats of the corpus
-        '''
-        #train, valid, test = self.generate_datasets()
-        print('======')
-        print("Printing summary statistics:")
-        stats = pd.DataFrame(
-            {   "Metric":
-                ["Number of tokens in training data",
-                "Number of tokens in validation data",
-                "Number of tokens in test data",
-                "Size of vocabulary",
-                "Number of <unk> tokens",
-                "Number of stopwords",
-                "Size of <unk> vocab",
-                "Number of validation data tokens not in training data",
-                "Number of test data tokens not in training data",
-                "Average word length in training data",
-                "Average word length in validation data",
-                "Average word length in test data",
-                "Number of training data tokens not in validation and test data"],
-                "Result":
-                [round(len(train),2),
-                 round(len(valid),2),
-                 round(len(test),2),
-                 round(len(self._tokenmap),2),
-                 round(self._tokens.count("<unk>"),2),
-                 round(len(self.get_stopwords()),2),
-                 round(len(self._unktokens),2),
-                 round(len([t for t in self._validdata if t not in self._traindata]),2),
-                 round(len([t for t in self._testdata if t not in self._traindata]),2),
-                 round(self.get_avg(train),2),
-                 round(self.get_avg(valid),2),
-                 round(self.get_avg(test),2),
-                 round(len([t for t in self._traindata if (t not in self._validdata) and (t not in self._testdata)]),2)
-                ]
-            }
-        )
-
-        print(stats)
+    def wordvec_length(self):
+        return len(self._embeddings)
 
     def encode_as_ints(self, sequence):
 
@@ -181,31 +167,6 @@ class my_corpus():
 
         return (text)
 
-    def threshold(self, threshold):
-        '''
-        Takes a threshold value, parses token list, replaces those below threshold with <UNK>
-        Creates new list at self._tokens_threshold.
-        Create new list with any removed tokens at self._tokens_removed
-        '''
-
-        unk = '<unk>'
-
-        tokens_threshold = pd.Series(self._tokens.copy()) # put through pandas to get on C level
-        saved_old_tokens = self._tokens.copy()
-        token_counts = Counter(self._tokens) # histogram of token counts (done on C level super fast!)
-        sorted_counts = dict(sorted(token_counts.items(), key=lambda item: item[1])) # histogram, but sorted ascending
-        thresh_index = next(i for i, v in enumerate(sorted_counts.values()) if v >= threshold) # index where counts becomes geq than threshold
-        unk_tokens = list(sorted_counts.keys())[0:thresh_index] # all the tokens whose counts were less than threshold
-        tokens_threshold[tokens_threshold.isin(unk_tokens)] = unk
-        tokens_threshold = tokens_threshold.to_list()
-
-        unique_tokens = list(set(tokens_threshold))
-        # reset self._tokens and self._tokenmap accordingly
-        self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
-        self._tokens = tokens_threshold
-        self._unktokens = unk_tokens
-        return
-
     def huggingface(self):
         """
         implementation of tokenization using Huggingface Wordpiece tokenization
@@ -213,8 +174,8 @@ class my_corpus():
         print('Huggingface tokenization:')
         unk_tokens = "<UNK>"
         spl_tokens = ["<UNK>", "<SEP>", "<MASK>", "<CLS>"]
-        tokenizer = Tokenizer(WordPiece(unk_tokens = unk_tokens))
-        trainer = WordPieceTrainer(vocab_size=5000, special_tokens = spl_tokens)
+        tokenizer = Tokenizer(WordPiece(unk_tokens=unk_tokens))
+        trainer = WordPieceTrainer(vocab_size=5000, special_tokens=spl_tokens)
         tokenizer.pre_tokenizer = Whitespace()
 
         tokenizer.train([f"wiki.train.txt"], trainer)  # training the tokenzier
@@ -223,32 +184,11 @@ class my_corpus():
         input_string = input("PLease enter a sentence to tokenize: ")
         output = tokenizer.encode(input_string)
 
-        print("Tokenized text: ",output.tokens)
+        print("Tokenized text: ", output.tokens)
 
 
 def main():
-    corpus = my_corpus(None)
-
-    t0 = time.time()
-    corpus.tag_corpus()
-    t1 = time.time()
-    print('tag time taken: ', t1-t0)
-
-    t0 = time.time()
-    corpus.threshold(3)
-    t1 = time.time()
-    print('threshold time taken: ', t1-t0)
-
-    # write to txt
-    #with open('wiki.train.txt', 'w') as f:
-        #f.write(' '.join(train))
-    #with open('wiki.valid.txt', 'w') as f:
-        #f.write(' '.join(valid))
-    #with open('wiki.test.txt', 'w') as f:
-        #f.write(' '.join(test))
-
-    # print some summary stats
-    corpus.print_summary_stats()
+    corpus = my_corpus('wiki.train.txt')
 
     corpus.huggingface()
 
