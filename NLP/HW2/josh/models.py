@@ -3,9 +3,8 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torch.optim as optim
 import torch.nn as nn
-import txt_preprocess_josh
+import dataset
 import torch
-
 
 class FeedForward(nn.Module):
 
@@ -18,7 +17,7 @@ class FeedForward(nn.Module):
     def forward(self, X):
         X = self.embeds(X)
         X = torch.flatten(X,start_dim=1)
-        X = F.relu(self.lin1(X))
+        X = torch.tanh(self.lin1(X))
         X = self.lin2(X)
 
         return X
@@ -30,7 +29,7 @@ def training_loop(traindata, validdata, model):
     batchsize=100
     l2=0.
     max_epoch=100
-    tol=1e-4,
+    tol=1e-3,
     verbose='vv'
 
     # CUDA for PyTorch - uses your GPU if you have one
@@ -43,13 +42,13 @@ def training_loop(traindata, validdata, model):
 
     criterion = nn.CrossEntropyLoss()
 
-    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=l2)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     reason = "Max iterations reached" # ititialise a reason for exitting training
 
     learning_curve= []
     validation_curve = []
     for epoch in range(max_epoch):  # loop over the dataset multiple times
-        print(f'epoch {epoch+1}')
+        print(f'epoch {epoch + 1}')
         # Training
         train_losses = []  # we'll store the losses over each minibatch, and average at the end to get a "stable" loss
         for X_batch, y_batch in trainingloader:
@@ -60,10 +59,10 @@ def training_loop(traindata, validdata, model):
             tloss.backward()
             optimizer.step()
             train_losses.append(tloss.item())
-            if verbose == 'vv':
-                print('[%d] mid-epoch train loss: %.5f' %
-                      (epoch + 1, tloss.item()), end='\r', flush=True)
-
+            # if verbose == 'vv':
+            #     print('[%d] mid-epoch train loss: %.5f' %
+            #           (epoch + 1, tloss.item()), end='\r', flush=True)
+        print(f'train loss: {train_losses[-1]}')
         ave_train_loss = sum(train_losses)/len(train_losses)
 
         # Validation
@@ -75,6 +74,7 @@ def training_loop(traindata, validdata, model):
                 vloss = criterion(logits, y_batch)
                 valid_losses.append(vloss.item())
 
+        print(f'validation loss: {valid_losses[-1]}')
         ave_valid_loss = sum(valid_losses)/len(valid_losses)
 
         # # stopping criteria
@@ -82,11 +82,11 @@ def training_loop(traindata, validdata, model):
         #     reason = "Learning criteria achieved"
         #     break
 
-        # print statistics
-        if epoch % 1 == 0:  # print out loss as model is training
-            if verbose == 'v' or verbose == 'vv':
-                print('[%d] train loss: %.5f valid loss: %.5f' %
-                      (epoch + 1, ave_train_loss, ave_valid_loss))#, end='\r', flush=True)
+        # # print statistics
+        # if epoch % 1 == 0:  # print out loss as model is training
+        #     if verbose == 'v' or verbose == 'vv':
+        #         print('[%d] train loss: %.5f valid loss: %.5f' %
+        #               (epoch + 1, ave_train_loss, ave_valid_loss))#, end='\r', flush=True)
 
         learning_curve.append(ave_train_loss)
         validation_curve.append(ave_valid_loss)
@@ -96,11 +96,12 @@ def training_loop(traindata, validdata, model):
     plt.plot(learning_curve, label='training loss')
     plt.plot(validation_curve, label='validation loss')
     plt.show()
+
     return None
 
 if __name__ == '__main__':
-    traindata = txt_preprocess_josh.my_corpus('wiki.train.txt')
-    validdata = txt_preprocess_josh.my_corpus('wiki.valid.txt')
+    traindata = dataset.my_corpus('../wiki.train.txt')
+    validdata = dataset.my_corpus('../wiki.valid.txt')
 
     vocabsize = len(traindata._tokenmap)
     window_size = 5
