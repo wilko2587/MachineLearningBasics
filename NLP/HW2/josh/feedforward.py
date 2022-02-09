@@ -18,10 +18,7 @@ class FeedForward(pl.LightningModule):
         self.lin1 = nn.Linear(context*embed_dim,1000)
         self.drop1 = nn.Dropout(p=0.5)
         self.lin2 = nn.Linear(1000,vocab_size)
-
-        l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
-
-        self.loss = nn.CrossEntropyLoss() + l2_norm
+        self.loss = nn.CrossEntropyLoss()
 
     def forward(self, X):
         X = self.embed(X)
@@ -37,6 +34,7 @@ class FeedForward(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         data,label = batch
         logits = self.forward(data)
+        # l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
         loss = self.loss(logits,label)
         accuracy = torchmetrics.functional.accuracy(logits,label)
         tensorboard_logs = {'acc': {'train': accuracy.detach()}, 'loss': {'train': loss.detach()}}
