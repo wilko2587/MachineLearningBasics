@@ -73,7 +73,7 @@ if __name__ == '__main__':
     dataloader = wiki_dataloader(datasets=datasets, batch_size=5000)
 
     # Make model and train
-    model = FeedForward(context=train.window,embed_dim=100,vocab_size=len(train.unique_tokens))
+    model = FeedForward(context=train.window, embed_dim=100, vocab_size=len(train.unique_tokens))
     tb_logger = pl_loggers.TensorBoardLogger("./lightning_logs/", name="ff")
     trainer = pl.Trainer(logger=tb_logger, max_epochs=10)
     trainer.fit(model, dataloader)
