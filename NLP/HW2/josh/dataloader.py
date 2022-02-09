@@ -12,7 +12,7 @@ class wiki_dataloader(pl.LightningDataModule):
 
         self.token_map = datasets[0].token_map
         self.batch_size = batch_size
-        self.setup() # remove before running this
+        # self.setup() # remove before running this
 
     def setup(self, stage=None):
         self.train = [[each[0],each[1]] for each in self.train_dataset]
