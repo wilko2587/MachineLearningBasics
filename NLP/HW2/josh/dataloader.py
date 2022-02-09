@@ -20,13 +20,13 @@ class wiki_dataloader(pl.LightningDataModule):
         self.test = [[each[0],each[1]] for each in self.test_dataset]
 
     def train_dataloader(self):
-        return DataLoader(self.train, batch_size=self.batch_size, shuffle=True, num_workers=8)
+        return DataLoader(self.train, batch_size=self.batch_size, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(self.val, batch_size=self.batch_size, shuffle=False, num_workers=8)
+        return DataLoader(self.val, batch_size=self.batch_size, shuffle=False)
 
     def test_dataloader(self):
-        return DataLoader(self.test, batch_size=self.batch_size, shuffle=False, num_workers=8)
+        return DataLoader(self.test, batch_size=self.batch_size, shuffle=False)
 
 if __name__ == "__main__":
     train = wiki_dataset('../wiki.train.txt', training=True, token_map='create')
@@ -35,5 +35,5 @@ if __name__ == "__main__":
 
     datasets = [train,valid,test]
 
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=100)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=5000)
 

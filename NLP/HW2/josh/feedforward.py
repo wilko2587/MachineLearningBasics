@@ -67,7 +67,7 @@ if __name__ == '__main__':
     datasets = [train,valid,test]
 
     # Load dataloader
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=100)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=5000)
 
     # Make model and train
     model = FeedForward(context=train.window,embed_dim=100,vocab_size=len(train.unique_tokens))
