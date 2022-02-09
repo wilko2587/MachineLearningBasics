@@ -3,11 +3,15 @@ import torch
 from torch.utils.data import Dataset
 
 class wiki_dataset(Dataset):
+    '''
+    Dataset module.
+    '''
 
     def __init__(self, file, training, token_map, window=5):
         '''
         File: data location
-        training: True if training set, False otherwise
+        training: True if training set, False otherwise. makes sure that no tokens get saved for val/test that are not
+        in training.
         token_map: 'create' if training data, else provide it token map from training data
         window: sliding window length
         '''
@@ -41,6 +45,7 @@ class wiki_dataset(Dataset):
         return len(self.tokens) # returns number of tokens
 
     def __getitem__(self, idx):
+        # returns data, label where data is the idx of the tokens and label is idx of label
         tokens = self.tokens[idx:idx+self.window]
         token_idx_list = list()
 
