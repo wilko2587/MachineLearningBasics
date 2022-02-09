@@ -2,56 +2,61 @@ import nltk
 import torch
 from torch.utils.data import Dataset
 
+class wiki_dataset(Dataset):
 
-class my_corpus(Dataset):
-    '''
-    Differences from existing code:
-    Only kept self._tokens, self._tokenmap.
-    Len returns len(self._tokenmap.
-    Get item returns ([tokens of sliding window length], integer index from self._tokenmap of target).
-    Plan to use embedding layer in PyTorch. This will allow us to update the weights in this embedding layer
-    after each minibatch.
-    Commented out other stuff.
-    '''
+    def __init__(self, file, training, token_map, window=5):
+        '''
+        File: data location
+        training: True if training set, False otherwise
+        token_map: 'create' if training data, else provide it token map from training data
+        window: sliding window length
+        '''
 
-    def __init__(self, filename, windowlength=5):
         super().__init__()
-        self._windowlength = windowlength
-
-        print('importing data to memory...')
-
+        self.window = window
+        unk = '<unk>'
         token_list = list()
 
-        with open(filename, 'r') as f:
+        with open(file, 'r') as f:
             for line in f:
                 toks = nltk.word_tokenize(line.strip().lower())
                 for tok in toks:
-                    token_list.append(tok)
+                    if training == False:
+                        if tok not in token_map:
+                            token_list.append(unk) # for valid/test set, add <unk> if token not in training set
+                        else:
+                            token_list.append(tok)
+                    else:
+                        token_list.append(tok) # this is for training set
 
-        self._tokens = token_list
-        unique_tokens = list(set(self._tokens))  # only keep uniques
+        self.tokens = token_list
+        self.unique_tokens = list(set(self.tokens))
 
-        print('building corpus...')
-        self._tokenmap = {unique_tokens[i]: i for i in range(len(unique_tokens))}
-
-        print('generating embeddings...')
-        # self._generate_word_embeddings()
-
-        print('{} corpus initialisation complete.'.format(filename))
+        if token_map == 'create': # create a token_map from training data
+            self.token_map = {self.unique_tokens[i]: i for i in range(len(self.unique_tokens))}
+        else:
+            self.token_map = token_map
 
     def __len__(self):
-        return len(self._tokenmap)
+        return len(self.tokens) # returns number of tokens
 
     def __getitem__(self, idx):
-        tokens = self._tokens[idx:idx+self._windowlength]
-        token_list = list()
+        tokens = self.tokens[idx:idx+self.window]
+        token_idx_list = list()
 
         for each in tokens:
-            token_list.append(self._tokenmap[each])
-        token_tensor = torch.tensor(token_list)
-        target_token = self._tokens[idx+self._windowlength]
-        target = self._tokenmap[target_token]
-        return (token_tensor,target)
+            token_idx_list.append(self.token_map[each])
+
+        token_tensor = torch.tensor(token_idx_list, dtype=torch.long)
+
+        target_token = self.tokens[idx+self.window]
+        target = torch.tensor(self.token_map[target_token],dtype=torch.long)
+
+        return [token_tensor,target]
 
 if __name__ == "__main__":
-    main()
+    train = wiki_dataset('../wiki.train.txt', training=True, token_map='create')
+    valid = wiki_dataset('../wiki.valid.txt', training=False, token_map=train.token_map)
+    test = wiki_dataset('../wiki.test.txt', training=False, token_map=train.token_map)
+
+
