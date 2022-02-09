@@ -16,13 +16,18 @@ class FeedForward(pl.LightningModule):
         super(FeedForward, self).__init__()
         self.embed = nn.Embedding(vocab_size,embed_dim)
         self.lin1 = nn.Linear(context*embed_dim,1000)
+        self.drop1 = nn.Dropout(p=0.5)
         self.lin2 = nn.Linear(1000,vocab_size)
-        self.loss = nn.CrossEntropyLoss()
+
+        l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
+
+        self.loss = nn.CrossEntropyLoss() + l2_norm
 
     def forward(self, X):
         X = self.embed(X)
         X = torch.flatten(X,start_dim=1)
         X = torch.tanh(self.lin1(X))
+        X = self.drop1(X)
         X = self.lin2(X)
         return X
 
