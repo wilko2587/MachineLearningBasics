@@ -3,45 +3,17 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torch.optim as optim
 import torch.nn as nn
-import txt_preprocess
+import txt_preprocess_james as tpj
 import torch
 
 
-class FeedForward(nn.Module):
+class NeuralNet(nn.Module):
     '''
-    Hey Jim
-    really simple, single layer neural network using pytorch to use as our model
-
-    I'm using tanh activation functions by default (give a quick google - there's a lot of debate these almost
-    always outperform sigmoids... they train faster. Think the taylor expansion will reveal why but haven't looked
-    at it myself)
-
-    I use a softmax on the outputs. Standard.
-
-    J
+    High level class for a nn.Module neural network
     '''
 
-    def __init__(self, inputs, layers, outputs, activationfunc=nn.Tanh):
-        '''
-
-        :param inputs: integer, number of input features
-        :param layers: list of integers representing sizes of hidden layers. ie: [5,4] will give a NN with 2 hidden
-                        layers, first hidden layer of 5 nodes, and second hidden layer of 4 nodes
-        :param outputs: number of output nodes
-        :param activationfunc: default tanh. activation function to use throughout the network
-        '''
-
-        super(FeedForward, self).__init__()
-        layer_sizes = [inputs] + layers + [outputs]
-        sequentials = []
-
-        for i in range(len(layer_sizes) - 1):
-            if i != 0: sequentials.append(activationfunc())
-
-            sequentials.append(nn.Linear(layer_sizes[i],
-                                         layer_sizes[i + 1]))
-
-        self._stack = nn.Sequential(*sequentials)
+    def __init__(self):
+        super(NeuralNet, self).__init__()
 
     def forward(self, X):
         # NB: good pytorch practice: never apply softmax function at the end of .forward()!!!
@@ -107,12 +79,13 @@ class FeedForward(nn.Module):
                 optimizer.zero_grad()
                 logits = self(X_batch)
                 tloss = criterion(logits, y_batch)
-                tloss.backward()
-                optimizer.step()
-                train_losses.append(tloss.item())
                 if verbose == 'vv':
                     print('[%d] mid-epoch train loss: %.5f' %
                           (epoch + 1, tloss.item()), end='\r', flush=True)
+
+                tloss.backward()
+                optimizer.step()
+                train_losses.append(tloss.item())
 
             ave_train_loss = sum(train_losses)/len(train_losses)
 
@@ -149,13 +122,55 @@ class FeedForward(nn.Module):
         return None
 
 
+class FeedForward(NeuralNet):
+    def __init__(self, inputs, layers, outputs, activationfunc=nn.Tanh):
+        '''
+
+        :param inputs: integer, number of input features
+        :param layers: list of integers representing sizes of hidden layers. ie: [5,4] will give a NN with 2 hidden
+                        layers, first hidden layer of 5 nodes, and second hidden layer of 4 nodes
+        :param outputs: number of output nodes
+        :param activationfunc: default tanh. activation function to use throughout the network
+        '''
+
+        super(FeedForward, self).__init__()
+        layer_sizes = [inputs] + layers + [outputs]
+        sequentials = []
+
+        for i in range(len(layer_sizes) - 1):
+            if i != 0: sequentials.append(activationfunc())
+
+            sequentials.append(nn.Linear(layer_sizes[i],
+                                         layer_sizes[i + 1]))
+
+        self._stack = nn.Sequential(*sequentials)
+
+class LSTM(NeuralNet):
+    def __init__(self, inputs, hiddendim, outputs):
+        '''
+
+        :param inputs: integer, number of input features
+        :param hiddendim: dimensions of hidden layer
+        :param outputs: number of output nodes
+        '''
+
+        super(LSTM, self).__init__()
+        sequentials = [nn.LSTM(inputs, hiddendim),
+                       nn.Linear(hiddendim, outputs)]
+
+        self._stack = nn.Sequential(*sequentials)
+
+
 if __name__ == '__main__':
-    traindata = txt_preprocess.my_corpus('wiki.train.txt')
-    validdata = txt_preprocess.my_corpus('wiki.valid.txt')
+    traindata = tpj.my_corpus('wiki.train.txt', windowlength=5)
+    validdata= tpj.my_corpus('wiki.valid.txt', windowlength=5)
+    traindata.generate_embeddings()
+    validdata.inherit_embeddings(traindata)
+
     #testdata = txt_preprocess.my_corpus('wiki.test.txt')
-    vocabsize = traindata.wordvec_length()
-    window_size = 5
+    embedding_size = traindata.embedding_size()
+    vocab_size = traindata.vocab_size()
+    print('datalength: ', len(traindata))
 
-    model = FeedForward(vocabsize*5, [100], vocabsize)
-    model.fit(traindata, validdata, lr=1e-3, batchsize=20, max_epoch=20)
-
+    ff = FeedForward(embedding_size*5, [1000], vocab_size, activationfunc=nn.ReLU)
+    ff.fit(traindata, validdata, lr=1e-3, batchsize=20, max_epoch=20)
