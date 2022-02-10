@@ -42,7 +42,8 @@ class wiki_dataset(Dataset):
             self.token_map = token_map
 
     def __len__(self):
-        return len(self.tokens) # returns number of tokens
+        # print("len: ", len(self.tokens))
+        return len(self.tokens) - self.window # returns number of tokens
 
     def __getitem__(self, idx):
         # returns data, label where data is the idx of the tokens and label is idx of label
@@ -56,8 +57,8 @@ class wiki_dataset(Dataset):
 
         target_token = self.tokens[idx+self.window]
         target = torch.tensor(self.token_map[target_token],dtype=torch.long)
-
         return [token_tensor,target]
+
 
 if __name__ == "__main__":
     train = wiki_dataset('../wiki.train.txt', training=True, token_map='create')
