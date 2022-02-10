@@ -42,7 +42,7 @@ class wiki_dataset(Dataset):
             self.token_map = token_map
 
     def __len__(self):
-        print("len: ", len(self.tokens))
+        # print("len: ", len(self.tokens))
         return len(self.tokens) - self.window # returns number of tokens
 
     def __getitem__(self, idx):

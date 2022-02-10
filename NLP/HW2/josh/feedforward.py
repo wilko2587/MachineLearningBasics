@@ -18,7 +18,8 @@ class FeedForward(pl.LightningModule):
         super(FeedForward, self).__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
         self.lin1 = nn.Linear(context * embed_dim, 1000)
-        #self.drop1 = nn.Dropout(p=0.5)
+        self.bn1 = nn.BatchNorm1d(1000)
+        self.drop1 = nn.Dropout(p=0.5)
         self.lin2 = nn.Linear(1000, vocab_size)
 
         #l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
@@ -28,8 +29,8 @@ class FeedForward(pl.LightningModule):
     def forward(self, X):
         X = self.embed(X)
         X = torch.flatten(X, start_dim=1)
-        X = torch.tanh(self.lin1(X))
-        #X = self.drop1(X)
+        X = torch.tanh(self.bn1(self.lin1(X)))
+        X = self.drop1(X)
         X = self.lin2(X)
         return X
 
@@ -59,7 +60,6 @@ class FeedForward(pl.LightningModule):
         tensorboard_logs = {'loss': {'test': loss.detach()}}
         self.log("test loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
-
 
 if __name__ == '__main__':
     # Load datasets
