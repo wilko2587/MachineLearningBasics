@@ -14,9 +14,9 @@ class FeedForward(pl.LightningModule):
 
     def __init__(self, context, embed_dim, vocab_size):
         super(FeedForward, self).__init__()
-        self.embed = nn.Embedding(vocab_size,embed_dim)
-        self.lin1 = nn.Linear(context*embed_dim,1000)
-        self.lin2 = nn.Linear(1000,vocab_size)
+        self.embed = nn.Embedding(vocab_size, embed_dim)
+        self.lin1 = nn.Linear(context*embed_dim, 1000)
+        self.lin2 = nn.Linear(1000, vocab_size)
         self.loss = nn.CrossEntropyLoss()
 
     def forward(self, X):
