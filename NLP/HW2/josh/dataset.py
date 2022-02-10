@@ -43,7 +43,7 @@ class wiki_dataset(Dataset):
 
     def __len__(self):
         print("len: ", len(self.tokens))
-        return len(self.tokens) -self.window # returns number of tokens
+        return len(self.tokens) - self.window # returns number of tokens
 
     def __getitem__(self, idx):
         # returns data, label where data is the idx of the tokens and label is idx of label

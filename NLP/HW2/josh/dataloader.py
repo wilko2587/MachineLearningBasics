@@ -5,6 +5,9 @@ import pytorch_lightning as pl
 class wiki_dataloader(pl.LightningDataModule):
 
     def __init__(self, datasets, batch_size):
+        '''
+        datasets: expects [train,valid,test]
+        '''
         super().__init__()
         self.train_dataset = datasets[0]
         self.valid_dataset = datasets[1]
