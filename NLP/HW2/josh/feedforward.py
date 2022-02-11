@@ -19,7 +19,7 @@ class FeedForward(pl.LightningModule):
         self.embed = nn.Embedding(vocab_size, embed_dim)
         self.lin1 = nn.Linear(context * embed_dim, 1000)
         self.bn1 = nn.BatchNorm1d(1000)
-        self.drop1 = nn.Dropout(p=0.5)
+        self.drop1 = nn.Dropout(p=0.8)
         self.lin2 = nn.Linear(1000, vocab_size)
         self.loss = nn.CrossEntropyLoss()
 
@@ -37,9 +37,9 @@ class FeedForward(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         data, label = batch
         logits = self.forward(data)
-        #l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
-        #l1_norm = sum(p.abs().sum() for p in model.parameters()).item()
-        loss = self.loss(logits, label) # + l2_norm + l1_norm
+        l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
+        l1_norm = sum(p.abs().sum() for p in self.parameters()).item()
+        loss = self.loss(logits, label)# + 0.001*l2_norm + 0.001*l1_norm
         tensorboard_logs = {'loss': {'train': loss.detach()}}
         self.log("training loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
