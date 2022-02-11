@@ -12,33 +12,42 @@ import time
 import matplotlib.pyplot as plt
 
 
-class RNN(pl.LightningModule):
+class RecurrentNet(pl.LightningModule):
 
-    def __init__(self, context, embed_dim, vocab_size):
-        super(FeedForward, self).__init__()
+    def __init__(self, context, embed_dim, vocab_size, n_layers, hidden_dim):
+        super(RecurrentNet, self).__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
-        self.lin1 = nn.Linear(context * embed_dim, 1000)
-        self.bn1 = nn.BatchNorm1d(1000)
-        self.drop1 = nn.Dropout(p=0.8)
-        self.lin2 = nn.Linear(1000, vocab_size)
+
+        self.input_size = context*embed_dim
+
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
+
+        self.rnn = nn.RNN(input_size=self.input_size, hidden_dim=self.hidden_dim, n_layers=self.n_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_dem, vocab_size)
         self.loss = nn.CrossEntropyLoss()
 
     def forward(self, X):
+        batch_size = x.size(0)
+        hidden = torch.zeros(self.n_layers, batch_size, self.hidden_dim)
+
         X = self.embed(X)
         X = torch.flatten(X, start_dim=1)
-        X = torch.tanh(self.bn1(self.lin1(X)))
-        X = self.drop1(X)
-        X = self.lin2(X)
-        return X
+
+        output, hidden = self.rnn(X,hidden)
+        output = output.contiguous().view(-1, self.hidden_dim)
+        output = self.fc(output)
+
+        return output, hidden
 
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=1e-3)
 
     def training_step(self, batch, batch_idx):
         data, label = batch
-        logits = self.forward(data)
-        l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
-        l1_norm = sum(p.abs().sum() for p in self.parameters()).item()
+        logits, hidden = self.forward(data)
+        # l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
+        # l1_norm = sum(p.abs().sum() for p in self.parameters()).item()
         loss = self.loss(logits, label)# + 0.001*l2_norm + 0.001*l1_norm
         tensorboard_logs = {'loss': {'train': loss.detach()}}
         self.log("training loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -46,7 +55,7 @@ class RNN(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         data, label = batch
-        logits = self.forward(data)
+        logits, hidden  = self.forward(data)
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {'val': loss.detach()}}
         self.log("validation loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -54,7 +63,7 @@ class RNN(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         data, label = batch
-        logits = self.forward(data)
+        logits, hidden = self.forward(data)
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {'test': loss.detach()}}
         self.log("test loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -71,9 +80,9 @@ if __name__ == '__main__':
     dataloader = wiki_dataloader(datasets=datasets, batch_size=20)
 
     # Make model and train
-    model = RNN(context=train.window, embed_dim=100, vocab_size=len(train.unique_tokens))
+    model = RecurrentNet(context=train.window, embed_dim=100, vocab_size=len(train.unique_tokens), n_layers=2, hidden_dim=100)
     tb_logger = pl_loggers.TensorBoardLogger("./lightning_logs/", name="ff")
-    trainer = pl.Trainer(logger=tb_logger, max_epochs=10)
+    trainer = pl.Trainer(logger=tb_logger, max_epochs=1)
     trainer.fit(model, dataloader)
     result = trainer.test(model, dataloader)
     print(result)
