@@ -14,28 +14,26 @@ import matplotlib.pyplot as plt
 
 class RecurrentNet(pl.LightningModule):
 
-    def __init__(self, context, embed_dim, vocab_size, n_layers, hidden_dim):
+    def __init__(self, context, embed_dim, vocab_size, hidden_size, num_layers):
         super(RecurrentNet, self).__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
 
-        self.input_size = context*embed_dim
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
 
-        self.hidden_dim = hidden_dim
-        self.n_layers = n_layers
-
-        self.rnn = nn.RNN(input_size=self.input_size, hidden_dim=self.hidden_dim, n_layers=self.n_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_dem, vocab_size)
+        self.rnn = nn.RNN(input_size=context*embed_dim, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, vocab_size)
         self.loss = nn.CrossEntropyLoss()
 
     def forward(self, X):
-        batch_size = x.size(0)
-        hidden = torch.zeros(self.n_layers, batch_size, self.hidden_dim)
+        batch_size = X.size(0)
+        hidden = torch.zeros(self.num_layers, batch_size, self.hidden_size)
 
         X = self.embed(X)
         X = torch.flatten(X, start_dim=1)
 
         output, hidden = self.rnn(X,hidden)
-        output = output.contiguous().view(-1, self.hidden_dim)
+        output = output.contiguous().view(-1, self.hidden_size)
         output = self.fc(output)
 
         return output, hidden
@@ -80,7 +78,7 @@ if __name__ == '__main__':
     dataloader = wiki_dataloader(datasets=datasets, batch_size=20)
 
     # Make model and train
-    model = RecurrentNet(context=train.window, embed_dim=100, vocab_size=len(train.unique_tokens), n_layers=2, hidden_dim=100)
+    model = RecurrentNet(context=train.window, embed_dim=100, vocab_size=len(train.unique_tokens), hidden_size=100, num_layers=2)
     tb_logger = pl_loggers.TensorBoardLogger("./lightning_logs/", name="ff")
     trainer = pl.Trainer(logger=tb_logger, max_epochs=1)
     trainer.fit(model, dataloader)
