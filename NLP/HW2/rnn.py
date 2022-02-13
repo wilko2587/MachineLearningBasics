@@ -12,27 +12,24 @@ import time
 import matplotlib.pyplot as plt
 
 class rnn(pl.LightningModule):
-    def __init__(self, n_vocab, embedding_size, hidden_size, num_layers, seq_size):
+    def __init__(self, n_vocab, embedding_size, hidden_size, num_layers):
         super(rnn, self).__init__()
-
-        self.n_vocab = n_vocab
-        self.embedding_size = embedding_size
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.seq_size = seq_size
-
-        self.prev_state = None
-
+        self.hidden_state = None
         self.embed = nn.Embedding(n_vocab, embedding_size)
         self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, n_vocab)
         self.loss = nn.CrossEntropyLoss()
 
-    def forward(self, x, prev_state):
+    def forward(self, x, hidden_state):
         x = self.embed(x)
+        print(f'initial x {x.shape}')
         x, hidden = self.rnn(x)
+        print(f'after rnn x {x.shape}')
+        print(f'after rnn hidden {hidden.shape}')
         x = x[:, -1, :]
+        print(f'after reshape x {x.shape}')
         logits = self.fc(x)
+        print(f'after linear x {x.shape}')
 
         return logits, hidden
 
@@ -41,18 +38,18 @@ class rnn(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         data, label = batch
-        logits, self.prev_state = self.forward(data, self.prev_state)
-        self.prev_state = [state.detach() for state in self.prev_state]  # holding onto the numbers, not the gradient
+        logits, self.hidden_state = self.forward(data, self.hidden_state)
+        self.hidden_state = [state.detach() for state in self.hidden_state] #holding onto the numbers, not the gradient
         # l2_norm = sum(p.pow(2.0).sum() for p in self.parameters()).item()
         # l1_norm = sum(p.abs().sum() for p in self.parameters()).item()
-        loss = self.loss(logits, label)  # + 0.001*l2_norm + 0.001*l1_norm
+        loss = self.loss(logits, label)# + 0.001*l2_norm + 0.001*l1_norm
         tensorboard_logs = {'loss': {'train': loss.detach()}}
         self.log("training loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
         data, label = batch
-        logits, self.prev_state = self.forward(data, self.prev_state)
+        logits, self.hidden_state = self.forward(data, self.hidden_state)
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {'val': loss.detach()}}
         self.log("validation loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -60,7 +57,7 @@ class rnn(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         data, label = batch
-        logits, self.prev_state = self.forward(data, self.prev_state)
+        logits, self.hidden_state = self.forward(data, self.hidden_state)
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {'test': loss.detach()}}
         self.log("test loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -77,7 +74,7 @@ if __name__ == '__main__':
     dataloader = wiki_dataloader(datasets=datasets, batch_size=20)
 
     # Make model and train
-    model = rnn(n_vocab=len(train.unique_tokens), embedding_size=100, hidden_size=100, num_layers=2, seq_size=30)
+    model = rnn(n_vocab=len(train.unique_tokens), embedding_size=100, hidden_size=100, num_layers=2)
     tb_logger = pl_loggers.TensorBoardLogger("./lightning_logs/", name="ff")
     trainer = pl.Trainer(logger=tb_logger, max_epochs=1, gpus=1)
     trainer.fit(model, dataloader)
