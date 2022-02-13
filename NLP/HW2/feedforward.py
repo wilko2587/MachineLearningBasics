@@ -16,13 +16,15 @@ nltk.download('punkt')
 
 class FeedForward(pl.LightningModule):
 
-    def __init__(self, context, embed_dim, vocab_size):
+    def __init__(self, context, embed_dim, vocab_size,
+                 hidden_size = 1000,
+                 dropout=0.8):
         super(FeedForward, self).__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
-        self.lin1 = nn.Linear(context * embed_dim, 1000)
-        self.bn1 = nn.BatchNorm1d(1000)
-        self.drop1 = nn.Dropout(p=0.8)
-        self.lin2 = nn.Linear(1000, vocab_size)
+        self.lin1 = nn.Linear(context * embed_dim, hidden_size)
+        self.bn1 = nn.BatchNorm1d(hidden_size)
+        self.drop1 = nn.Dropout(p=dropout)
+        self.lin2 = nn.Linear(hidden_size, vocab_size)
         self.loss = nn.CrossEntropyLoss()
 
     def forward(self, X):
@@ -61,6 +63,59 @@ class FeedForward(pl.LightningModule):
         tensorboard_logs = {'loss': {'test': loss.detach()}}
         self.log("test loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
+
+
+def test_hiddensize(sizes=[50,100,200,500], logpath="./FeedForward_logs/", gpus=1, tpu_cores=None):
+
+    # Load datasets
+    train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
+    valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=30)
+    test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=30)
+    datasets = [train, valid, test]
+
+    # Load dataloader
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers = 8)
+
+    for hidden_size in sizes:
+
+        # Make model and train
+        model = FeedForward(context=train.window, embed_dim=100, vocab_size=len(train.unique_tokens),
+                            hidden_size=hidden_size,
+                            dropout=0)
+
+        tb_logger = pl_loggers.TensorBoardLogger(logpath, name="hiddensize_{}".format(hidden_size))
+        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+
+        trainer.fit(model, dataloader)
+        result = trainer.test(model, dataloader)
+    return
+
+
+def test_dropout(dropouts = [0.2, 0.4, 0.6, 0.8], logpath="./FeedForward_logs/", tpu_cores=None, gpus=1): # Todo: put dropout as a feature in LSTM1
+
+    # Load datasets
+    train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
+    valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=30)
+    test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=30)
+    datasets = [train, valid, test]
+
+    # Load dataloader
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=8)
+
+    for dropout in dropouts:
+
+        # Make model and train
+        model = FeedForward(context=train.window, embed_dim=100, vocab_size=len(train.unique_tokens),
+                            hidden_size=1000,
+                            dropout=dropout)
+
+        tb_logger = pl_loggers.TensorBoardLogger("./LSTM_logs/", name="dropout_{}".format(dropout))
+        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+
+        trainer.fit(model, dataloader)
+        result = trainer.test(model, dataloader)
+    return
+
 
 if __name__ == '__main__':
     # Load datasets

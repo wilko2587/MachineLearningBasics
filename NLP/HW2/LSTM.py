@@ -74,7 +74,7 @@ class LSTM1(pl.LightningModule):
         return {"loss": loss, "log": tensorboard_logs}
 
 
-def test_hiddensize(sizes=[50,100,200,500], logpath="./LSTM_logs/"):
+def test_hiddensize(sizes=[50,100,200,500], logpath="./LSTM_logs/", gpus=1, tpu_cores=None):
     # Load datasets
     train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
     valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=30)
@@ -82,7 +82,7 @@ def test_hiddensize(sizes=[50,100,200,500], logpath="./LSTM_logs/"):
     datasets = [train, valid, test]
 
     # Load dataloader
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=20)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers = 8)
 
     for hidden_size in sizes:
 
@@ -94,14 +94,14 @@ def test_hiddensize(sizes=[50,100,200,500], logpath="./LSTM_logs/"):
                   hidden_size=hidden_size)
 
         tb_logger = pl_loggers.TensorBoardLogger(logpath, name="hiddensize_{}".format(hidden_size))
-        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20)
+        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
         result = trainer.test(model, dataloader)
     return
 
 
-def test_dropout(): # Todo: put dropout as a feature in LSTM1
+def test_dropout(tpu_cores=None, gpus=1): # Todo: put dropout as a feature in LSTM1
 
     # Load datasets
     train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
@@ -122,7 +122,7 @@ def test_dropout(): # Todo: put dropout as a feature in LSTM1
                   hidden_size=100)
 
         tb_logger = pl_loggers.TensorBoardLogger("./LSTM_logs/", name="dropout_{}".format(dropout))
-        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20)
+        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
         result = trainer.test(model, dataloader)

@@ -4,11 +4,13 @@ import pytorch_lightning as pl
 
 class wiki_dataloader(pl.LightningDataModule):
 
-    def __init__(self, datasets, batch_size):
+    def __init__(self, datasets, batch_size, num_workers=2):
         '''
         datasets: expects [train,valid,test]
         '''
         super().__init__()
+        self.num_workers = num_workers
+
         self.train_dataset = datasets[0]
         self.valid_dataset = datasets[1]
         self.test_dataset = datasets[2]
@@ -21,13 +23,13 @@ class wiki_dataloader(pl.LightningDataModule):
         self.test = [[each[0],each[1]] for each in self.test_dataset]
 
     def train_dataloader(self):
-        return DataLoader(self.train, batch_size=self.batch_size, shuffle=True)
+        return DataLoader(self.train, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.val, batch_size=self.batch_size, shuffle=False)
+        return DataLoader(self.val, batch_size=self.batch_size, shuffle=False, num_workers = self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.test, batch_size=self.batch_size, shuffle=False)
+        return DataLoader(self.test, batch_size=self.batch_size, shuffle=False, num_workers= self.num_workers)
 
 
 if __name__ == "__main__":
