@@ -27,7 +27,7 @@ class LSTM1(pl.LightningModule):
         self.prev_state = None
         self.embed = nn.Embedding(n_vocab, embedding_size)
         self.loss = nn.CrossEntropyLoss()
-        self.fc = nn.Linear(embedding_size, n_vocab) #transpose of embedding layer; need same weights but transposed
+        self.fc = nn.Linear(hidden_size, n_vocab) #transpose of embedding layer; need same weights but transposed
 
     def forward(self, x, prev_state):
         x = self.embed(x)
@@ -73,7 +73,8 @@ class LSTM1(pl.LightningModule):
         self.log("test loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
-def test_hiddensize():
+
+def test_hiddensize(sizes=[50,100,200,500], logpath="./LSTM_logs/"):
     # Load datasets
     train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
     valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=30)
@@ -83,7 +84,7 @@ def test_hiddensize():
     # Load dataloader
     dataloader = wiki_dataloader(datasets=datasets, batch_size=20)
 
-    for hidden_size in [50, 100, 200, 500]:
+    for hidden_size in sizes:
 
         # Make model and train
         model = LSTM1(n_vocab=len(train.unique_tokens),
@@ -92,7 +93,7 @@ def test_hiddensize():
                   embedding_size=100,
                   hidden_size=hidden_size)
 
-        tb_logger = pl_loggers.TensorBoardLogger("./LSTM_logs/", name="hiddensize_{}".format(hidden_size))
+        tb_logger = pl_loggers.TensorBoardLogger(logpath, name="hiddensize_{}".format(hidden_size))
         trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20)
 
         trainer.fit(model, dataloader)
