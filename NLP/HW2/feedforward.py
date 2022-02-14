@@ -45,12 +45,12 @@ class FeedForward(pl.LightningModule):
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=self.lr)
 
-    def _step(self, batch, batch_idx, label):
+    def _step(self, batch, batch_idx, logstring):
         data, label = batch
-        logits = self.forward(data)
+        logits = self(data)
         loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {label: loss.detach()}}
-        self.log("{} loss".format(label), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        tensorboard_logs = {'loss': {logstring: loss.detach()}}
+        self.log("{} loss".format(logstring), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def training_step(self, batch, batch_idx):
@@ -71,6 +71,8 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
 
     hparam = string of hyperparam to vary
     values = values of hparam to try
+    tpu_cores: either None, or 1 or 8
+    gpus = None, or integer
     '''
 
     # Load datasets
