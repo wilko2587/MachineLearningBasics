@@ -45,12 +45,12 @@ class FeedForward(pl.LightningModule):
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=self.lr)
 
-    def _step(self, batch, batch_idx, label):
+    def _step(self, batch, batch_idx, logstring):
         data, label = batch
         logits = self(data)
         loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {label: loss.detach()}}
-        self.log("{} loss".format(label), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        tensorboard_logs = {'loss': {logstring: loss.detach()}}
+        self.log("{} loss".format(logstring), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def training_step(self, batch, batch_idx):
