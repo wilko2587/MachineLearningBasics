@@ -12,22 +12,19 @@ import pytorch_lightning.loggers as pl_loggers
 class LSTM1(pl.LightningModule):
     def __init__(self, n_vocab,
                  embedding_size,
-                 hidden_size,
-                 num_layers,
-                 seq_size):
+                 num_layers):
         super(LSTM1, self).__init__()
-        self.seq_size = seq_size
         self.embedding_size=embedding_size
-        self.hidden_size=hidden_size
         self.lstm = nn.LSTM(input_size = embedding_size,
                             hidden_size = embedding_size,
                             num_layers = num_layers,
                             batch_first=False, dropout=0.5)
-        # nn.utils.clip_grad_norm_(self.lstm.parameters(), clip) - between backwards and optimizer step
+
+
         self.prev_state = None
         self.embed = nn.Embedding(n_vocab, embedding_size)
         self.loss = nn.CrossEntropyLoss()
-        self.fc = nn.Linear(hidden_size, n_vocab) #transpose of embedding layer; need same weights but transposed
+        self.fc = nn.Linear(embedding_size, n_vocab) #transpose of embedding layer; need same weights but transposed
         self.fc.weight = self.embed.weight # tie embeddings
 
     def forward(self, x):
@@ -38,7 +35,7 @@ class LSTM1(pl.LightningModule):
         return logits
 
     def configure_optimizers(self):
-        return optim.SGD(self.parameters(), lr=1e-3)
+        return optim.SGD(self.parameters(), lr=1e-2)
 
     def training_step(self, batch, batch_idx):
         data, label = batch
@@ -82,7 +79,7 @@ def test_dropout(tpu_cores=None, gpus=1): # Todo: put dropout as a feature in LS
         # Make model and train
         model = LSTM1(n_vocab=len(train.unique_tokens),
                   num_layers=2,
-                  embedding_size=100,)
+                  embedding_size=100)
 
         tb_logger = pl_loggers.TensorBoardLogger("./LSTM_logs/", name="dropout_{}".format(dropout))
         trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
