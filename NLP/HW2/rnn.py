@@ -33,7 +33,6 @@ class rnn(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         data, label = batch
         logits = self.forward(data)
-        # self.hidden_state = [state.detach() for state in self.hidden_state] #holding onto the numbers, not the gradient
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {'train': loss.detach()}}
         self.log("training loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
