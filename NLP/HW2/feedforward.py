@@ -83,7 +83,7 @@ def test_dropout(dropouts = [0.2, 0.4, 0.6, 0.8], logpath="./FeedForward_logs/",
                             hidden_size=1000,
                             dropout=dropout)
 
-        tb_logger = pl_loggers.TensorBoardLogger("./LSTM_logs/", name="dropout_{}".format(dropout))
+        tb_logger = pl_loggers.TensorBoardLogger("./FeedForward_logs/", name="dropout_{}".format(dropout))
         trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
