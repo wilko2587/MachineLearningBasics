@@ -24,12 +24,13 @@ class LSTM1(pl.LightningModule):
         self.lstm = nn.LSTM(input_size = embedding_size,
                             hidden_size = embedding_size,
                             num_layers = num_layers,
-                            batch_first=False, dropout=0.5)
+                            batch_first=False, dropout=dropout)
 
         self.fc = nn.Linear(embedding_size, n_vocab) #transpose of embedding layer; need same weights but transposed
         self.fc.weight = self.embed.weight # tie embeddings
 
         self.loss = nn.CrossEntropyLoss()
+        self.lr = lr
 
     def forward(self, x):
         x = self.embed(x)
@@ -39,11 +40,11 @@ class LSTM1(pl.LightningModule):
         return logits
 
     def configure_optimizers(self):
-        return optim.SGD(self.parameters(), lr=1e-2)
+        return optim.SGD(self.parameters(), lr=self.lr)
 
     def _step(self, batch, batch_idx, label):
         data, label = batch
-        logits = self.forward(data)
+        logits = self(data)
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {label: loss.detach()}}
         self.log("{} loss".format(label), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -67,6 +68,8 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
 
     hparam = string of hyperparam to vary
     values = values of hparam to try
+    tpu_cores: either None, or 1 or 8
+    gpus = None, or integer
     '''
 
     # Load datasets
@@ -76,14 +79,14 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
     datasets = [train, valid, test]
 
     # default LSTM params
-    params = {'embedding_size':100,
-              'n_vocab':len(train.unique_tokens),
+    params = {'n_vocab':len(train.unique_tokens),
+              'embedding_size':100,
               'num_layers':2,
               'dropout':0,
               'lr':1e-3}
 
     # Load dataloader
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=8)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=2)
 
     for hparam_val in values:
 
@@ -102,3 +105,6 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
         trainer.fit(model, dataloader)
         result = trainer.test(model, dataloader)
     return
+
+if __name__ == '__main__':
+    test_hparam("lr", values=[1e-4, 1e-3])
