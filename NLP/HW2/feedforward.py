@@ -26,13 +26,15 @@ class FeedForward(pl.LightningModule):
         self.bn1 = nn.BatchNorm1d(embed_dim)
         self.drop1 = nn.Dropout(p=dropout)
         self.loss = nn.CrossEntropyLoss()
+        self.lin2 = nn.Linear(embed_dim, vocab_size)
+        self.lin2.weight = self.embed.weight # tied embeddings
 
     def forward(self, X):
         X = self.embed(X)
         X = torch.flatten(X, start_dim=1)
         X = torch.tanh(self.bn1(self.lin1(X)))
         X = self.drop1(X)
-        X = torch.mm(X, self.embed.weight.transpose(1,0))
+        X = self.lin2(X)
         return X
 
     def configure_optimizers(self):
