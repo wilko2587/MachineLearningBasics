@@ -10,22 +10,26 @@ import pytorch_lightning.loggers as pl_loggers
 
 
 class LSTM1(pl.LightningModule):
-    def __init__(self, n_vocab,
+    def __init__(self,
+                 n_vocab,
                  embedding_size,
-                 num_layers):
+                 num_layers,
+                 dropout=0,
+                 lr = 1e-3):
+
         super(LSTM1, self).__init__()
-        self.embedding_size=embedding_size
+
+        self.embed = nn.Embedding(n_vocab, embedding_size)
+
         self.lstm = nn.LSTM(input_size = embedding_size,
                             hidden_size = embedding_size,
                             num_layers = num_layers,
                             batch_first=False, dropout=0.5)
 
-
-        self.prev_state = None
-        self.embed = nn.Embedding(n_vocab, embedding_size)
-        self.loss = nn.CrossEntropyLoss()
         self.fc = nn.Linear(embedding_size, n_vocab) #transpose of embedding layer; need same weights but transposed
         self.fc.weight = self.embed.weight # tie embeddings
+
+        self.loss = nn.CrossEntropyLoss()
 
     def forward(self, x):
         x = self.embed(x)
@@ -37,33 +41,33 @@ class LSTM1(pl.LightningModule):
     def configure_optimizers(self):
         return optim.SGD(self.parameters(), lr=1e-2)
 
-    def training_step(self, batch, batch_idx):
+    def _step(self, batch, batch_idx, label):
         data, label = batch
-        logits = self(data)
-        loss = self.loss(logits, label)  # + l2_norm + l1_norm
-        tensorboard_logs = {'loss': {'train': loss.detach()}}
-        self.log("training loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        logits = self.forward(data)
+        loss = self.loss(logits, label)
+        tensorboard_logs = {'loss': {label: loss.detach()}}
+        self.log("{} loss".format(label), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
+
+    def training_step(self, batch, batch_idx):
+        return self._step(batch, batch_idx, "train")
 
     def validation_step(self, batch, batch_idx):
-        data, label = batch
-        logits = self(data)
-        loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {'val': loss.detach()}}
-        self.log("validation loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        return {"loss": loss, "log": tensorboard_logs}
+        return self._step(batch, batch_idx, "val")
 
     def test_step(self, batch, batch_idx):
-        data, label = batch
-        logits = self(data)
-        loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {'test': loss.detach()}}
-        self.log("test loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        return {"loss": loss, "log": tensorboard_logs}
+        return self._step(batch, batch_idx, "test")
 
 
+def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpus=1):
+    '''
 
-def test_dropout(tpu_cores=None, gpus=1): # Todo: put dropout as a feature in LSTM1
+    pretty neat function to test a hparam (as titled in LSTM1.__init__()) between a set of values.
+    Will automatically log for you
+
+    hparam = string of hyperparam to vary
+    values = values of hparam to try
+    '''
 
     # Load datasets
     train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
@@ -71,18 +75,29 @@ def test_dropout(tpu_cores=None, gpus=1): # Todo: put dropout as a feature in LS
     test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=30)
     datasets = [train, valid, test]
 
-    # Load dataloader
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=20)
+    # default LSTM params
+    params = {'embedding_size':100,
+              'n_vocab':len(train.unique_tokens),
+              'num_layers':2,
+              'dropout':0,
+              'lr':1e-3}
 
-    for dropout in [0.1, 0.2, 0.3, 0.4, 0.5]:
+    # Load dataloader
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=8)
+
+    for hparam_val in values:
+
+        if hparam != 'gradient_clip_val':
+            params[hparam] = hparam_val
 
         # Make model and train
-        model = LSTM1(n_vocab=len(train.unique_tokens),
-                  num_layers=2,
-                  embedding_size=100)
+        model = LSTM1(**params)
 
-        tb_logger = pl_loggers.TensorBoardLogger("./LSTM_logs/", name="dropout_{}".format(dropout))
-        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+        tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
+        if hparam == 'gradient_clip_val':
+            trainer = pl.Trainer(gradient_clip_val=values, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+        else:
+            trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
         result = trainer.test(model, dataloader)
