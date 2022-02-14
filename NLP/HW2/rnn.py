@@ -8,6 +8,7 @@ from dataloader import wiki_dataloader
 import torchmetrics
 import pytorch_lightning as pl
 import pytorch_lightning.loggers as pl_loggers
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 import time
 import matplotlib.pyplot as plt
 
@@ -15,8 +16,9 @@ class rnn(pl.LightningModule):
     def __init__(self, n_vocab, embedding_size, hidden_size, num_layers):
         super(rnn, self).__init__()
         self.embed = nn.Embedding(n_vocab, embedding_size)
-        self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False, dropout=0.5)
+        self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False, dropout=0.8)
         self.fc = nn.Linear(hidden_size, n_vocab)
+        self.fc.weight = self.embed.weight
         self.loss = nn.CrossEntropyLoss()
 
     def forward(self, x):
@@ -35,7 +37,7 @@ class rnn(pl.LightningModule):
         logits = self.forward(data)
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {'train': loss.detach()}}
-        self.log("training loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("train loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
@@ -43,7 +45,7 @@ class rnn(pl.LightningModule):
         logits = self.forward(data)
         loss = self.loss(logits, label)
         tensorboard_logs = {'loss': {'val': loss.detach()}}
-        self.log("validation loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def test_step(self, batch, batch_idx):
@@ -67,7 +69,7 @@ if __name__ == '__main__':
     # Make model and train
     model = rnn(n_vocab=len(train.unique_tokens), embedding_size=100, hidden_size=100, num_layers=2)
     tb_logger = pl_loggers.TensorBoardLogger("./lightning_logs/", name="ff")
-    trainer = pl.Trainer(logger=tb_logger, max_epochs=1, gpus=1)
+    trainer = pl.Trainer(logger=tb_logger, max_epochs=20, gpus=1, callbacks=[EarlyStopping(monitor='val loss')])
     trainer.fit(model, dataloader)
     result = trainer.test(model, dataloader)
     print(result)
