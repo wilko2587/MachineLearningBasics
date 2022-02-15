@@ -16,7 +16,12 @@ class rnn(pl.LightningModule):
     def __init__(self, n_vocab, embedding_size, hidden_size, num_layers):
         super(rnn, self).__init__()
         self.embed = nn.Embedding(n_vocab, embedding_size)
-        self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False, dropout=0.8)
+        nn.init.uniform_(self.embed.weight, a=-0.1, b=0.1)
+        self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False, dropout=0.2)
+        nn.init.uniform_(self.rnn.weight_ih_l0, a=-0.1, b=0.1)
+        nn.init.uniform_(self.rnn.weight_hh_l0, a=-0.1, b=0.1)
+        nn.init.uniform_(self.rnn.weight_ih_l1, a=-0.1, b=0.1)
+        nn.init.uniform_(self.rnn.weight_hh_l1, a=-0.1, b=0.1)
         self.fc = nn.Linear(hidden_size, n_vocab)
         self.fc.weight = self.embed.weight
         self.loss = nn.CrossEntropyLoss()
@@ -26,7 +31,6 @@ class rnn(pl.LightningModule):
         x, hidden = self.rnn(x)
         x = x[:, -1, :]
         logits = self.fc(x)
-
         return logits
 
     def configure_optimizers(self):
