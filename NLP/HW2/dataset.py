@@ -28,7 +28,6 @@ class wiki_dataset(Dataset):
             for line in f:
                 #toks = nltk.word_tokenize(line.strip().lower())
                 toks = tokenizer.tokenize(line.lower())
-                print(toks)
                 toks = self._tag_sequence(toks)
                 for tok in toks:
                     if training == False:
