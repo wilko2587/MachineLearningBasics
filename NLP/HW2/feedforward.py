@@ -99,7 +99,7 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
         model = FeedForward(**params)
 
         tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
-        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=10, tpu_cores=tpu_cores, gpus=gpus)
+        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
         model.eval() # freeze the model
@@ -110,7 +110,7 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
             features, groundTruth = test[idx]
             fpass = model.forward(features.unsqueeze(dim=0))
             pred = np.argmax(torch.softmax(fpass.detach().squeeze(dim=0), 0))
-            sentence = ''.join([test.decode_int(i) for i in features])
+            sentence = ' '.join([test.decode_int(i) for i in features])
             nextword = test.decode_int(groundTruth)
             nextpred = test.decode_int(pred)
             print('{} ({}) [{}]'.format(sentence, nextword, nextpred))

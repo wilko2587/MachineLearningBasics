@@ -99,7 +99,7 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
 
         tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
         if hparam == 'gradient_clip_val':
-            trainer = pl.Trainer(gradient_clip_val=values, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+            trainer = pl.Trainer(gradient_clip_val=hparam_val, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
         else:
             trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
