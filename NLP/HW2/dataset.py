@@ -1,6 +1,7 @@
 import nltk
 import torch
 from torch.utils.data import Dataset
+import re
 
 class wiki_dataset(Dataset):
     '''
@@ -21,9 +22,14 @@ class wiki_dataset(Dataset):
         unk = '<unk>'
         token_list = list()
 
+        tokenizer = nltk.RegexpTokenizer(r"\w+") # new tokenizer ignores any punctuation
+
         with open(file, 'r') as f:
             for line in f:
-                toks = nltk.word_tokenize(line.strip().lower())
+                #toks = nltk.word_tokenize(line.strip().lower())
+                toks = tokenizer.tokenize(line.lower())
+                print(toks)
+                toks = self._tag_sequence(toks)
                 for tok in toks:
                     if training == False:
                         if tok not in token_map:
@@ -58,6 +64,27 @@ class wiki_dataset(Dataset):
         target_token = self.tokens[idx+self.window]
         target = torch.tensor(self.token_map[target_token],dtype=torch.long)
         return [token_tensor,target]
+
+    def _tag_sequence(self, sequence):
+        '''
+        method to take a list of tokens (sequence) and to replace years with <year>,
+        days with <days>, decimals with <decimal> etc
+        '''
+
+        # Now replace years, ints, decimals, days, numbers with tags
+        sequence = [re.sub('^[12][0-9]{3}$', '<year>', tok) for tok in sequence]  # tag years
+        sequence = [re.sub('^[0-9]*$', '<integer>', tok) for tok in sequence]  # tag integers
+        sequence = [re.sub('^[0-9]+\.+[0-9]*$', '<decimal>', tok) for tok in sequence]  # tag decimals
+        sequence = [re.sub('(monday|tuesday|wednesday|thursday|friday|saturday|sunday)',
+                           '<dayofweek>', tok) for tok in sequence]  # tag days of week
+        sequence = [re.sub('(january|february|march|april|may|june|july|august|september|october|november|december)',
+                           '<month>', tok) for tok in sequence]  # tag month
+        sequence = [re.sub('^[0-9]+(st|nd|rd|th)',
+                           '<days>', tok) for tok in sequence]  # tag days (in date) - can have errors in this
+        sequence = [re.sub('^[0-9]', '<other>', tok) for tok in sequence]  # tag all remaining numbers
+        sequence = [re.sub('(unk)', '<unk>', tok) for tok in sequence] # reformat the unks to <unk> (previously "unk")
+
+        return sequence
 
     def decode_int(self, num):
         inv_token_map = {v: k for k, v in self.token_map.items()}
