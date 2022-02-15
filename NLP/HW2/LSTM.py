@@ -45,7 +45,7 @@ class LSTM1(pl.LightningModule):
         return logits
 
     def configure_optimizers(self):
-        return optim.SGD(self.parameters(), lr=self.lr)
+        return optim.Adam(self.parameters(), lr=self.lr)
 
     def _step(self, batch, batch_idx, logstring):
         data, label = batch
