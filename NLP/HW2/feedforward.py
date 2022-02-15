@@ -99,11 +99,11 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
         model = FeedForward(**params)
 
         tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
-        model.eval() # freeze the model
-        #trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=10, tpu_cores=tpu_cores, gpus=gpus)
+        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=10, tpu_cores=tpu_cores, gpus=gpus)
 
-        #trainer.fit(model, dataloader)
-        #result = trainer.test(model, dataloader)
+        trainer.fit(model, dataloader)
+        model.eval() # freeze the model
+        result = trainer.test(model, dataloader)
         print('printing some example sentences from test set')
         print('--> format: sentence (true) [predicted]')
         for idx in np.random.randint(0, 1000, size=10):
