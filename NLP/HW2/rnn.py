@@ -34,7 +34,7 @@ class rnn(pl.LightningModule):
         return logits
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=1e-3)
+        return optim.Adam(self.parameters(), lr=3e-3)
 
     def training_step(self, batch, batch_idx):
         data, label = batch
