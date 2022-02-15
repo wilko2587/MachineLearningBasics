@@ -16,7 +16,8 @@ class LSTM1(pl.LightningModule):
                  embedding_size,
                  num_layers,
                  dropout=0,
-                 lr = 1e-3):
+                 lr = 1e-3,
+                 trainweights=None):
 
         super(LSTM1, self).__init__()
 
@@ -30,6 +31,9 @@ class LSTM1(pl.LightningModule):
         self.fc = nn.Linear(embedding_size, n_vocab) #transpose of embedding layer; need same weights but transposed
         self.fc.weight = self.embed.weight # tie embeddings
 
+        self.loss = nn.CrossEntropyLoss(weight=trainweights)
+        self.viewloss = nn.CrossEntropyLoss() # weights change the results of the loss, so we initialise an unweighted
+                                                # loss to keep track and use for perplexity calcs
         self.loss = nn.CrossEntropyLoss()
         self.lr = lr
 
@@ -47,8 +51,9 @@ class LSTM1(pl.LightningModule):
         data, label = batch
         logits = self(data)
         loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {logstring: loss.detach()}}
-        self.log("{} loss".format(logstring), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        viewloss = self.viewloss(logits, label)
+        tensorboard_logs = {'loss': {logstring: viewloss.detach()}}
+        self.log("{} loss".format(logstring), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def training_step(self, batch, batch_idx):
@@ -95,7 +100,8 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
             params[hparam] = hparam_val
 
         # Make model and train
-        model = LSTM1(**params)
+        model = LSTM1(**params,
+                        trainweights = torch.log(1. / train.token_count()))
 
         tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
         if hparam == 'gradient_clip_val':

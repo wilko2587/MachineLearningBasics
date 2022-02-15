@@ -12,6 +12,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import nltk
+
 nltk.download('punkt')
 
 
@@ -21,19 +22,22 @@ class FeedForward(pl.LightningModule):
                  embed_dim,
                  vocab_size,
                  dropout=0.8,
-                 lr = 1e-3):
-
+                 lr=1e-3,
+                 trainweights=None):
         super(FeedForward, self).__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
         self.lr = lr
-        nn.init.uniform_(self.embed.weight, a=-0.1, b=0.1) # initialise weights in range -0.1->0.1 with uniform distro
+        nn.init.uniform_(self.embed.weight, a=-0.1, b=0.1)  # initialise weights in range -0.1->0.1 with uniform distro
         self.lin1 = nn.Linear(context * embed_dim, embed_dim)
-        nn.init.uniform_(self.lin1.weight, a=-0.1, b=0.1) # initialise weights in range -0.1->0.1 with uniform distro
+        nn.init.uniform_(self.lin1.weight, a=-0.1, b=0.1)  # initialise weights in range -0.1->0.1 with uniform distro
         self.bn1 = nn.BatchNorm1d(embed_dim)
         self.drop1 = nn.Dropout(p=dropout)
-        self.loss = nn.CrossEntropyLoss()
         self.lin2 = nn.Linear(embed_dim, vocab_size)
-        self.lin2.weight = self.embed.weight # tied embeddings
+        self.lin2.weight = self.embed.weight  # tied embeddings
+
+        self.loss = nn.CrossEntropyLoss(weight=trainweights)
+        self.viewloss = nn.CrossEntropyLoss() # weights change the results of the loss, so we initialise an unweighted
+                                                # loss to keep track and use for perplexity calcs
 
     def forward(self, X):
         X = self.embed(X)
@@ -50,8 +54,9 @@ class FeedForward(pl.LightningModule):
         data, label = batch
         logits = self(data)
         loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {logstring: loss.detach()}}
-        self.log("{} loss".format(logstring), loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        viewloss = self.viewloss(logits, label)
+        tensorboard_logs = {'loss': {logstring: viewloss.detach()}}
+        self.log("{} loss".format(logstring), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def training_step(self, batch, batch_idx):
@@ -64,7 +69,7 @@ class FeedForward(pl.LightningModule):
         return self._step(batch, batch_idx, "test")
 
 
-def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=None, gpus=1):
+def test_hparam(hparam, values=[], logpath="./FeedForward_logs/", tpu_cores=None, gpus=1):
     '''
 
     pretty neat function to test a hparam (as titled in FeedForward.__init__()) between a set of values.
@@ -84,10 +89,10 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
 
     # default feedforward params
     params = {'context': train.window,
-              'embed_dim':100,
-              'vocab_size':len(train.unique_tokens),
-              'dropout':0,
-              'lr':1e-3}
+              'embed_dim': 100,
+              'vocab_size': len(train.unique_tokens),
+              'dropout': 0,
+              'lr': 1e-3}
 
     # Load dataloader
     dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=8)
@@ -96,13 +101,14 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
 
         params[hparam] = hparam_val
         # Make model and train
-        model = FeedForward(**params)
+        model = FeedForward(**params,
+                            trainweights=torch.log(1./train.token_count()))
 
         tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
-        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=10, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
-        model.eval() # freeze the model
+        model.eval()  # freeze the model
         result = trainer.test(model, dataloader)
         print('printing some example sentences from test set')
         print('--> format: sentence (true) [predicted]')
@@ -116,5 +122,6 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
             print('{} ({}) [{}]'.format(sentence, nextword, nextpred))
     return
 
+
 if __name__ == '__main__':
-    test_hparam('lr', values = [1e-3], tpu_cores=None, gpus=None)
+    test_hparam('lr', values=[1e-3], tpu_cores=None, gpus=None)

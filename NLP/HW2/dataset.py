@@ -2,6 +2,8 @@ import nltk
 import torch
 from torch.utils.data import Dataset
 import re
+from collections import Counter
+import pandas as pd
 
 class wiki_dataset(Dataset):
     '''
@@ -63,6 +65,16 @@ class wiki_dataset(Dataset):
         target_token = self.tokens[idx+self.window]
         target = torch.tensor(self.token_map[target_token],dtype=torch.long)
         return [token_tensor,target]
+
+    def token_count(self):
+        '''
+        returns histogram of tokens found in self.token_list
+        '''
+
+
+        histogram = pd.Series(Counter(self.tokens))
+        histogram = histogram.reindex(self.token_map.keys(), fill_value=0)
+        return torch.tensor(histogram.values)
 
     def _tag_sequence(self, sequence):
         '''
