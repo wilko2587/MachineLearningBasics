@@ -59,6 +59,9 @@ class wiki_dataset(Dataset):
         target = torch.tensor(self.token_map[target_token],dtype=torch.long)
         return [token_tensor,target]
 
+    def decode_int(self, num):
+        inv_token_map = {v: k for k, v in self.token_map.items()}
+        return inv_token_map[int(num)]
 
 if __name__ == "__main__":
     train = wiki_dataset('./wiki.train.txt', training=True, token_map='create')

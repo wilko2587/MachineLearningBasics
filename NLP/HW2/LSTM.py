@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics
@@ -103,7 +104,18 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
             trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
+        model.eval()
         result = trainer.test(model, dataloader)
+        print('printing some example sentences from test set')
+        print('--> format: sentence (true) [predicted]')
+        for idx in np.random.randint(0, 1000, size=10):
+            features, groundTruth = test[idx]
+            fpass = model.forward(features.unsqueeze(dim=0))
+            pred = np.argmax(torch.softmax(fpass.detach().squeeze(dim=0), 0))
+            sentence = ''.join([test.decode_int(i) for i in features])
+            nextword = test.decode_int(groundTruth)
+            nextpred = test.decode_int(pred)
+            print('{} ({}) [{}]'.format(sentence, nextword, nextpred))
     return
 
 if __name__ == '__main__':

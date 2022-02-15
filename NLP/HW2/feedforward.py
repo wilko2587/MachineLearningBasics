@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 import pytorch_lightning.loggers as pl_loggers
 import time
 import matplotlib.pyplot as plt
+import numpy as np
 import nltk
 nltk.download('punkt')
 
@@ -76,9 +77,9 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
     '''
 
     # Load datasets
-    train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
-    valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=30)
-    test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=30)
+    train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=5)
+    valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=5)
+    test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=5)
     datasets = [train, valid, test]
 
     # default feedforward params
@@ -98,8 +99,22 @@ def test_hparam(hparam, values = [], logpath="./FeedForward_logs/", tpu_cores=No
         model = FeedForward(**params)
 
         tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
-        trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+        model.eval() # freeze the model
+        #trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=10, tpu_cores=tpu_cores, gpus=gpus)
 
-        trainer.fit(model, dataloader)
-        result = trainer.test(model, dataloader)
+        #trainer.fit(model, dataloader)
+        #result = trainer.test(model, dataloader)
+        print('printing some example sentences from test set')
+        print('--> format: sentence (true) [predicted]')
+        for idx in np.random.randint(0, 1000, size=10):
+            features, groundTruth = test[idx]
+            fpass = model.forward(features.unsqueeze(dim=0))
+            pred = np.argmax(torch.softmax(fpass.detach().squeeze(dim=0), 0))
+            sentence = ''.join([test.decode_int(i) for i in features])
+            nextword = test.decode_int(groundTruth)
+            nextpred = test.decode_int(pred)
+            print('{} ({}) [{}]'.format(sentence, nextword, nextpred))
     return
+
+if __name__ == '__main__':
+    test_hparam('lr', values = [1e-3], tpu_cores=None, gpus=None)
