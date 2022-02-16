@@ -34,7 +34,6 @@ class LSTM1(pl.LightningModule):
         self.loss = nn.CrossEntropyLoss(weight=trainweights)
         self.viewloss = nn.CrossEntropyLoss() # weights change the results of the loss, so we initialise an unweighted
                                                 # loss to keep track and use for perplexity calcs
-        self.loss = nn.CrossEntropyLoss()
         self.lr = lr
 
     def forward(self, x):
