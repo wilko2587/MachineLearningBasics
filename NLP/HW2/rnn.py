@@ -36,7 +36,7 @@ class rnn(pl.LightningModule):
     def forward(self, x):
         x = self.embed(x)
         x, hidden = self.rnn(x)
-        x = x[:, -1, :]
+        x = x[-1, :, :]
         logits = self.fc(x)
         return logits
 
