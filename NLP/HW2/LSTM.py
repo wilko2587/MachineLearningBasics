@@ -66,6 +66,7 @@ class LSTM1(pl.LightningModule):
         return self._step(batch, batch_idx, "test")
 
 
+
 def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpus=1):
     '''
 
@@ -84,6 +85,9 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
     test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=30)
     datasets = [train, valid, test]
 
+    # Load dataloader
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=2)
+
     # default LSTM params
     params = {'n_vocab':len(train.unique_tokens),
               'embedding_size':100,
@@ -91,8 +95,6 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
               'dropout':0,
               'lr':1e-3}
 
-    # Load dataloader
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=2)
 
     for hparam_val in values:
 
@@ -107,7 +109,7 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
         if hparam == 'gradient_clip_val':
             trainer = pl.Trainer(gradient_clip_val=hparam_val, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
         else:
-            trainer = pl.Trainer(gradient_clip_val=0.5, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
+            trainer = pl.Trainer(gradient_clip_val=0, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores, gpus=gpus)
 
         trainer.fit(model, dataloader)
         model.eval()
@@ -125,4 +127,11 @@ def test_hparam(hparam, values = [], logpath="./LSTM_logs/", tpu_cores=None, gpu
     return
 
 if __name__ == '__main__':
-    test_hparam("lr", values=[1e-4, 1e-3])
+    # Load datasets
+    train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
+    valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=30)
+    test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=30)
+    datasets = [train, valid, test]
+
+    # Load dataloader
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=2)

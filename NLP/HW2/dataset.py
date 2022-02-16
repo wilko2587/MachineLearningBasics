@@ -19,6 +19,7 @@ class wiki_dataset(Dataset):
         in training.
         token_map: 'create' if training data, else provide it token map from training data
         window: sliding window length
+
         '''
 
         super().__init__()
