@@ -114,7 +114,7 @@ def test_hparam(hparam, values = [], logpath="./RNN_logs/", tpu_cores=None, gpus
             features, groundTruth = test[idx]
             fpass = model.forward(features.unsqueeze(dim=0))
             pred = np.argmax(torch.softmax(fpass.detach().squeeze(dim=0), 0))
-            sentence = ''.join([test.decode_int(i) for i in features])
+            sentence = ' '.join([test.decode_int(i) for i in features])
             nextword = test.decode_int(groundTruth)
             nextpred = test.decode_int(pred)
             print('{} ({}) [{}]'.format(sentence, nextword, nextpred))
