@@ -13,7 +13,7 @@ import time
 import matplotlib.pyplot as plt
 
 class rnn(pl.LightningModule):
-    def __init__(self, n_vocab, embedding_size, hidden_size, num_layers, dropout, lr):
+    def __init__(self, n_vocab, embedding_size, hidden_size, num_layers, dropout, lr, trainweights=None):
         super(rnn, self).__init__()
         self.lr = lr
         self.embed = nn.Embedding(n_vocab, embedding_size)
