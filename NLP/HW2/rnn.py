@@ -19,7 +19,7 @@ class rnn(pl.LightningModule):
         self.embed = nn.Embedding(n_vocab, embedding_size)
         nn.init.uniform_(self.embed.weight, a=-0.1, b=0.1)
 
-        self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False, dropout=dropout,lr=lr)
+        self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False, dropout=dropout)
         nn.init.uniform_(self.rnn.weight_ih_l0, a=-0.1, b=0.1)
         nn.init.uniform_(self.rnn.weight_hh_l0, a=-0.1, b=0.1)
         nn.init.uniform_(self.rnn.weight_ih_l1, a=-0.1, b=0.1)
@@ -119,3 +119,21 @@ def test_hparam(hparam, values = [], logpath="./RNN_logs/", tpu_cores=None, gpus
             nextpred = test.decode_int(pred)
             print('{} ({}) [{}]'.format(sentence, nextword, nextpred))
     return
+
+if __name__ == '__main__':
+    # Load datasets and dataloader - RNN
+    train = wiki_dataset('wiki.train.txt', training=True, token_map='create', window=30)
+    valid = wiki_dataset('wiki.valid.txt', training=False, token_map=train.token_map, window=30)
+    test = wiki_dataset('wiki.test.txt', training=False, token_map=train.token_map, window=30)
+    datasets = [train, valid, test]
+
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=20)
+
+    model = rnn(n_vocab=len(train.unique_tokens), embedding_size=100, hidden_size=100, num_layers=2, dropout=0,
+                    lr=1e-3, trainweights=torch.log(1. / train.token_count()))
+    tb_logger = pl_loggers.TensorBoardLogger("RNN_logs/", name="rnn")
+    trainer = pl.Trainer(logger=tb_logger, max_epochs=20,
+                         callbacks=[EarlyStopping(monitor='val loss')])
+    trainer.fit(model, dataloader)
+    result = trainer.test(model, dataloader)
+    print(result)
