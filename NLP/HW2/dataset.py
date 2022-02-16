@@ -4,6 +4,8 @@ from torch.utils.data import Dataset
 import re
 from collections import Counter
 import pandas as pd
+from nltk.corpus import stopwords
+nltk.download('stopwords')
 
 class wiki_dataset(Dataset):
     '''
@@ -25,6 +27,7 @@ class wiki_dataset(Dataset):
         token_list = list()
 
         tokenizer = nltk.RegexpTokenizer(r"\w+") # new tokenizer ignores any punctuation
+        stop_words = set(stopwords.words('english'))
 
         with open(file, 'r') as f:
             for line in f:
@@ -32,13 +35,14 @@ class wiki_dataset(Dataset):
                 toks = tokenizer.tokenize(line.lower())
                 toks = self._tag_sequence(toks)
                 for tok in toks:
-                    if training == False:
-                        if tok not in token_map:
-                            token_list.append(unk) # for valid/test set, add <unk> if token not in training set
+                    if tok not in stop_words:
+                        if training == False:
+                            if tok not in token_map:
+                                token_list.append(unk) # for valid/test set, add <unk> if token not in training set
+                            else:
+                                token_list.append(tok)
                         else:
-                            token_list.append(tok)
-                    else:
-                        token_list.append(tok) # this is for training set
+                            token_list.append(tok) # this is for training set
 
         self.tokens = token_list
         self.unique_tokens = list(set(self.tokens))
