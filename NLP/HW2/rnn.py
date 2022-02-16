@@ -15,17 +15,23 @@ import matplotlib.pyplot as plt
 class rnn(pl.LightningModule):
     def __init__(self, n_vocab, embedding_size, hidden_size, num_layers, dropout, lr, trainweights=None):
         super(rnn, self).__init__()
-        self.lr = lr
+
         self.embed = nn.Embedding(n_vocab, embedding_size)
         nn.init.uniform_(self.embed.weight, a=-0.1, b=0.1)
+
         self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False, dropout=dropout,lr=lr)
         nn.init.uniform_(self.rnn.weight_ih_l0, a=-0.1, b=0.1)
         nn.init.uniform_(self.rnn.weight_hh_l0, a=-0.1, b=0.1)
         nn.init.uniform_(self.rnn.weight_ih_l1, a=-0.1, b=0.1)
         nn.init.uniform_(self.rnn.weight_hh_l1, a=-0.1, b=0.1)
+
         self.fc = nn.Linear(hidden_size, n_vocab)
+
         # self.fc.weight = self.embed.weight
-        self.loss = nn.CrossEntropyLoss()
+
+        self.lr = lr
+        self.loss = nn.CrossEntropyLoss(weight=trainweights)
+        self.viewloss = nn.CrossEntropyLoss()
 
     def forward(self, x):
         x = self.embed(x)
@@ -37,29 +43,23 @@ class rnn(pl.LightningModule):
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=self.lr)
 
-    def training_step(self, batch, batch_idx):
+    def _step(self, batch, batch_idx, logstring):
         data, label = batch
-        logits = self.forward(data)
+        logits = self(data)
         loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {'train': loss.detach()}}
-        self.log("train loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        viewloss = self.viewloss(logits, label)
+        tensorboard_logs = {'loss': {logstring: viewloss.detach()}}
+        self.log("{} loss".format(logstring), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
+
+    def training_step(self, batch, batch_idx):
+        return self._step(batch, batch_idx, "train")
 
     def validation_step(self, batch, batch_idx):
-        data, label = batch
-        logits = self.forward(data)
-        loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {'val': loss.detach()}}
-        self.log("val loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        return {"loss": loss, "log": tensorboard_logs}
+        return self._step(batch, batch_idx, "val")
 
     def test_step(self, batch, batch_idx):
-        data, label = batch
-        logits = self.forward(data)
-        loss = self.loss(logits, label)
-        tensorboard_logs = {'loss': {'test': loss.detach()}}
-        self.log("test loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        return {"loss": loss, "log": tensorboard_logs}
+        return self._step(batch, batch_idx, "test")
 
 def test_hparam(hparam, values = [], logpath="./RNN_logs/", tpu_cores=None, gpus=1):
     '''
