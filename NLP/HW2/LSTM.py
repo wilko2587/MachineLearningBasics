@@ -39,8 +39,7 @@ class LSTM1(pl.LightningModule):
 
     def forward(self, x):
         x = self.embed(x)
-        x, ht, ct = self.lstm(x, self.state[0], self.state[1])
-        self.state = (ht, ct)
+        x, self.state = self.lstm(x, self.state)
         # x = x[:, -1, :]
         logits = self.fc(x)  # logit from running x through linear layer
         return logits
