@@ -8,7 +8,7 @@ from torch import optim
 from dataset import wiki_dataset
 from dataloader import wiki_dataloader
 import pytorch_lightning.loggers as pl_loggers
-torch.seed(1)
+torch.manual_seed(1)
 
 
 class LSTM1(pl.LightningModule):
