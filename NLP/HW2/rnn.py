@@ -25,7 +25,7 @@ class rnn(pl.LightningModule):
         nn.init.uniform_(self.embed.weight, a=-0.1, b=0.1)
 
         self.rnn = nn.RNN(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=False,
-                          dropout=dropout)
+                          dropout=dropout, bidirectional=True, nonlinearity='relu')
 
         nn.init.uniform_(self.rnn.weight_ih_l0, a=-0.1, b=0.1)
         nn.init.uniform_(self.rnn.weight_hh_l0, a=-0.1, b=0.1)

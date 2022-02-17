@@ -76,7 +76,6 @@ class wiki_dataset(Dataset):
         returns histogram of tokens found in self.token_list
         '''
 
-
         histogram = pd.Series(Counter(self.tokens))
         histogram = histogram.reindex(self.token_map.keys(), fill_value=0)
         return torch.tensor(histogram.values)
