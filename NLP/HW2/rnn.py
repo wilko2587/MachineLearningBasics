@@ -35,6 +35,8 @@ class rnn(pl.LightningModule):
         self.fc = nn.Linear(hidden_size, n_vocab)
         # self.fc.weight = self.embed.weight  # tie embeddings
 
+        ###### THINK ABOUT TIED EMBEDDINGS ######
+
         self.lr = lr
         self.loss = nn.CrossEntropyLoss(weight=trainweights)
         self.viewloss = nn.CrossEntropyLoss()
@@ -45,6 +47,9 @@ class rnn(pl.LightningModule):
             x, hidden_state = self.rnn(x)
         else:
             x, hidden_state = self.rnn(x, self.hidden_state)
+
+        ###### IS THIS THE RIGHT TIME FOR THIS? ######
+        ###### MAY BE BETTER SERVED IN TRAINING STEP ONLY ######
 
         self.hidden_state = hidden_state.detach()
 
