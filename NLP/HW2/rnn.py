@@ -33,7 +33,7 @@ class rnn(pl.LightningModule):
         nn.init.uniform_(self.rnn.weight_hh_l1, a=-0.1, b=0.1)
 
         self.fc = nn.Linear(hidden_size, n_vocab)
-        self.fc.weight = self.embed.weight  # tie embeddings
+        # self.fc.weight = self.embed.weight  # tie embeddings
 
         self.lr = lr
         self.loss = nn.CrossEntropyLoss(weight=trainweights)
