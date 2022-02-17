@@ -8,6 +8,7 @@ from torch import optim
 from dataset import wiki_dataset
 from dataloader import wiki_dataloader
 import pytorch_lightning.loggers as pl_loggers
+torch.manual_seed(1)
 
 
 class LSTM1(pl.LightningModule):
@@ -87,7 +88,7 @@ def test_hparam(hparam, values=[], logpath="./LSTM_logs/", tpu_cores=None, gpus=
     datasets = [train, valid, test]
 
     # Load dataloader
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=2)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=2, unk_threshold=0.4)
 
     # default LSTM params
     params = {'n_vocab': len(train.unique_tokens),
@@ -105,7 +106,7 @@ def test_hparam(hparam, values=[], logpath="./LSTM_logs/", tpu_cores=None, gpus=
         model = LSTM1(**params,
                       trainweights=torch.log(1. / train.token_count()))
 
-        tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
+        tb_logger = pl_loggers.TensorBoardLogger(logpath, name="1e-3_unkthresh.5")#"{}_{}".format(hparam, hparam_val))
         if hparam == 'gradient_clip_val':
             trainer = pl.Trainer(gradient_clip_val=hparam_val, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores,
                                  gpus=gpus)
