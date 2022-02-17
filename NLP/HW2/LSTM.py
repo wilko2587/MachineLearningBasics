@@ -39,7 +39,8 @@ class LSTM1(pl.LightningModule):
 
     def forward(self, x):
         x = self.embed(x)
-        x, self.state = self.lstm(x, self.state)
+        x, state = self.lstm(x, self.state)
+        self.state = (state[0].detach(), state[1].detach())
         # x = x[:, -1, :]
         logits = self.fc(x)  # logit from running x through linear layer
         return logits
@@ -52,7 +53,7 @@ class LSTM1(pl.LightningModule):
         label = torch.cat([data[:,1:], label.unsqueeze(dim=1)], dim=1)
         logits = self(data)
         loss = self.loss(logits.flatten(start_dim=0, end_dim=1), label.flatten(start_dim=0, end_dim=1))
-        viewloss = self.viewloss(logits, label)
+        viewloss = self.viewloss(logits.flatten(start_dim=0, end_dim=1), label.flatten(start_dim=0, end_dim=1))
         tensorboard_logs = {'loss': {logstring: viewloss.detach()}}
         self.log("{} loss".format(logstring), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
