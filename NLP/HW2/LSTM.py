@@ -127,8 +127,7 @@ def test_hparam(hparam, values=[], logpath="./LSTM_logs/", tpu_cores=None, gpus=
         print('--> format: sentence (true) [predicted]')
         for idx in np.random.randint(0, 1000, size=10):
             features, groundTruth = test[idx]
-            fpass = model.forward(features.unsqueeze(dim=0))
-            pred = np.argmax(torch.softmax(fpass.detach().squeeze(dim=0), 0))
+            pred = model.predict(features)
             sentence = ''.join([test.decode_int(i) for i in features])
             nextword = test.decode_int(groundTruth)
             nextpred = test.decode_int(pred)
