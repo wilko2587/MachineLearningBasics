@@ -72,7 +72,7 @@ class LSTM1(pl.LightningModule):
         '''
         return a single predicton from a feature vector
         '''
-        fpass = model.forward(x.unsqueeze(dim=0))[:, -1, :]
+        fpass = self.forward(x.unsqueeze(dim=0))[:, -1, :]
         return np.argmax(torch.softmax(fpass.detach().squeeze(dim=0), 0))
 
 
