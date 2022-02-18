@@ -68,6 +68,13 @@ class LSTM1(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         return self._step(batch, batch_idx, "test")
 
+    def predict(self, x):
+        '''
+        return a single predicton from a feature vector
+        '''
+        fpass = model.forward(x.unsqueeze(dim=0))[:, -1, :]
+        return np.argmax(torch.softmax(fpass.detach().squeeze(dim=0), 0))
+
 
 def test_hparam(hparam, values=[], logpath="./LSTM_logs/", tpu_cores=None, gpus=1):
     '''
@@ -88,7 +95,7 @@ def test_hparam(hparam, values=[], logpath="./LSTM_logs/", tpu_cores=None, gpus=
     datasets = [train, valid, test]
 
     # Load dataloader
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=64, num_workers=2, unk_threshold=0.4)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=20, num_workers=2, unk_threshold=0.4)
 
     # default LSTM params
     params = {'n_vocab': len(train.unique_tokens),
@@ -148,7 +155,15 @@ if __name__ == '__main__':
     model = LSTM1(**params,
                   trainweights=torch.log(1. / train.token_count()))
 
-    tb_logger = pl_loggers.TensorBoardLogger('./Logs/', name="logname")
-    trainer = pl.Trainer(gradient_clip_val=0, logger=tb_logger, max_epochs=20, tpu_cores=None, gpus=None)
+    #tb_logger = pl_loggers.TensorBoardLogger('./Logs/', name="logname")
+    #trainer = pl.Trainer(gradient_clip_val=0, logger=tb_logger, max_epochs=20, tpu_cores=None, gpus=None)
 
-    trainer.fit(model, dataloader)
+    #trainer.fit(model, dataloader)
+    print('--> format: sentence (true) [predicted]')
+    for idx in np.random.randint(0, 1000, size=10):
+        features, groundTruth = test[idx]
+        pred = model.predict(features)
+        sentence = ' '.join([test.decode_int(i) for i in features])
+        nextword = test.decode_int(groundTruth)
+        nextpred = test.decode_int(pred)
+        print('{} ({}) [{}]'.format(sentence, nextword, nextpred))

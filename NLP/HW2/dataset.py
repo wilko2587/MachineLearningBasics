@@ -27,7 +27,7 @@ class wiki_dataset(Dataset):
         unk = '<unk>'
         token_list = list()
 
-        tokenizer = nltk.RegexpTokenizer(r"\w+") # new tokenizer ignores any punctuation
+        tokenizer = nltk.RegexpTokenizer(r"\w+|[\.|\,|\(|\)|\?|\!]")#|(\.|\,|\(|\)|\?|\!)") # new tokenizer ignores any punctuation
         stop_words = set(stopwords.words('english'))
 
         with open(file, 'r') as f:
@@ -88,7 +88,7 @@ class wiki_dataset(Dataset):
 
         # Now replace years, ints, decimals, days, numbers with tags
         sequence = [re.sub('^[12][0-9]{3}$', '<year>', tok) for tok in sequence]  # tag years
-        sequence = [re.sub('^[0-9]*$', '<integer>', tok) for tok in sequence]  # tag integers
+        sequence = [re.sub('^[0-9]+', '<integer>', tok) for tok in sequence]  # tag integers
         sequence = [re.sub('^[0-9]+\.+[0-9]*$', '<decimal>', tok) for tok in sequence]  # tag decimals
         sequence = [re.sub('(monday|tuesday|wednesday|thursday|friday|saturday|sunday)',
                            '<dayofweek>', tok) for tok in sequence]  # tag days of week
@@ -98,7 +98,6 @@ class wiki_dataset(Dataset):
                            '<days>', tok) for tok in sequence]  # tag days (in date) - can have errors in this
         sequence = [re.sub('^[0-9]', '<other>', tok) for tok in sequence]  # tag all remaining numbers
         sequence = [re.sub('(unk)', '<unk>', tok) for tok in sequence] # reformat the unks to <unk> (previously "unk")
-
         return sequence
 
     def decode_int(self, num):
