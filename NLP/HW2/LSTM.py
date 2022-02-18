@@ -113,7 +113,7 @@ def test_hparam(hparam, values=[], logpath="./LSTM_logs/", tpu_cores=None, gpus=
         model = LSTM1(**params,
                       trainweights=torch.log(1. / train.token_count()))
 
-        tb_logger = pl_loggers.TensorBoardLogger(logpath, name="1e-3_unkthresh.5")#"{}_{}".format(hparam, hparam_val))
+        tb_logger = pl_loggers.TensorBoardLogger(logpath, name="{}_{}".format(hparam, hparam_val))
         if hparam == 'gradient_clip_val':
             trainer = pl.Trainer(gradient_clip_val=hparam_val, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores,
                                  gpus=gpus)
