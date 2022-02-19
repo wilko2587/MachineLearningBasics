@@ -48,7 +48,7 @@ class rnn(pl.LightningModule):
         else:
             x, hidden_state = self.rnn(x, self.hidden_state)
 
-        ###### IS THIS THE RIGHT TIME FOR THIS? ######
+        ###### IS THIS THE RIGHT TIME FOR THIS? ######h
         ###### MAY BE BETTER SERVED IN TRAINING STEP ONLY ######
 
         self.hidden_state = hidden_state.detach()
