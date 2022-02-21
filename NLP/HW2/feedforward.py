@@ -21,7 +21,7 @@ class FeedForward(pl.LightningModule):
     def __init__(self, context,
                  embed_dim,
                  vocab_size,
-                 dropout=0.8,
+                 dropout=0.2,
                  lr=1e-3,
                  trainweights=None):
         super(FeedForward, self).__init__()
@@ -29,7 +29,7 @@ class FeedForward(pl.LightningModule):
         self.lr = lr
         nn.init.uniform_(self.embed.weight, a=-0.1, b=0.1)  # initialise weights in range -0.1->0.1 with uniform distro
         self.lin1 = nn.Linear(context * embed_dim, embed_dim)
-        nn.init.uniform_(self.lin1.weight, a=-0.1, b=0.1)  # initialise weights in range -0.1->0.1 with uniform distro
+        nn.init.uniform_(self.lin1.weight, a=-0.1, b=0.1)
         self.bn1 = nn.BatchNorm1d(embed_dim)
         self.drop1 = nn.Dropout(p=dropout)
         self.lin2 = nn.Linear(embed_dim, vocab_size)
