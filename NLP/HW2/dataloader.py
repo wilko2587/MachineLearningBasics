@@ -23,6 +23,10 @@ class wiki_dataloader(pl.LightningDataModule):
         self.token_map = datasets[0].token_map
         self.batch_size = batch_size
 
+        self.train = [[each[0], each[1]] for each in self.train_dataset]
+        self.val = [[each[0], each[1]] for each in self.valid_dataset]
+        self.test = [[each[0], each[1]] for each in self.test_dataset]
+
         # self.train = [[each[0], each[1]] for each in self.train_dataset if
         #               torch.sum(each[0] == datasets[0].token_map['<unk>']) <= int(unk_threshold * datasets[0].window)]
         # self.val = [[each[0], each[1]] for each in self.valid_dataset if
@@ -30,9 +34,6 @@ class wiki_dataloader(pl.LightningDataModule):
         # self.test = [[each[0], each[1]] for each in self.test_dataset if
         #              torch.sum(each[0] == datasets[0].token_map['<unk>']) <= int(unk_threshold * datasets[0].window)]
 
-        self.train = [[each[0], each[1]] for each in self.train_dataset]
-        self.val = [[each[0], each[1]] for each in self.valid_dataset]
-        self.test = [[each[0], each[1]] for each in self.test_dataset]
 
     def train_dataloader(self):
         return DataLoader(self.train, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
@@ -51,4 +52,4 @@ if __name__ == "__main__":
 
     datasets = [train, valid, test]
 
-    # dataloader = wiki_dataloader(datasets=datasets, batch_size=64, unk_threshold=1)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=64)
