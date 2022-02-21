@@ -42,6 +42,8 @@ class wiki_dataset(Dataset):
                     else:
                         token_list.append(tok) # this is for training set
 
+        token_list.append(unk)
+
         self.tokens = token_list
         self.unique_tokens = list(set(self.tokens))
 

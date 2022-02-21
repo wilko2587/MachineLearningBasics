@@ -6,7 +6,7 @@ import torch
 
 class wiki_dataloader(pl.LightningDataModule):
 
-    def __init__(self, datasets, batch_size, num_workers=2, unk_threshold=1.):
+    def __init__(self, datasets, batch_size, num_workers=2):
         '''
         datasets: expects [train,valid,test]
 
@@ -52,4 +52,4 @@ if __name__ == "__main__":
 
     datasets = [train, valid, test]
 
-    dataloader = wiki_dataloader(datasets=datasets, batch_size=64)
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=100)
