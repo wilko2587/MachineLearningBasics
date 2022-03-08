@@ -17,7 +17,6 @@ class rnn(pl.LightningModule):
     def __init__(self, n_vocab, embedding_size, hidden_size, num_layers, dropout, lr, trainweights=None):
         super(rnn, self).__init__()
 
-        self.hidden_state = None
         self.num_layers = num_layers
         self.hidden_size = hidden_size
 
@@ -33,9 +32,7 @@ class rnn(pl.LightningModule):
         nn.init.uniform_(self.rnn.weight_hh_l1, a=-0.1, b=0.1)
 
         self.fc = nn.Linear(hidden_size, n_vocab)
-        # self.fc.weight = self.embed.weight  # tie embeddings
-
-        ###### THINK ABOUT TIED EMBEDDINGS ######
+        self.fc.weight = self.embed.weight  # tie embeddings
 
         self.lr = lr
         self.loss = nn.CrossEntropyLoss(weight=trainweights)
@@ -43,41 +40,43 @@ class rnn(pl.LightningModule):
 
     def forward(self, x):
         x = self.embed(x)
-        if self.hidden_state == None:
-            x, hidden_state = self.rnn(x)
-        else:
-            x, hidden_state = self.rnn(x, self.hidden_state)
+        x, hidden = self.rnn(x)
+        output = torch.flatten(x,start_dim=0,end_dim=1)
+        logits = self.fc(output)
 
-        ###### IS THIS THE RIGHT TIME FOR THIS? ######
-        ###### MAY BE BETTER SERVED IN TRAINING STEP ONLY ######
-
-        self.hidden_state = hidden_state.detach()
-
-        logits = self.fc(x)
-
-        return logits
+        return logits, hidden
 
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=self.lr)
 
-    def _step(self, batch, batch_idx, logstring):
+    def training_step(self, batch, batch_idx):
         data, label = batch
-        label = torch.cat([data[:, 1:], label.unsqueeze(dim=1)], dim=1)
-        logits = self(data)
-        loss = self.loss(logits.flatten(start_dim=0, end_dim=1), label.flatten(start_dim=0, end_dim=1))
-        viewloss = self.viewloss(logits.flatten(start_dim=0, end_dim=1), label.flatten(start_dim=0, end_dim=1))
-        tensorboard_logs = {'loss': {logstring: viewloss.detach()}}
-        self.log("{} loss".format(logstring), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        label = torch.cat([data[:,1:], label.unsqueeze(dim=1)], dim=1)
+        logits, hidden = self(data)
+        loss = self.loss(logits, label.flatten(start_dim=0, end_dim=1)) # (0.1)*(sum(p.abs().sum() for p in model.parameters()).item()) + (0.1)*(sum(p.pow(2.0).sum() for p in model.parameters()).item())
+        viewloss = self.viewloss(logits, label.flatten(start_dim=0, end_dim=1))
+        tensorboard_logs = {'loss': {'train': viewloss.detach()}}
+        self.log("{} loss".format('train'), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss, "log": tensorboard_logs}
 
-    def training_step(self, batch, batch_idx):
-        return self._step(batch, batch_idx, "train")
-
     def validation_step(self, batch, batch_idx):
-        return self._step(batch, batch_idx, "val")
+        data, label = batch
+        label = torch.cat([data[:,1:], label.unsqueeze(dim=1)], dim=1)
+        logits, hidden = self(data)
+        loss = self.loss(logits, label.flatten(start_dim=0, end_dim=1))
+        viewloss = self.viewloss(logits, label.flatten(start_dim=0, end_dim=1))
+        tensorboard_logs = {'loss': {'val': viewloss.detach()}}
+        self.log("{} loss".format('val'), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        return {"loss": loss, "log": tensorboard_logs}
 
     def test_step(self, batch, batch_idx):
-        return self._step(batch, batch_idx, "test")
+        data, label = batch
+        label = torch.cat([data[:,1:], label.unsqueeze(dim=1)], dim=1)
+        logits, hidden = self(data)
+        loss = self.loss(logits, label.flatten(start_dim=0, end_dim=1))
+        viewloss = self.viewloss(logits, label.flatten(start_dim=0, end_dim=1))
+        tensorboard_logs = {'loss': {'test': viewloss.detach()}}
+        self.log("{} loss".format('test'), viewloss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
 def test_hparam(hparam, values = [], logpath="./RNN_logs/", tpu_cores=None, gpus=1):
     '''

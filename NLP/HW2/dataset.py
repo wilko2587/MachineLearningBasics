@@ -8,9 +8,6 @@ from nltk.corpus import stopwords
 nltk.download('stopwords')
 
 class wiki_dataset(Dataset):
-    '''
-    Dataset module.
-    '''
 
     def __init__(self, file, training, token_map, window=5):
         '''
@@ -28,22 +25,24 @@ class wiki_dataset(Dataset):
         token_list = list()
 
         tokenizer = nltk.RegexpTokenizer(r"\w+|[\.|\,|\(|\)|\?|\!]")#|(\.|\,|\(|\)|\?|\!)") # new tokenizer ignores any punctuation
-        stop_words = set(stopwords.words('english'))
+        # stop_words = set(stopwords.words('english'))
 
         with open(file, 'r') as f:
             for line in f:
                 #toks = nltk.word_tokenize(line.strip().lower())
                 toks = tokenizer.tokenize(line.lower())
-                toks = self._tag_sequence(toks)
+                # toks = self._tag_sequence(toks)
                 for tok in toks:
-                    if tok not in stop_words:
-                        if training == False:
-                            if tok not in token_map:
-                                token_list.append(unk) # for valid/test set, add <unk> if token not in training set
-                            else:
-                                token_list.append(tok)
+                    # if tok not in stop_words:
+                    if training == False:
+                        if tok not in token_map:
+                            token_list.append(unk) # for valid/test set, add <unk> if token not in training set
                         else:
-                            token_list.append(tok) # this is for training set
+                            token_list.append(tok)
+                    else:
+                        token_list.append(tok) # this is for training set
+
+        token_list.append(unk)
 
         self.tokens = token_list
         self.unique_tokens = list(set(self.tokens))
@@ -54,7 +53,6 @@ class wiki_dataset(Dataset):
             self.token_map = token_map
 
     def __len__(self):
-        # print("len: ", len(self.tokens))
         return len(self.tokens) - self.window # returns number of tokens
 
     def __getitem__(self, idx):
