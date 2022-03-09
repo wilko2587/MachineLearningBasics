@@ -66,5 +66,7 @@ def main():
                                warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
 
     # start training
-    Trainer(model=model, args=config, train_dataset=dataset)
+    Trainer(model=model, args=config, train_dataset=dataset).train()
+
+    model.save_pretrained('./models/') # ??? I think this is how you save a model??
 
