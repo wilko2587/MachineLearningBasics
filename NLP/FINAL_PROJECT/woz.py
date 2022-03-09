@@ -95,7 +95,7 @@ def main():
     make_woz_datasets(True)
     make_woz_datasets(False)
 
-    gen_mode = 0
+    gen_mode = 1
     gen_labels = ['logits', 'greedy', 'beam', 'top-p']
     tuned_model = 0 # I'm setting this to 0
 
