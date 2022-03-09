@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 import torch
 
 # implemented with inspo from https://towardsdatascience.com/guide-to-fine-tuning-text-generation-models-gpt-2-gpt-neo-and-t5-dc5de6b3bc5e
+# API key: 71d15fe01d1f78ec26109a22bfb225eae26a777e
 
 class WozDataset(Dataset): # basic torch dataset to let the trainer function
     def __init__(self, prompt, resp, tokenizer): # prompt and response text as inputs
@@ -27,12 +28,15 @@ class WozDataset(Dataset): # basic torch dataset to let the trainer function
     def __len__(self):
         return len(self.x)
 
-    def __getitem__(self, idx):
-        return self.x[idx], self.attention_mask[idx], self.y[idx]
+    def __getitem__(self, idx): # format seems to be required by GPT2, see https://discuss.huggingface.co/t/finetuning-gpt2-with-user-defined-loss/163/20?page=2
+        dict = {"input_ids": self.x[idx],
+                "attention_mask": self.attention_mask[idx],
+                "labels": self.y[idx]}
+        return dict
 
 def main():
     '''
-    Literally just a wrapper so I can run this in collab
+    Just a wrapper so I can run this in collab
     '''
     base_model = 'gpt2'
     torch.manual_seed(1)
@@ -62,7 +66,7 @@ def main():
     # config for training
     config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
                                load_best_model_at_end=False, save_strategy="epoch",
-                               per_device_train_batch_size=2, per_gpu_eval_batch_size=2,
+                               per_device_train_batch_size=2,
                                warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
 
     # start training
