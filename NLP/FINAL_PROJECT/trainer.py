@@ -30,38 +30,41 @@ class WozDataset(Dataset): # basic torch dataset to let the trainer function
     def __getitem__(self, idx):
         return self.x[idx], self.attention_mask[idx], self.y[idx]
 
+def main():
+    '''
+    Literally just a wrapper so I can run this in collab
+    '''
+    base_model = 'gpt2'
+    torch.manual_seed(1)
+    train_name = 'woz.train_b.txt'
 
-base_model = 'gpt2'
-torch.manual_seed(1)
-train_name = 'woz.train_b.txt'
+    tokenizer = GPT2Tokenizer.from_pretrained(base_model)
+    tokenizer.pad_token = tokenizer.eos_token # set the padding token
+    model = GPT2LMHeadModel.from_pretrained(base_model, pad_token_id=tokenizer.eos_token_id)
+    if torch.cuda.is_available():
+        model = model.cuda()
 
-tokenizer = GPT2Tokenizer.from_pretrained(base_model)
-tokenizer.pad_token = tokenizer.eos_token # set the padding token
-model = GPT2LMHeadModel.from_pretrained(base_model, pad_token_id=tokenizer.eos_token_id)
-if torch.cuda.is_available():
-    model = model.cuda()
+    # format and tokenize the training dataset
+    train_x = []
+    train_y = []
+    with open(train_name, 'rt') as f:
+        for line in f:
+            if line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
+                line = line.replace('\n', '')
+                SYS_index = line.index('[SYSTEM]')
+                prompt = line[:SYS_index].strip(' ')
+                resp = line[SYS_index:].strip(' ')
+                train_x.append(prompt)
+                train_y.append(resp)
 
-# format and tokenize the training dataset
-train_x = []
-train_y = []
-with open(train_name, 'rt') as f:
-    for line in f:
-        if line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
-            line = line.replace('\n', '')
-            SYS_index = line.index('[SYSTEM]')
-            prompt = line[:SYS_index].strip(' ')
-            resp = line[SYS_index:].strip(' ')
-            train_x.append(prompt)
-            train_y.append(resp)
+    dataset = WozDataset(train_x, train_y)
 
-dataset = WozDataset(train_x, train_y)
+    # config for training
+    config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
+                               load_best_model_at_end=False, save_strategy="epoch",
+                               per_device_train_batch_size=2, per_gpu_eval_batch_size=2,
+                               warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
 
-# config for training
-config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
-                           load_best_model_at_end=False, save_strategy="epoch",
-                           per_device_train_batch_size=2, per_gpu_eval_batch_size=2,
-                           warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
-
-# start training
-Trainer(model=model, args=config, train_dataset=dataset)
+    # start training
+    Trainer(model=model, args=config, train_dataset=dataset)
 
