@@ -6,7 +6,7 @@ import torch
 # implemented with inspo from https://towardsdatascience.com/guide-to-fine-tuning-text-generation-models-gpt-2-gpt-neo-and-t5-dc5de6b3bc5e
 
 class WozDataset(Dataset): # basic torch dataset to let the trainer function
-    def __init__(self, prompt, resp): # prompt and response text as inputs
+    def __init__(self, prompt, resp, tokenizer): # prompt and response text as inputs
 
         # initializations
         self.x = []
@@ -57,7 +57,7 @@ def main():
                 train_x.append(prompt)
                 train_y.append(resp)
 
-    dataset = WozDataset(train_x, train_y)
+    dataset = WozDataset(train_x, train_y, tokenizer=tokenizer)
 
     # config for training
     config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
