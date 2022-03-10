@@ -89,3 +89,6 @@ def main():
     Trainer(model=model, args=config, valid_dataset=dataset_v).train()
     model.save_pretrained('./models/') # ??? I think this is how you save a model??
 
+if __name__ == "__main__":
+    main()
+
