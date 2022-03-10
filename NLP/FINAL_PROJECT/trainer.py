@@ -41,7 +41,7 @@ def main():
     base_model = 'gpt2'
     torch.manual_seed(1)
     train_name = 'woz.train_b.txt'
-
+    valid_name = 'woz.valid_b.txt'
     tokenizer = GPT2Tokenizer.from_pretrained(base_model)
     tokenizer.pad_token = tokenizer.eos_token # set the padding token
     model = GPT2LMHeadModel.from_pretrained(base_model, pad_token_id=tokenizer.eos_token_id)
@@ -51,6 +51,9 @@ def main():
     # format and tokenize the training dataset
     train_x = []
     train_y = []
+    val_x = []
+    val_y = []
+    #create train and validation datasets
     with open(train_name, 'rt') as f:
         for line in f:
             if line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
@@ -61,7 +64,19 @@ def main():
                 train_x.append(prompt)
                 train_y.append(resp)
 
-    dataset = WozDataset(train_x, train_y, tokenizer=tokenizer)
+    dataset_t = WozDataset(train_x, train_y, tokenizer=tokenizer)
+
+    with open(valid_name, 'rt') as f:
+        for line in f:
+            if line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
+                line = line.replace('\n', '')
+                SYS_index = line.index('[SYSTEM]')
+                prompt = line[:SYS_index].strip(' ')
+                resp = line[SYS_index:].strip(' ')
+                val_x.append(prompt)
+                val_y.append(resp)
+
+    dataset_v = WozDataset(val_x, val_y, tokenizer=tokenizer)
 
     # config for training
     config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
@@ -70,7 +85,7 @@ def main():
                                warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
 
     # start training
-    Trainer(model=model, args=config, train_dataset=dataset).train()
-
+    #Trainer(model=model, args=config, train_dataset=dataset_t).train()
+    Trainer(model=model, args=config, valid_dataset=dataset_v).train()
     model.save_pretrained('./models/') # ??? I think this is how you save a model??
 
