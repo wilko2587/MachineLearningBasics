@@ -121,8 +121,8 @@ def main(situation='restaurant'):
 
     metrics = {
                'bleu':load_metric('bleu'),
-               'comet':load_metric('comet'),
-               'sacrebleu':load_metric('sacrebleu')
+               'meteor':load_metric('meteor'),
+                'google_bleu':load_metric('google_bleu')
     }
 
     predicts = []
