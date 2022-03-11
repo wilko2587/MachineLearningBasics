@@ -11,7 +11,7 @@ class wiki_dataloader(pl.LightningDataModule):
         datasets: expects [train,valid,test]
 
         unk_threshold = threshold for the % of unks allowed in a sequence. eg: 0.4 = drops all samples
-        where more than 40% of the sentence is made of "unk". Default "1" = no effect
+            where more than 40% of the sentence is made of "unk". Default "1" = no effect
         '''
         super().__init__()
         self.num_workers = num_workers

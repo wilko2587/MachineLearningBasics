@@ -134,6 +134,45 @@ def test_hparam(hparam, values=[], logpath="./LSTM_logs/", tpu_cores=None, gpus=
             print('{} ({}) [{}]'.format(sentence, nextword, nextpred))
     return
 
+def run_LSTM(lr=1e-3, dropout=0, grad_clipping=0, punctuation_allowed=True, unk_threshold=1, logdir='FinalModel',
+             tpu_cores=8, gpus=None, max_epochs=20):
+    # Load datasets
+    train = wiki_dataset('./wiki.train.txt', training=True, token_map='create', window=30)
+    valid = wiki_dataset('./wiki.valid.txt', training=False, token_map=train.token_map, window=30)
+    test = wiki_dataset('./wiki.test.txt', training=False, token_map=train.token_map, window=30)
+    datasets = [train, valid, test]
+
+    # Load dataloader
+    dataloader = wiki_dataloader(datasets=datasets, batch_size=20, num_workers=2, unk_threshold=unk_threshold)
+
+    # default LSTM params
+    params = {'n_vocab': len(train.unique_tokens),
+              'embedding_size': 100,
+              'num_layers': 2,
+              'dropout': dropout,
+              'lr': lr}
+
+    # Make model and train
+    model = LSTM1(**params,
+                  trainweights=torch.log(1. / train.token_count()))
+
+    tb_logger = pl_loggers.TensorBoardLogger(logdir, name="{}_{}_{}".format(lr, dropout, grad_clipping))
+    trainer = pl.Trainer(gradient_clip_val=grad_clipping, logger=tb_logger, max_epochs=20, tpu_cores=tpu_cores,
+                         gpus=gpus)
+
+    trainer.fit(model, dataloader)
+    model.eval()
+    result = trainer.test(model, dataloader)
+    print('printing some example sentences from test set')
+    print('--> format: sentence (true) [predicted]')
+    for idx in np.random.randint(0, 1000, size=10):
+        features, groundTruth = test[idx]
+        pred = model.predict(features)
+        sentence = ''.join([test.decode_int(i) for i in features])
+        nextword = test.decode_int(groundTruth)
+        nextpred = test.decode_int(pred)
+        print('{} ({}) [{}]'.format(sentence, nextword, nextpred))
+
 
 if __name__ == '__main__':
     # Load datasets

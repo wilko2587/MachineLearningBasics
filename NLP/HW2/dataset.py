@@ -24,7 +24,7 @@ class wiki_dataset(Dataset):
         unk = '<unk>'
         token_list = list()
 
-        tokenizer = nltk.RegexpTokenizer(r"\w+|[\.|\,|\(|\)|\?|\!]")#|(\.|\,|\(|\)|\?|\!)") # new tokenizer ignores any punctuation
+        tokenizer = nltk.RegexpTokenizer(r"\w+") # |[\.|\,|\(|\)|\?|\!]")#|(\.|\,|\(|\)|\?|\!)") # new tokenizer ignores any punctuation
         # stop_words = set(stopwords.words('english'))
 
         with open(file, 'r') as f:

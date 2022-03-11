@@ -13,7 +13,7 @@ import numpy as np
 
 _datadir = './train/'
 
-def make_woz_datasets(bKnowledge):
+def make_woz_datasets(bKnowledge, situation='restaurant'):
     if bKnowledge:
         out_names = ['woz.train_c.txt', 'woz.valid_c.txt', 'woz.test_c.txt']
     else:
@@ -31,7 +31,7 @@ def make_woz_datasets(bKnowledge):
                 data = json.load(f)
             for dialogue in data:
                 if len(dialogue['services']) == 1:
-                    if dialogue['services'][0] == 'restaurant':
+                    if dialogue['services'][0] == situation:
                         prev_speaker = ''
                         prev_utterance = ''
                         for turn in dialogue['turns']:
@@ -40,7 +40,7 @@ def make_woz_datasets(bKnowledge):
                             utterance = turn['utterance']
 
                             for frame in turn['frames']:
-                                if frame['service'] == 'restaurant':
+                                if frame['service'] == situation:
                                     knowledge = ''
                                     try:
                                         knowledge = '[KNOWLEDGE] '
@@ -91,11 +91,12 @@ def make_woz_datasets(bKnowledge):
     print(counts)
 
 
-def main():
-    make_woz_datasets(True)
-    make_woz_datasets(False)
 
-    gen_mode = 1
+def main(situation='restaurant'):
+    make_woz_datasets(True, situation=situation)
+    make_woz_datasets(False, situation=situation)
+
+    gen_mode = 0
     gen_labels = ['logits', 'greedy', 'beam', 'top-p']
     tuned_model = 0 # I'm setting this to 0
 
@@ -106,18 +107,23 @@ def main():
         tuned = '/home/ddemeter/CS-497/b'
         test_name = 'woz.test_b.txt'
     else:
-        tuned = '/home/ddemeter/CS-497/c'
+        tuned = 'gpt2' #'/home/ddemeter/CS-497/c'
         test_name = 'woz.test_c.txt'
 
     tokenizer = GPT2Tokenizer.from_pretrained(tuned)
     model = GPT2LMHeadModel.from_pretrained(tuned, pad_token_id=tokenizer.eos_token_id)
+
     if torch.cuda.is_available():
         model = model.cuda()
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print('total parameters = ', params)
 
-    metric = load_metric("bleu")
+    metrics = {
+               'bleu':load_metric('bleu'),
+               'comet':load_metric('comet'),
+               'sacrebleu':load_metric('sacrebleu')
+    }
 
     predicts = []
     refs = []
@@ -216,19 +222,22 @@ def main():
             predicts.append(predictions)
             refs.append(references)
 
-            try:
-                results = metric.compute(predictions=predictions, references=references)
-                bleus.append(results['bleu'])
-            except:
-                print('ref:  ', ref)
-                print('pred: ', predict)
-            if results['bleu'] > 0.01:
-                print('ref:  ', ref)
-                print('pred: ', predict)
-                print('BLEU[%d]: %7.3f' % (obs, results['bleu']))
-                print(' ')
-                best.append(results['bleu'])
+            for metric in metrics:
+                M = metrics[metric]
+                try:
+                    results = M.compute(predictions=predictions, references=references)
+                    bleus.append(results[metric])
+                except:
+                #    print('ref:  ', ref)
+                #    print('pred: ', predict)
+                #if results['bleu'] > 0.01:
+                #    print('ref:  ', ref)
+                #    print('pred: ', predict)
+                #    print('BLEU[%d]: %7.3f' % (obs, results['bleu']))
+                #    print(' ')
+                    best.append(results[metric])
 
+    print("Situation: {}".format(situation))
     print(best)
     if len(best) > 0:
         print('avg[%d]: %7.5f' % (len(best), sum(best) / float(len(best))))
@@ -241,4 +250,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    main(situation='restaurant')
+    main(situation='hotel')
+    main(situation='attraction')
+    main(situation='train')
+
+    #make_tagged_datasets()
+
