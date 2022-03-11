@@ -128,7 +128,7 @@ def main(situation='restaurant'):
     predicts = []
     refs = []
     best = []
-    bleus = []
+    metric_results = dict.fromkeys(metrics.keys(), [])
     max_len = 0
     total = 0
     with open(test_name, 'rt') as f:
@@ -226,25 +226,19 @@ def main(situation='restaurant'):
                 M = metrics[metric]
                 try:
                     results = M.compute(predictions=predictions, references=references)
-                    bleus.append(results[metric])
+                    metric_results[metric] = metric_results[metric] + [results[metric]]
                 except:
-                #    print('ref:  ', ref)
-                #    print('pred: ', predict)
-                #if results['bleu'] > 0.01:
-                #    print('ref:  ', ref)
-                #    print('pred: ', predict)
-                #    print('BLEU[%d]: %7.3f' % (obs, results['bleu']))
-                #    print(' ')
-                    best.append(results[metric])
+                    best.append(results[metric]) # don't know what this is for...?
 
+            #if obs > 3:
+            #    break # just to speed it up if needed
+
+    print('\n------')
     print("Situation: {}".format(situation))
-    print(best)
-    if len(best) > 0:
-        print('avg[%d]: %7.5f' % (len(best), sum(best) / float(len(best))))
-        print(' ')
 
-    results = metric.compute(predictions=predicts, references=refs)
-    print('Final %s on %s BLEU: %7.3f % 7.3f' % (gen_labels[gen_mode], test_name, results['bleu'], sum(bleus) / 511.0))
+    for metric in metrics:
+        results = metrics[metric].compute(predictions=predicts, references=refs)
+        print('Final %s on %s %s: %7.3f % 7.3f' % (gen_labels[gen_mode], metric, test_name, results[metric], sum(metric_results[metric]) / 511.0))
     print(len(predicts), len(refs))
     print(' ')
 
@@ -253,8 +247,6 @@ if __name__ == "__main__":
 
     main(situation='restaurant')
     main(situation='hotel')
-    main(situation='attraction')
     main(situation='train')
 
     #make_tagged_datasets()
-
