@@ -83,7 +83,6 @@ def make_woz_datasets(bKnowledge, situation='restaurant'):
                                                                            speaker,
                                                                            utterance)
                                 fout.write('%s\n' % (text))
-                                print(text)
                             prev_speaker = speaker
                             prev_utterance = utterance
         counts.append(count)
@@ -98,7 +97,7 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
 
     gen_labels = ['logits', 'greedy', 'beam', 'top-p']
 
-    tokenizer = GPT2Tokenizer.from_pretrained(model_path)
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
     model = GPT2LMHeadModel.from_pretrained(model_path, pad_token_id=tokenizer.eos_token_id)
 
     if torch.cuda.is_available():
@@ -216,7 +215,7 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
                     results = M.compute(predictions=predictions, references=references)
                     metric_results[metric] = metric_results[metric] + [results[metric]]
                 except:
-                    best.append(results[metric]) # don't know what this is for...?
+                    pass
 
             #if obs > 3:
             #    break # just to speed it up if needed
