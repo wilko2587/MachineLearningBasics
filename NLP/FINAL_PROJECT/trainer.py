@@ -81,12 +81,12 @@ def main():
     # config for training
     config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
                                load_best_model_at_end=False, save_strategy="epoch",
-                               per_device_train_batch_size=2,
+                               per_device_train_batch_size=2, do_eval=True,
                                warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
 
     # start training
     #Trainer(model=model, args=config, train_dataset=dataset_t).train()
-    Trainer(model=model, args=config, valid_dataset=dataset_v).train()
+    Trainer(model=model, args=config, train_dataset=dataset_t, eval_dataset=dataset_v).train()
     model.save_pretrained('./models/') # ??? I think this is how you save a model??
 
 if __name__ == "__main__":
