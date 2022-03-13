@@ -81,7 +81,7 @@ def main():
     # config for training
     config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
                                load_best_model_at_end=False, save_strategy="epoch",
-                               per_device_train_batch_size=2, do_eval=True,
+                               per_device_train_batch_size=2, evaluation_strategy="steps",
                                warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
 
     # start training

@@ -92,26 +92,14 @@ def make_woz_datasets(bKnowledge, situation='restaurant'):
 
 
 
-def main(situation='restaurant'):
+def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', gen_mode=0):
     make_woz_datasets(True, situation=situation)
     make_woz_datasets(False, situation=situation)
 
-    gen_mode = 0
     gen_labels = ['logits', 'greedy', 'beam', 'top-p']
-    tuned_model = 0 # I'm setting this to 0
 
-    if tuned_model == 0:
-        tuned = 'gpt2'
-        test_name = 'woz.test_a.txt'
-    elif tuned_model == 1:
-        tuned = '/home/ddemeter/CS-497/b'
-        test_name = 'woz.test_b.txt'
-    else:
-        tuned = 'gpt2' #'/home/ddemeter/CS-497/c'
-        test_name = 'woz.test_c.txt'
-
-    tokenizer = GPT2Tokenizer.from_pretrained(tuned)
-    model = GPT2LMHeadModel.from_pretrained(tuned, pad_token_id=tokenizer.eos_token_id)
+    tokenizer = GPT2Tokenizer.from_pretrained(model_path)
+    model = GPT2LMHeadModel.from_pretrained(model_path, pad_token_id=tokenizer.eos_token_id)
 
     if torch.cuda.is_available():
         model = model.cuda()
