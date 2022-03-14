@@ -1,4 +1,5 @@
 from transformers import GPT2Tokenizer, GPT2Model, GPT2LMHeadModel
+from transformers import T5Tokenizer, T5ForConditionalGeneration
 from datasets import load_metric
 from pprint import pprint
 
@@ -13,7 +14,7 @@ import numpy as np
 
 _datadir = './train/'
 
-def make_woz_datasets(bKnowledge, situation='restaurant'):
+def make_woz_datasets(bKnowledge):
     if bKnowledge:
         out_names = ['woz.train_c.txt', 'woz.valid_c.txt', 'woz.test_c.txt']
     else:
@@ -31,7 +32,7 @@ def make_woz_datasets(bKnowledge, situation='restaurant'):
                 data = json.load(f)
             for dialogue in data:
                 if len(dialogue['services']) == 1:
-                    if dialogue['services'][0] == situation:
+                    if dialogue['services'][0] == 'restaurant':
                         prev_speaker = ''
                         prev_utterance = ''
                         for turn in dialogue['turns']:
@@ -40,7 +41,7 @@ def make_woz_datasets(bKnowledge, situation='restaurant'):
                             utterance = turn['utterance']
 
                             for frame in turn['frames']:
-                                if frame['service'] == situation:
+                                if frame['service'] == 'restaurant':
                                     knowledge = ''
                                     try:
                                         knowledge = '[KNOWLEDGE] '
@@ -83,6 +84,7 @@ def make_woz_datasets(bKnowledge, situation='restaurant'):
                                                                            speaker,
                                                                            utterance)
                                 fout.write('%s\n' % (text))
+                                print(text)
                             prev_speaker = speaker
                             prev_utterance = utterance
         counts.append(count)
@@ -90,15 +92,30 @@ def make_woz_datasets(bKnowledge, situation='restaurant'):
     print(counts)
 
 
+def main():
+    make_woz_datasets(True)
+    make_woz_datasets(False)
 
-def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', gen_mode=0):
-    make_woz_datasets(True, situation=situation)
-    make_woz_datasets(False, situation=situation)
-
+    gen_mode = 1
     gen_labels = ['logits', 'greedy', 'beam', 'top-p']
+    tuned_model = 2 # I'm setting this to 0
 
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-    model = GPT2LMHeadModel.from_pretrained(model_path, pad_token_id=tokenizer.eos_token_id)
+    if tuned_model == 0:
+        tuned = 'gpt2' #'gpt2'
+        test_name = 'woz.test_a.txt'
+        tokenizer = GPT2Tokenizer.from_pretrained(tuned)
+        model = GPT2LMHeadModel.from_pretrained(tuned, pad_token_id=tokenizer.eos_token_id)
+    elif tuned_model == 1:
+        tuned = '/home/ddemeter/CS-497/b'
+        test_name = 'woz.test_b.txt'
+    elif tuned_model == 2:
+        tuned = 't5-base'
+        test_name = 'woz.test_b.txt'
+        tokenizer = T5Tokenizer.from_pretrained(tuned)
+        model = T5ForConditionalGeneration.from_pretrained(tuned)
+    else:
+        tuned = 'gpt2'
+        test_name = 'woz.test_c.txt'
 
     if torch.cuda.is_available():
         model = model.cuda()
@@ -106,16 +123,12 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
     params = sum([np.prod(p.size()) for p in model_parameters])
     print('total parameters = ', params)
 
-    metrics = {
-               'bleu':load_metric('bleu'),
-               'meteor':load_metric('meteor'),
-                'google_bleu':load_metric('google_bleu')
-    }
+    metric = load_metric("bleu")
 
     predicts = []
     refs = []
     best = []
-    metric_results = dict.fromkeys(metrics.keys(), [])
+    bleus = []
     max_len = 0
     total = 0
     with open(test_name, 'rt') as f:
@@ -209,31 +222,23 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
             predicts.append(predictions)
             refs.append(references)
 
-            for metric in metrics:
-                M = metrics[metric]
-                try:
-                    results = M.compute(predictions=predictions, references=references)
-                    metric_results[metric] = metric_results[metric] + [results[metric]]
-                except:
-                    pass
+            try:
+                results = metric.compute(predictions=predictions, references=references)
+                bleus.append(results['bleu'])
+                best.append(results['bleu'])
+            except:
+                pass
 
-            #if obs > 3:
-            #    break # just to speed it up if needed
+    print(best)
+    if len(best) > 0:
+        print('avg[%d]: %7.5f' % (len(best), sum(best) / float(len(best))))
+        print(' ')
 
-    print('\n------')
-    print("Situation: {}".format(situation))
-
-    for metric in metrics:
-        results = metrics[metric].compute(predictions=predicts, references=refs)
-        print('Final %s on %s %s: %7.3f % 7.3f' % (gen_labels[gen_mode], metric, test_name, results[metric], sum(metric_results[metric]) / 511.0))
+    results = metric.compute(predictions=predicts, references=refs)
+    print('Final %s on %s BLEU: %7.3f % 7.3f' % (gen_labels[gen_mode], test_name, results['bleu'], sum(bleus) / 511.0))
     print(len(predicts), len(refs))
     print(' ')
 
 
 if __name__ == "__main__":
-
-    main(situation='restaurant')
-    main(situation='hotel')
-    #main(situation='train')
-
-    #make_tagged_datasets()
+    main()
