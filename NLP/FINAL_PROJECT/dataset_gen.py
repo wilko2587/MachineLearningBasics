@@ -69,8 +69,6 @@ def make_woz_datasets(bKnowledge, tagging=False, situation='restaurant'):
                             utterance = turn['utterance']
                             if tagging:
                                 utterance = tag_sequence(utterance)
-                                print(utterance)
-                                a = input('')
 
                             for frame in turn['frames']:
                                 if frame['service'] == situation:
