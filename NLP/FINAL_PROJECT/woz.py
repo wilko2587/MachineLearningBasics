@@ -89,7 +89,6 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
                     input_ids = input_ids.cuda()
                 greedy = model.generate(input_ids, max_length=max_len)
                 text2 = tokenizer.decode(greedy[0], skip_special_tokens=False)
-                print(text2)
                 tokens = text2.split()
 
             if gen_mode == 2:
@@ -128,6 +127,9 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
             references = [[ref.split()]]
             predicts.append(predictions)
             refs.append(references)
+
+            print("\nGoal: {}".format(ref))
+            print("Pred: {}".format(predict))
 
             for metric in metrics:
                 M = metrics[metric]
