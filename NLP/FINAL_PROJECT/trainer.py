@@ -34,14 +34,12 @@ class WozDataset(Dataset): # basic torch dataset to let the trainer function
                 "labels": self.y[idx]}
         return dict
 
-def main():
+def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
     '''
     Just a wrapper so I can run this in collab
     '''
     base_model = 'gpt2'
     torch.manual_seed(1)
-    train_name = 'woz.train_a.txt'
-    valid_name = 'woz.valid_a.txt'
     tokenizer = GPT2Tokenizer.from_pretrained(base_model)
     tokenizer.pad_token = tokenizer.eos_token # set the padding token
     model = GPT2LMHeadModel.from_pretrained(base_model, pad_token_id=tokenizer.eos_token_id)
