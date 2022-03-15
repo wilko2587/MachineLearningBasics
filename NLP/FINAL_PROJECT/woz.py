@@ -1,99 +1,18 @@
 from transformers import GPT2Tokenizer, GPT2Model, GPT2LMHeadModel
 from datasets import load_metric
-from pprint import pprint
 
 import torch
-import math
-import time
-import sys
-import os
-import json
 import numpy as np
-
-
-_datadir = './train/'
-
-def make_woz_datasets(bKnowledge, situation='restaurant'):
-    if bKnowledge:
-        out_names = ['woz.train_c.txt', 'woz.valid_c.txt', 'woz.test_c.txt']
-    else:
-        out_names = ['woz.train_b.txt', 'woz.valid_a.txt', 'woz.test_a.txt', 'woz.valid_b.txt', 'woz.test_b.txt']
-    max_ins = [18, 2, 2, 2, 2]
-
-    count = 0
-    counts = []
-    for dataset in range(len(out_names)):
-        fout = open(out_names[dataset], 'wt')
-        for dialog in range(1, max_ins[dataset], 1):
-            file_name = 'dialogues_%03d.json' % dialog
-            path_to_file = os.path.join(_datadir, file_name)
-            with open(path_to_file) as f:
-                data = json.load(f)
-            for dialogue in data:
-                if len(dialogue['services']) == 1:
-                    if dialogue['services'][0] == situation:
-                        prev_speaker = ''
-                        prev_utterance = ''
-                        for turn in dialogue['turns']:
-                            count = count + 1
-                            speaker = turn['speaker']
-                            utterance = turn['utterance']
-
-                            for frame in turn['frames']:
-                                if frame['service'] == situation:
-                                    knowledge = ''
-                                    try:
-                                        knowledge = '[KNOWLEDGE] '
-                                        for slot in frame['slots']:
-                                            temp = '%s [EQUAL] %s [SEP] ' % (slot['slot'], slot['value'])
-                                            knowledge = knowledge + temp
-                                    except:
-                                        nothing = 1
-                                    try:
-                                        if len(knowledge) == 0:
-                                            knowledge = '[KNOWLEDGE] '
-                                        try:
-                                            intent = frame['state']['active_intent']
-                                            temp = '%s [EQUAL] %s [SEP] ' % ('active_intent', intent)
-                                            knowledge = knowledge + temp
-                                            slot_values = frame['state']['slot_values']
-                                            for slot in slot_values:
-                                                vals = slot_values[slot]
-                                                for val in vals:
-                                                    temp = '%s [EQUAL] %s [SEP] ' % (slot, val)
-                                                    knowledge = knowledge + temp
-                                        except:
-                                            nothing = 1
-                                    except:
-                                        noting = 1
-
-                            if len(prev_speaker) > 0:
-                                if not bKnowledge:
-                                    knowledge = ''
-                                if dataset == 0:
-                                    text = '[%s] %s %s [%s] %s [END]' % (prev_speaker,
-                                                                         prev_utterance,
-                                                                         knowledge,
-                                                                         speaker,
-                                                                         utterance)
-                                else:
-                                    text = '[%s] %s %s [%s] | %s [END]' % (prev_speaker,
-                                                                           prev_utterance,
-                                                                           knowledge,
-                                                                           speaker,
-                                                                           utterance)
-                                fout.write('%s\n' % (text))
-                            prev_speaker = speaker
-                            prev_utterance = utterance
-        counts.append(count)
-        count = 0
-    print(counts)
-
+import dataset_gen
 
 
 def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', gen_mode=0):
-    make_woz_datasets(True, situation=situation)
-    make_woz_datasets(False, situation=situation)
+
+    # First generate all the datasets we need, tagging and all
+    dataset_gen.make_woz_datasets(True, situation=situation, tagging=False)
+    dataset_gen.make_woz_datasets(False, situation=situation, tagging=False)
+    dataset_gen.make_woz_datasets(True, situation=situation, tagging=True)
+    dataset_gen.make_woz_datasets(False, situation=situation, tagging=True)
 
     gen_labels = ['logits', 'greedy', 'beam', 'top-p']
 
@@ -170,6 +89,7 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
                     input_ids = input_ids.cuda()
                 greedy = model.generate(input_ids, max_length=max_len)
                 text2 = tokenizer.decode(greedy[0], skip_special_tokens=False)
+                print(text2)
                 tokens = text2.split()
 
             if gen_mode == 2:
@@ -234,6 +154,3 @@ if __name__ == "__main__":
 
     main(situation='restaurant')
     main(situation='hotel')
-    #main(situation='train')
-
-    #make_tagged_datasets()
