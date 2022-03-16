@@ -65,7 +65,10 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
                 resp = line[SYS_index + len(end_token):].strip(' ')
                 resp = resp.split('  <|endoftext|>')[0]
                 train_x.append(prompt)
-                train_y.append(resp)
+                full = prompt + resp
+                if len(full)>90: # trim bc sometimes they can be too big
+                  full = full[:90]
+                train_y.append(full)
 
     dataset_t = WozDataset(train_x, train_y, tokenizer=tokenizer)
 
@@ -79,7 +82,10 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
                 resp = line[SYS_index:].strip(' ')
                 resp = resp.split('  <|endoftext|>')[0]
                 val_x.append(prompt)
-                val_y.append(resp)
+                full = prompt + resp
+                if len(full)>90:
+                  full = full[:90]
+                val_y.append(full)
 
     dataset_v = WozDataset(val_x, val_y, tokenizer=tokenizer)
 
