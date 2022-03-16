@@ -34,6 +34,7 @@ class WozDataset(Dataset): # basic torch dataset to let the trainer function
                 "labels": self.y[idx]}
         return dict
 
+
 def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
     '''
     Just a wrapper so I can run this in collab
@@ -54,9 +55,10 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
     #create train and validation datasets
     with open(train_name, 'rt') as f:
         for line in f:
-            if line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
+            if True: #line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
                 line = line.replace('\n', '')
-                SYS_index = line.index('[SYSTEM]')
+                end_token = "[SYSTEM]" if line.split(' ')[0] == '[USER]' else "[USER]"
+                SYS_index = line.index(end_token)
                 prompt = line[:SYS_index].strip(' ')
                 resp = line[SYS_index:].strip(' ')
                 train_x.append(prompt)
@@ -66,9 +68,10 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
 
     with open(valid_name, 'rt') as f:
         for line in f:
-            if line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
+            if True: # line.split(' ')[0] == '[USER]': # only train on replies by [SYSTEM] (that start with prompt by [USER])
                 line = line.replace('\n', '')
-                SYS_index = line.index('[SYSTEM]')
+                end_token = "[SYSTEM]" if line.split(' ')[0] == '[USER]' else "[USER]"
+                SYS_index = line.index(end_token)
                 prompt = line[:SYS_index].strip(' ')
                 resp = line[SYS_index:].strip(' ')
                 val_x.append(prompt)
@@ -77,7 +80,7 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
     dataset_v = WozDataset(val_x, val_y, tokenizer=tokenizer)
 
     # config for training
-    config = TrainingArguments(output_dir='./results/', num_train_epochs=2, logging_steps=20,
+    config = TrainingArguments(output_dir='./results/', num_train_epochs=10, logging_steps=20,
                                load_best_model_at_end=False, save_strategy="epoch",
                                per_device_train_batch_size=2, evaluation_strategy="steps",
                                warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
@@ -85,7 +88,6 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
     # start training
     #Trainer(model=model, args=config, train_dataset=dataset_t).train()
     Trainer(model=model, args=config, train_dataset=dataset_t, eval_dataset=dataset_v).train()
-    model.save_pretrained('./models/') # ??? I think this is how you save a model??
 
 if __name__ == "__main__":
     main()
