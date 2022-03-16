@@ -54,11 +54,11 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
     obs = 0
     with open(test_name, 'rt') as f:
         for line in f:
-            if line.split(' ')[0] == '[USER]':
+            if True: #line.split(' ')[0] == '[USER]':
                 line = line.replace('\n', '')
                 text = line.split('|')
                 prompt = text[0].strip(' ')
-                ref = text[1].strip(' ')
+                ref = text[1].strip(' ').strip('  <')
                 obs = obs + 1
                 in_ids = tokenizer.encode(prompt, add_special_tokens=True)
 
@@ -89,26 +89,33 @@ def main(situation='restaurant', model_path='gpt2', test_name='woz.test_a.txt', 
                     input_ids = torch.tensor(in_ids).unsqueeze(0)
                     if torch.cuda.is_available():
                         input_ids = input_ids.cuda()
-                    greedy = model.generate(input_ids, max_length=max_len)
+                    greedy = model.generate(input_ids, max_length=max_len, min_length=len(input_ids[0])+10)
                     text2 = tokenizer.decode(greedy[0], skip_special_tokens=False)
                     print('\ntext prom: {}'.format(prompt))
                     print('text resp: {}'.format(text2))
+                    print('toks: {}'.format(greedy))
                     tokens = text2.split()
 
                 if gen_mode == 2:
                     input_ids = torch.tensor(in_ids).unsqueeze(0)
                     if torch.cuda.is_available():
                         input_ids = input_ids.cuda()
-                    beam = model.generate(input_ids, max_length=max_len, num_beams=5, early_stopping=True)
+                    beam = model.generate(input_ids, max_length=max_len, num_beams=5, early_stopping=True, min_length=len(input_ids[0])+10)
                     text2 = tokenizer.decode(beam[0], skip_special_tokens=False)
+                    print('\ntext prom: {}'.format(prompt))
+                    print('text resp: {}'.format(text2))
+                    print('toks: {}'.format(beam))
                     tokens = text2.split()
 
                 if gen_mode == 3:
                     input_ids = torch.tensor(in_ids).unsqueeze(0)
                     if torch.cuda.is_available():
                         input_ids = input_ids.cuda()
-                    top_p = model.generate(input_ids, max_length=max_len, do_sample=True, top_p=0.90, top_k=0)
+                    top_p = model.generate(input_ids, max_length=max_len, do_sample=True, top_p=0.90, top_k=0, min_length=len(input_ids[0])+10)
                     text2 = tokenizer.decode(top_p[0], skip_special_tokens=False)
+                    print('\ntext prom: {}'.format(prompt))
+                    print('text resp: {}'.format(text2))
+                    print('toks: {}'.format(top_p))
                     tokens = text2.split()
 
                 first = len(prompt.split(' '))

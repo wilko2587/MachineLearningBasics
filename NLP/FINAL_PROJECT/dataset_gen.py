@@ -102,13 +102,13 @@ def make_woz_datasets(bKnowledge, tagging=False, situation='restaurant'):
                                 if not bKnowledge:
                                     knowledge = ''
                                 if dataset == 0:
-                                    text = '[%s] %s %s [%s] %s [END]' % (prev_speaker,
+                                    text = '[%s] %s %s [%s] %s  <|endoftext|>' % (prev_speaker,
                                                                          prev_utterance,
                                                                          knowledge,
                                                                          speaker,
                                                                          utterance)
                                 else:
-                                    text = '[%s] %s %s [%s] | %s [END]' % (prev_speaker,
+                                    text = '[%s] %s %s [%s] | %s  <|endoftext|>' % (prev_speaker,
                                                                            prev_utterance,
                                                                            knowledge,
                                                                            speaker,

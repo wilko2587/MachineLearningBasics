@@ -25,6 +25,7 @@ class WozDataset(Dataset): # basic torch dataset to let the trainer function
             self.attention_mask.append(torch.tensor(in_encoded_dict['attention_mask']))
             self.y.append(torch.tensor(out_encoded_dict['input_ids']))
 
+        print('hi')
     def __len__(self):
         return len(self.x)
 
@@ -44,6 +45,7 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
     tokenizer = GPT2Tokenizer.from_pretrained(base_model)
     tokenizer.pad_token = tokenizer.eos_token # set the padding token
     model = GPT2LMHeadModel.from_pretrained(base_model, pad_token_id=tokenizer.eos_token_id)
+    model.resize_token_embeddings(len(tokenizer))
     if torch.cuda.is_available():
         model = model.cuda()
 
@@ -59,8 +61,9 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
                 line = line.replace('\n', '')
                 end_token = "[SYSTEM]" if line.split(' ')[0] == '[USER]' else "[USER]"
                 SYS_index = line.index(end_token)
-                prompt = line[:SYS_index].strip(' ')
-                resp = line[SYS_index:].strip(' ')
+                prompt = line[:SYS_index + len(end_token)].strip(' ')
+                resp = line[SYS_index + len(end_token):].strip(' ')
+                resp = resp.split('  <|endoftext|>')[0]
                 train_x.append(prompt)
                 train_y.append(resp)
 
@@ -74,16 +77,18 @@ def main(train_name='woz.train_a.txt', valid_name='woz.valid_a.txt'):
                 SYS_index = line.index(end_token)
                 prompt = line[:SYS_index].strip(' ')
                 resp = line[SYS_index:].strip(' ')
+                resp = resp.split('  <|endoftext|>')[0]
                 val_x.append(prompt)
                 val_y.append(resp)
 
     dataset_v = WozDataset(val_x, val_y, tokenizer=tokenizer)
 
     # config for training
-    config = TrainingArguments(output_dir='./results/', num_train_epochs=10, logging_steps=20,
+    config = TrainingArguments(output_dir='./results/', num_train_epochs=5, logging_steps=20,
                                load_best_model_at_end=False, save_strategy="epoch",
-                               per_device_train_batch_size=2, evaluation_strategy="steps",
-                               warmup_steps=100, weight_decay=0.01, logging_dir='./Logs')
+                               per_device_train_batch_size=8, evaluation_strategy="steps",
+                               warmup_steps=100, weight_decay=0.01, logging_dir='./Logs',
+                               learning_rate=5e-6, do_train=True, do_eval=True)
 
     # start training
     #Trainer(model=model, args=config, train_dataset=dataset_t).train()
